@@ -2,30 +2,35 @@
 
 from .types import (
     HttpValidationError,
-    Model,
-    ModelResult,
+    ModelInfo,
+    ModelInfoListItem,
     ModelResultInfo,
     ModelResultMasked,
-    User,
+    ModelRunOutput,
+    ModelsEnum,
     ValidationError,
     ValidationErrorLocItem,
 )
-from .errors import NotFoundError, UnprocessableEntityError
+from .errors import ForbiddenError, NotFoundError, UnprocessableEntityError
 from . import models, results
 from .client import AsyncConductorQuantum, ConductorQuantum
+from .environment import ConductorQuantumEnvironment
 from .version import __version__
 
 __all__ = [
     "AsyncConductorQuantum",
     "ConductorQuantum",
+    "ConductorQuantumEnvironment",
+    "ForbiddenError",
     "HttpValidationError",
-    "Model",
-    "ModelResult",
+    "ModelInfo",
+    "ModelInfoListItem",
     "ModelResultInfo",
     "ModelResultMasked",
+    "ModelRunOutput",
+    "ModelsEnum",
     "NotFoundError",
     "UnprocessableEntityError",
-    "User",
     "ValidationError",
     "ValidationErrorLocItem",
     "__version__",

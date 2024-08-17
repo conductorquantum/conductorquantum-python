@@ -19,10 +19,10 @@ Instantiate and use the client with the following:
 from conductor_quantum import ConductorQuantum
 
 client = ConductorQuantum(
-    base_url="https://yourhost.com/path/to/api",
+    token="YOUR_TOKEN",
 )
-client.models.response(
-    request_info="request_info",
+client.models.execute(
+    model="coulomb-blockade-peak-detector",
 )
 ```
 
@@ -36,13 +36,13 @@ import asyncio
 from conductor_quantum import AsyncConductorQuantum
 
 client = AsyncConductorQuantum(
-    base_url="https://yourhost.com/path/to/api",
+    token="YOUR_TOKEN",
 )
 
 
 async def main() -> None:
-    await client.models.response(
-        request_info="request_info",
+    await client.models.execute(
+        model="coulomb-blockade-peak-detector",
     )
 
 
@@ -58,7 +58,7 @@ will be thrown.
 from conductor_quantum.core.api_error import ApiError
 
 try:
-    client.models.response(...)
+    client.models.execute(...)
 except ApiError as e:
     print(e.status_code)
     print(e.body)
@@ -81,7 +81,7 @@ A request is deemed retriable when any of the following HTTP status codes is ret
 Use the `max_retries` request option to configure this behavior.
 
 ```python
-client.models.response(..., {
+client.models.execute(..., {
     "max_retries": 1
 })
 ```
@@ -101,7 +101,7 @@ client = ConductorQuantum(
 
 
 # Override timeout for a specific method
-client.models.response(..., {
+client.models.execute(..., {
     "timeout_in_seconds": 1
 })
 ```

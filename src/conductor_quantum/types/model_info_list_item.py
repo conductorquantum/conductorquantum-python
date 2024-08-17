@@ -7,24 +7,34 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2
 import typing
 
 
-class ModelResultMasked(UniversalBaseModel):
+class ModelInfoListItem(UniversalBaseModel):
     """
-    Model result schema with the input file masked.
-    """
-
-    id: str = pydantic.Field()
-    """
-    The UUID of the model result.
+    Model information schema.
     """
 
-    model: str = pydantic.Field()
+    name: str = pydantic.Field()
     """
     The name of the model.
     """
 
-    created_at: dt.datetime = pydantic.Field()
+    description: str = pydantic.Field()
     """
-    The UTC time the model result was created.
+    The description of the model.
+    """
+
+    released: dt.datetime = pydantic.Field()
+    """
+    The UTC release date of the model.
+    """
+
+    number_of_runs: int = pydantic.Field()
+    """
+    The number of times the model has been run.
+    """
+
+    id: int = pydantic.Field()
+    """
+    The ID of the model.
     """
 
     if IS_PYDANTIC_V2:

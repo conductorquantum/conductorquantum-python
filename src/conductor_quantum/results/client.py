@@ -3,15 +3,15 @@
 from ..core.client_wrapper import SyncClientWrapper
 import typing
 from ..core.request_options import RequestOptions
+from ..types.model_result_masked import ModelResultMasked
 from ..core.pydantic_utilities import parse_obj_as
 from ..errors.not_found_error import NotFoundError
-from json.decoder import JSONDecodeError
-from ..core.api_error import ApiError
-from ..types.model_result_info import ModelResultInfo
-from ..core.jsonable_encoder import jsonable_encoder
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.http_validation_error import HttpValidationError
-from ..types.model_result_masked import ModelResultMasked
+from json.decoder import JSONDecodeError
+from ..core.api_error import ApiError
+from ..core.jsonable_encoder import jsonable_encoder
+from ..errors.forbidden_error import ForbiddenError
 from ..core.client_wrapper import AsyncClientWrapper
 
 
@@ -19,295 +19,7 @@ class ResultsClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    def get_percentage_increase(
-        self, *, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.Dict[str, float]:
-        """
-        Get the percentage increase in the number of model results created by a user
-        last week compared to the week before.
-
-        Args:
-        database: The database session.
-        user: The user.
-
-        Returns:
-        The percentage increase.
-
-        Parameters
-        ----------
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        typing.Dict[str, float]
-            Successful Response
-
-        Examples
-        --------
-        from conductor_quantum import ConductorQuantum
-
-        client = ConductorQuantum(
-            base_url="https://yourhost.com/path/to/api",
-        )
-        client.results.get_percentage_increase()
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            "results/percentage-increase",
-            method="GET",
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    typing.Dict[str, float],
-                    parse_obj_as(
-                        type_=typing.Dict[str, float],  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    typing.cast(
-                        typing.Optional[typing.Any],
-                        parse_obj_as(
-                            type_=typing.Optional[typing.Any],  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    def get_model_result_count(
-        self, *, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.Dict[str, int]:
-        """
-        Get the total number of ModelResult belonging to a user.
-
-        Args:
-        database: The database session.
-        user: The user.
-
-        Returns:
-        A dictionary containing the count of ModelResult.
-
-        Parameters
-        ----------
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        typing.Dict[str, int]
-            Successful Response
-
-        Examples
-        --------
-        from conductor_quantum import ConductorQuantum
-
-        client = ConductorQuantum(
-            base_url="https://yourhost.com/path/to/api",
-        )
-        client.results.get_model_result_count()
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            "results/count",
-            method="GET",
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    typing.Dict[str, int],
-                    parse_obj_as(
-                        type_=typing.Dict[str, int],  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    typing.cast(
-                        typing.Optional[typing.Any],
-                        parse_obj_as(
-                            type_=typing.Optional[typing.Any],  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    def model_info(
-        self,
-        model_result_id: int,
-        *,
-        dark_mode: typing.Optional[bool] = None,
-        include_plot: typing.Optional[bool] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> ModelResultInfo:
-        """
-        Get a model result by ID.
-
-        Args:
-        model_result_id: The ID of the model result.
-        database: The database session.
-        user: The user.
-
-        Returns:
-        The model result and optionally the plotly JSON.
-
-        Parameters
-        ----------
-        model_result_id : int
-
-        dark_mode : typing.Optional[bool]
-
-        include_plot : typing.Optional[bool]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        ModelResultInfo
-            Successful Response
-
-        Examples
-        --------
-        from conductor_quantum import ConductorQuantum
-
-        client = ConductorQuantum(
-            base_url="https://yourhost.com/path/to/api",
-        )
-        client.results.model_info(
-            model_result_id=1,
-        )
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            f"results/{jsonable_encoder(model_result_id)}",
-            method="GET",
-            params={
-                "dark_mode": dark_mode,
-                "include_plot": include_plot,
-            },
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    ModelResultInfo,
-                    parse_obj_as(
-                        type_=ModelResultInfo,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    typing.cast(
-                        typing.Optional[typing.Any],
-                        parse_obj_as(
-                            type_=typing.Optional[typing.Any],  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    typing.cast(
-                        HttpValidationError,
-                        parse_obj_as(
-                            type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    def delete_model_result(
-        self, model_result_id: int, *, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.Optional[typing.Any]:
-        """
-        Delete a model result by ID.
-
-        Args:
-        model_result_id: The ID of the model result.
-        database: The database session.
-        user: The user.
-
-        Returns:
-        None.
-
-        Parameters
-        ----------
-        model_result_id : int
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        typing.Optional[typing.Any]
-            Successful Response
-
-        Examples
-        --------
-        from conductor_quantum import ConductorQuantum
-
-        client = ConductorQuantum(
-            base_url="https://yourhost.com/path/to/api",
-        )
-        client.results.delete_model_result(
-            model_result_id=1,
-        )
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            f"results/{jsonable_encoder(model_result_id)}",
-            method="DELETE",
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    typing.Optional[typing.Any],
-                    parse_obj_as(
-                        type_=typing.Optional[typing.Any],  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    typing.cast(
-                        typing.Optional[typing.Any],
-                        parse_obj_as(
-                            type_=typing.Optional[typing.Any],  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    typing.cast(
-                        HttpValidationError,
-                        parse_obj_as(
-                            type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    def get_all_models_results(
+    def info(
         self,
         *,
         skip: typing.Optional[int] = None,
@@ -315,20 +27,15 @@ class ResultsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> typing.List[ModelResultMasked]:
         """
-        Get all model results.
-
-        Args:
-        skip: Number of model results to skip.
-        limit: Number of model results to return.
-
-        Returns:
-        List of model results.
+        Retrieves a list of model results.
 
         Parameters
         ----------
         skip : typing.Optional[int]
+            The number of model results to skip.
 
         limit : typing.Optional[int]
+            The number of model results to include.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -343,12 +50,12 @@ class ResultsClient:
         from conductor_quantum import ConductorQuantum
 
         client = ConductorQuantum(
-            base_url="https://yourhost.com/path/to/api",
+            token="YOUR_TOKEN",
         )
-        client.results.get_all_models_results()
+        client.results.info()
         """
         _response = self._client_wrapper.httpx_client.request(
-            "results",
+            "model-results",
             method="GET",
             params={
                 "skip": skip,
@@ -390,56 +97,50 @@ class ResultsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def download_model_result(
-        self, model_result_id: int, *, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.Optional[typing.Any]:
+    def delete(self, id: str, *, request_options: typing.Optional[RequestOptions] = None) -> None:
         """
-        Download a model result as a JSON file zipped with the input file from GCS.
-
-        Args:
-        model_result_id: The ID of the model result.
-        database: The database session.
-        user: The user.
-
-        Returns:
-        The zipped file as bytes.
+        Deletes a model result.
 
         Parameters
         ----------
-        model_result_id : int
+        id : str
+            The UUID of the model result.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        typing.Optional[typing.Any]
-            Successful Response
+        None
 
         Examples
         --------
         from conductor_quantum import ConductorQuantum
 
         client = ConductorQuantum(
-            base_url="https://yourhost.com/path/to/api",
+            token="YOUR_TOKEN",
         )
-        client.results.download_model_result(
-            model_result_id=1,
+        client.results.delete(
+            id="id",
         )
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"results/{jsonable_encoder(model_result_id)}/download",
-            method="GET",
+            f"model-results/{jsonable_encoder(id)}",
+            method="DELETE",
             request_options=request_options,
         )
         try:
             if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    typing.Optional[typing.Any],
-                    parse_obj_as(
-                        type_=typing.Optional[typing.Any],  # type: ignore
-                        object_=_response.json(),
-                    ),
+                return
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    typing.cast(
+                        typing.Optional[typing.Any],
+                        parse_obj_as(
+                            type_=typing.Optional[typing.Any],  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
                 )
             if _response.status_code == 404:
                 raise NotFoundError(
@@ -465,333 +166,87 @@ class ResultsClient:
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    def download(self, id: str, *, request_options: typing.Optional[RequestOptions] = None) -> typing.Iterator[bytes]:
+        """
+        Downloads a model result as a JSON file zipped with the input file.
+
+        Parameters
+        ----------
+        id : str
+            The UUID of the model result.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Yields
+        ------
+        typing.Iterator[bytes]
+            A zip file containing the model result as JSON and the input file.
+
+        Examples
+        --------
+        from conductor_quantum import ConductorQuantum
+
+        client = ConductorQuantum(
+            token="YOUR_TOKEN",
+        )
+        client.results.download(
+            id="string",
+        )
+        """
+        with self._client_wrapper.httpx_client.stream(
+            f"model-results/{jsonable_encoder(id)}/download",
+            method="GET",
+            request_options=request_options,
+        ) as _response:
+            try:
+                if 200 <= _response.status_code < 300:
+                    for _chunk in _response.iter_bytes():
+                        yield _chunk
+                    return
+                _response.read()
+                if _response.status_code == 403:
+                    raise ForbiddenError(
+                        typing.cast(
+                            typing.Optional[typing.Any],
+                            parse_obj_as(
+                                type_=typing.Optional[typing.Any],  # type: ignore
+                                object_=_response.json(),
+                            ),
+                        )
+                    )
+                if _response.status_code == 404:
+                    raise NotFoundError(
+                        typing.cast(
+                            typing.Optional[typing.Any],
+                            parse_obj_as(
+                                type_=typing.Optional[typing.Any],  # type: ignore
+                                object_=_response.json(),
+                            ),
+                        )
+                    )
+                if _response.status_code == 422:
+                    raise UnprocessableEntityError(
+                        typing.cast(
+                            HttpValidationError,
+                            parse_obj_as(
+                                type_=HttpValidationError,  # type: ignore
+                                object_=_response.json(),
+                            ),
+                        )
+                    )
+                _response_json = _response.json()
+            except JSONDecodeError:
+                raise ApiError(status_code=_response.status_code, body=_response.text)
+            raise ApiError(status_code=_response.status_code, body=_response_json)
 
 
 class AsyncResultsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    async def get_percentage_increase(
-        self, *, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.Dict[str, float]:
-        """
-        Get the percentage increase in the number of model results created by a user
-        last week compared to the week before.
-
-        Args:
-        database: The database session.
-        user: The user.
-
-        Returns:
-        The percentage increase.
-
-        Parameters
-        ----------
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        typing.Dict[str, float]
-            Successful Response
-
-        Examples
-        --------
-        import asyncio
-
-        from conductor_quantum import AsyncConductorQuantum
-
-        client = AsyncConductorQuantum(
-            base_url="https://yourhost.com/path/to/api",
-        )
-
-
-        async def main() -> None:
-            await client.results.get_percentage_increase()
-
-
-        asyncio.run(main())
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            "results/percentage-increase",
-            method="GET",
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    typing.Dict[str, float],
-                    parse_obj_as(
-                        type_=typing.Dict[str, float],  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    typing.cast(
-                        typing.Optional[typing.Any],
-                        parse_obj_as(
-                            type_=typing.Optional[typing.Any],  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    async def get_model_result_count(
-        self, *, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.Dict[str, int]:
-        """
-        Get the total number of ModelResult belonging to a user.
-
-        Args:
-        database: The database session.
-        user: The user.
-
-        Returns:
-        A dictionary containing the count of ModelResult.
-
-        Parameters
-        ----------
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        typing.Dict[str, int]
-            Successful Response
-
-        Examples
-        --------
-        import asyncio
-
-        from conductor_quantum import AsyncConductorQuantum
-
-        client = AsyncConductorQuantum(
-            base_url="https://yourhost.com/path/to/api",
-        )
-
-
-        async def main() -> None:
-            await client.results.get_model_result_count()
-
-
-        asyncio.run(main())
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            "results/count",
-            method="GET",
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    typing.Dict[str, int],
-                    parse_obj_as(
-                        type_=typing.Dict[str, int],  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    typing.cast(
-                        typing.Optional[typing.Any],
-                        parse_obj_as(
-                            type_=typing.Optional[typing.Any],  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    async def model_info(
-        self,
-        model_result_id: int,
-        *,
-        dark_mode: typing.Optional[bool] = None,
-        include_plot: typing.Optional[bool] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> ModelResultInfo:
-        """
-        Get a model result by ID.
-
-        Args:
-        model_result_id: The ID of the model result.
-        database: The database session.
-        user: The user.
-
-        Returns:
-        The model result and optionally the plotly JSON.
-
-        Parameters
-        ----------
-        model_result_id : int
-
-        dark_mode : typing.Optional[bool]
-
-        include_plot : typing.Optional[bool]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        ModelResultInfo
-            Successful Response
-
-        Examples
-        --------
-        import asyncio
-
-        from conductor_quantum import AsyncConductorQuantum
-
-        client = AsyncConductorQuantum(
-            base_url="https://yourhost.com/path/to/api",
-        )
-
-
-        async def main() -> None:
-            await client.results.model_info(
-                model_result_id=1,
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            f"results/{jsonable_encoder(model_result_id)}",
-            method="GET",
-            params={
-                "dark_mode": dark_mode,
-                "include_plot": include_plot,
-            },
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    ModelResultInfo,
-                    parse_obj_as(
-                        type_=ModelResultInfo,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    typing.cast(
-                        typing.Optional[typing.Any],
-                        parse_obj_as(
-                            type_=typing.Optional[typing.Any],  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    typing.cast(
-                        HttpValidationError,
-                        parse_obj_as(
-                            type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    async def delete_model_result(
-        self, model_result_id: int, *, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.Optional[typing.Any]:
-        """
-        Delete a model result by ID.
-
-        Args:
-        model_result_id: The ID of the model result.
-        database: The database session.
-        user: The user.
-
-        Returns:
-        None.
-
-        Parameters
-        ----------
-        model_result_id : int
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        typing.Optional[typing.Any]
-            Successful Response
-
-        Examples
-        --------
-        import asyncio
-
-        from conductor_quantum import AsyncConductorQuantum
-
-        client = AsyncConductorQuantum(
-            base_url="https://yourhost.com/path/to/api",
-        )
-
-
-        async def main() -> None:
-            await client.results.delete_model_result(
-                model_result_id=1,
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            f"results/{jsonable_encoder(model_result_id)}",
-            method="DELETE",
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    typing.Optional[typing.Any],
-                    parse_obj_as(
-                        type_=typing.Optional[typing.Any],  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    typing.cast(
-                        typing.Optional[typing.Any],
-                        parse_obj_as(
-                            type_=typing.Optional[typing.Any],  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    typing.cast(
-                        HttpValidationError,
-                        parse_obj_as(
-                            type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    async def get_all_models_results(
+    async def info(
         self,
         *,
         skip: typing.Optional[int] = None,
@@ -799,20 +254,15 @@ class AsyncResultsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> typing.List[ModelResultMasked]:
         """
-        Get all model results.
-
-        Args:
-        skip: Number of model results to skip.
-        limit: Number of model results to return.
-
-        Returns:
-        List of model results.
+        Retrieves a list of model results.
 
         Parameters
         ----------
         skip : typing.Optional[int]
+            The number of model results to skip.
 
         limit : typing.Optional[int]
+            The number of model results to include.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -829,18 +279,18 @@ class AsyncResultsClient:
         from conductor_quantum import AsyncConductorQuantum
 
         client = AsyncConductorQuantum(
-            base_url="https://yourhost.com/path/to/api",
+            token="YOUR_TOKEN",
         )
 
 
         async def main() -> None:
-            await client.results.get_all_models_results()
+            await client.results.info()
 
 
         asyncio.run(main())
         """
         _response = await self._client_wrapper.httpx_client.request(
-            "results",
+            "model-results",
             method="GET",
             params={
                 "skip": skip,
@@ -882,31 +332,21 @@ class AsyncResultsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def download_model_result(
-        self, model_result_id: int, *, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.Optional[typing.Any]:
+    async def delete(self, id: str, *, request_options: typing.Optional[RequestOptions] = None) -> None:
         """
-        Download a model result as a JSON file zipped with the input file from GCS.
-
-        Args:
-        model_result_id: The ID of the model result.
-        database: The database session.
-        user: The user.
-
-        Returns:
-        The zipped file as bytes.
+        Deletes a model result.
 
         Parameters
         ----------
-        model_result_id : int
+        id : str
+            The UUID of the model result.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        typing.Optional[typing.Any]
-            Successful Response
+        None
 
         Examples
         --------
@@ -915,31 +355,35 @@ class AsyncResultsClient:
         from conductor_quantum import AsyncConductorQuantum
 
         client = AsyncConductorQuantum(
-            base_url="https://yourhost.com/path/to/api",
+            token="YOUR_TOKEN",
         )
 
 
         async def main() -> None:
-            await client.results.download_model_result(
-                model_result_id=1,
+            await client.results.delete(
+                id="id",
             )
 
 
         asyncio.run(main())
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"results/{jsonable_encoder(model_result_id)}/download",
-            method="GET",
+            f"model-results/{jsonable_encoder(id)}",
+            method="DELETE",
             request_options=request_options,
         )
         try:
             if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    typing.Optional[typing.Any],
-                    parse_obj_as(
-                        type_=typing.Optional[typing.Any],  # type: ignore
-                        object_=_response.json(),
-                    ),
+                return
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    typing.cast(
+                        typing.Optional[typing.Any],
+                        parse_obj_as(
+                            type_=typing.Optional[typing.Any],  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
                 )
             if _response.status_code == 404:
                 raise NotFoundError(
@@ -965,3 +409,87 @@ class AsyncResultsClient:
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    async def download(
+        self, id: str, *, request_options: typing.Optional[RequestOptions] = None
+    ) -> typing.AsyncIterator[bytes]:
+        """
+        Downloads a model result as a JSON file zipped with the input file.
+
+        Parameters
+        ----------
+        id : str
+            The UUID of the model result.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Yields
+        ------
+        typing.AsyncIterator[bytes]
+            A zip file containing the model result as JSON and the input file.
+
+        Examples
+        --------
+        import asyncio
+
+        from conductor_quantum import AsyncConductorQuantum
+
+        client = AsyncConductorQuantum(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.results.download(
+                id="string",
+            )
+
+
+        asyncio.run(main())
+        """
+        async with self._client_wrapper.httpx_client.stream(
+            f"model-results/{jsonable_encoder(id)}/download",
+            method="GET",
+            request_options=request_options,
+        ) as _response:
+            try:
+                if 200 <= _response.status_code < 300:
+                    async for _chunk in _response.aiter_bytes():
+                        yield _chunk
+                    return
+                await _response.aread()
+                if _response.status_code == 403:
+                    raise ForbiddenError(
+                        typing.cast(
+                            typing.Optional[typing.Any],
+                            parse_obj_as(
+                                type_=typing.Optional[typing.Any],  # type: ignore
+                                object_=_response.json(),
+                            ),
+                        )
+                    )
+                if _response.status_code == 404:
+                    raise NotFoundError(
+                        typing.cast(
+                            typing.Optional[typing.Any],
+                            parse_obj_as(
+                                type_=typing.Optional[typing.Any],  # type: ignore
+                                object_=_response.json(),
+                            ),
+                        )
+                    )
+                if _response.status_code == 422:
+                    raise UnprocessableEntityError(
+                        typing.cast(
+                            HttpValidationError,
+                            parse_obj_as(
+                                type_=HttpValidationError,  # type: ignore
+                                object_=_response.json(),
+                            ),
+                        )
+                    )
+                _response_json = _response.json()
+            except JSONDecodeError:
+                raise ApiError(status_code=_response.status_code, body=_response.text)
+            raise ApiError(status_code=_response.status_code, body=_response_json)

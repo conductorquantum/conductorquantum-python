@@ -2,8 +2,9 @@
 
 import typing
 from ..core.client_wrapper import SyncClientWrapper
+from ..types.models_enum import ModelsEnum
 from ..core.request_options import RequestOptions
-from ..types.model import Model
+from ..types.model_info import ModelInfo
 from ..core.jsonable_encoder import jsonable_encoder
 from ..core.pydantic_utilities import parse_obj_as
 from ..errors.not_found_error import NotFoundError
@@ -11,8 +12,9 @@ from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.http_validation_error import HttpValidationError
 from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
+from ..types.model_info_list_item import ModelInfoListItem
 from .. import core
-from ..types.user import User
+from ..types.model_run_output import ModelRunOutput
 from ..core.client_wrapper import AsyncClientWrapper
 
 # this is used as the default value for optional parameters
@@ -23,26 +25,21 @@ class ModelsClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    def get(self, model_id: int, *, request_options: typing.Optional[RequestOptions] = None) -> Model:
+    def info(self, model: ModelsEnum, *, request_options: typing.Optional[RequestOptions] = None) -> ModelInfo:
         """
-        Get the information for a model.
-
-        Args:
-        model_id: The ID of the model.
-
-        Returns:
-        The model information.
+        Retrieves a model's details.
 
         Parameters
         ----------
-        model_id : int
+        model : ModelsEnum
+            The model to get information for.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        Model
+        ModelInfo
             Successful Response
 
         Examples
@@ -50,23 +47,23 @@ class ModelsClient:
         from conductor_quantum import ConductorQuantum
 
         client = ConductorQuantum(
-            base_url="https://yourhost.com/path/to/api",
+            token="YOUR_TOKEN",
         )
-        client.models.get(
-            model_id=1,
+        client.models.info(
+            model="coulomb-blockade-peak-detector",
         )
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"models/{jsonable_encoder(model_id)}",
+            f"models/{jsonable_encoder(model)}",
             method="GET",
             request_options=request_options,
         )
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    Model,
+                    ModelInfo,
                     parse_obj_as(
-                        type_=Model,  # type: ignore
+                        type_=ModelInfo,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -101,25 +98,24 @@ class ModelsClient:
         skip: typing.Optional[int] = None,
         limit: typing.Optional[int] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.List[Model]:
+    ) -> typing.List[ModelInfoListItem]:
         """
-        Get all models.
-
-        Returns:
-        A list of all models.
+        Retrieves a list of available models.
 
         Parameters
         ----------
         skip : typing.Optional[int]
+            The number of models to skip.
 
         limit : typing.Optional[int]
+            The number of models to include.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        typing.List[Model]
+        typing.List[ModelInfoListItem]
             Successful Response
 
         Examples
@@ -127,7 +123,7 @@ class ModelsClient:
         from conductor_quantum import ConductorQuantum
 
         client = ConductorQuantum(
-            base_url="https://yourhost.com/path/to/api",
+            token="YOUR_TOKEN",
         )
         client.models.list()
         """
@@ -143,9 +139,9 @@ class ModelsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    typing.List[Model],
+                    typing.List[ModelInfoListItem],
                     parse_obj_as(
-                        type_=typing.List[Model],  # type: ignore
+                        type_=typing.List[ModelInfoListItem],  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -174,23 +170,16 @@ class ModelsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def response(
-        self, *, request_info: str, file: core.File, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.Optional[typing.Any]:
+    def execute(
+        self, *, model: ModelsEnum, file: core.File, request_options: typing.Optional[RequestOptions] = None
+    ) -> ModelRunOutput:
         """
-        Endpoint to perform inference on a model.
-
-        Args:
-        request_info: The model request information.
-        processed_file: The processed file containing the data.
-        database: The database session.
-
-        Returns:
-        The model response.
+        Executes a model with the provided data.
 
         Parameters
         ----------
-        request_info : str
+        model : ModelsEnum
+            The model to run.
 
         file : core.File
             See core.File for more documentation
@@ -200,7 +189,7 @@ class ModelsClient:
 
         Returns
         -------
-        typing.Optional[typing.Any]
+        ModelRunOutput
             Successful Response
 
         Examples
@@ -208,17 +197,17 @@ class ModelsClient:
         from conductor_quantum import ConductorQuantum
 
         client = ConductorQuantum(
-            base_url="https://yourhost.com/path/to/api",
+            token="YOUR_TOKEN",
         )
-        client.models.response(
-            request_info="request_info",
+        client.models.execute(
+            model="coulomb-blockade-peak-detector",
         )
         """
         _response = self._client_wrapper.httpx_client.request(
             "models",
             method="POST",
             data={
-                "request_info": request_info,
+                "model": model,
             },
             files={
                 "file": file,
@@ -229,9 +218,9 @@ class ModelsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    typing.Optional[typing.Any],
+                    ModelRunOutput,
                     parse_obj_as(
-                        type_=typing.Optional[typing.Any],  # type: ignore
+                        type_=ModelRunOutput,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -251,306 +240,6 @@ class ModelsClient:
                         HttpValidationError,
                         parse_obj_as(
                             type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    def turn_on_parameter_extractor_plot_input(
-        self, *, request_info: str, file: core.File, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.Optional[typing.Any]:
-        """
-        Endpoint to plot turn-on data from a .npy file.
-
-        Args:
-        data: a tensor of shape (N, 2) containing the data.
-        request_info: The model request information.
-
-        Returns:
-        The plotly figure as a JSON string.
-
-        Parameters
-        ----------
-        request_info : str
-
-        file : core.File
-            See core.File for more documentation
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        typing.Optional[typing.Any]
-            Successful Response
-
-        Examples
-        --------
-        from conductor_quantum import ConductorQuantum
-
-        client = ConductorQuantum(
-            base_url="https://yourhost.com/path/to/api",
-        )
-        client.models.turn_on_parameter_extractor_plot_input(
-            request_info="request_info",
-        )
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            "models/plot-input",
-            method="POST",
-            data={
-                "request_info": request_info,
-            },
-            files={
-                "file": file,
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    typing.Optional[typing.Any],
-                    parse_obj_as(
-                        type_=typing.Optional[typing.Any],  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    typing.cast(
-                        typing.Optional[typing.Any],
-                        parse_obj_as(
-                            type_=typing.Optional[typing.Any],  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    typing.cast(
-                        HttpValidationError,
-                        parse_obj_as(
-                            type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    def create_user(
-        self, *, auth0id: str, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.Optional[User]:
-        """
-        Create a new user in the database
-
-        Args:
-        user: The user data to create
-
-        Returns:
-        The created user
-
-        Parameters
-        ----------
-        auth0id : str
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        typing.Optional[User]
-            Successful Response
-
-        Examples
-        --------
-        from conductor_quantum import ConductorQuantum
-
-        client = ConductorQuantum(
-            base_url="https://yourhost.com/path/to/api",
-        )
-        client.models.create_user(
-            auth0id="auth0_id",
-        )
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            "users",
-            method="POST",
-            json={
-                "auth0_id": auth0id,
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    typing.Optional[User],
-                    parse_obj_as(
-                        type_=typing.Optional[User],  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    typing.cast(
-                        typing.Optional[typing.Any],
-                        parse_obj_as(
-                            type_=typing.Optional[typing.Any],  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    typing.cast(
-                        HttpValidationError,
-                        parse_obj_as(
-                            type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    def get_user_id_from_auth0id(
-        self, *, auth0id: str, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.Optional[int]:
-        """
-        Get the user id from the auth0_id
-
-        Args:
-        auth0_id: The auth0_id of the user
-
-        Returns:
-        The user id
-
-        Parameters
-        ----------
-        auth0id : str
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        typing.Optional[int]
-            Successful Response
-
-        Examples
-        --------
-        from conductor_quantum import ConductorQuantum
-
-        client = ConductorQuantum(
-            base_url="https://yourhost.com/path/to/api",
-        )
-        client.models.get_user_id_from_auth0id(
-            auth0id="auth0_id",
-        )
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            "users/post-login",
-            method="GET",
-            params={
-                "auth0_id": auth0id,
-            },
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    typing.Optional[int],
-                    parse_obj_as(
-                        type_=typing.Optional[int],  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    typing.cast(
-                        typing.Optional[typing.Any],
-                        parse_obj_as(
-                            type_=typing.Optional[typing.Any],  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    typing.cast(
-                        HttpValidationError,
-                        parse_obj_as(
-                            type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    def delete_user(
-        self, *, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.Dict[str, typing.Optional[typing.Any]]:
-        """
-        Delete the user account
-
-        Args:
-        user_id: The ID of the user
-
-        Returns:
-        A message indicating the success of the operation
-
-        Parameters
-        ----------
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        typing.Dict[str, typing.Optional[typing.Any]]
-            Successful Response
-
-        Examples
-        --------
-        from conductor_quantum import ConductorQuantum
-
-        client = ConductorQuantum(
-            base_url="https://yourhost.com/path/to/api",
-        )
-        client.models.delete_user()
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            "users/me",
-            method="DELETE",
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    typing.Dict[str, typing.Optional[typing.Any]],
-                    parse_obj_as(
-                        type_=typing.Dict[str, typing.Optional[typing.Any]],  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    typing.cast(
-                        typing.Optional[typing.Any],
-                        parse_obj_as(
-                            type_=typing.Optional[typing.Any],  # type: ignore
                             object_=_response.json(),
                         ),
                     )
@@ -565,26 +254,21 @@ class AsyncModelsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    async def get(self, model_id: int, *, request_options: typing.Optional[RequestOptions] = None) -> Model:
+    async def info(self, model: ModelsEnum, *, request_options: typing.Optional[RequestOptions] = None) -> ModelInfo:
         """
-        Get the information for a model.
-
-        Args:
-        model_id: The ID of the model.
-
-        Returns:
-        The model information.
+        Retrieves a model's details.
 
         Parameters
         ----------
-        model_id : int
+        model : ModelsEnum
+            The model to get information for.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        Model
+        ModelInfo
             Successful Response
 
         Examples
@@ -594,29 +278,29 @@ class AsyncModelsClient:
         from conductor_quantum import AsyncConductorQuantum
 
         client = AsyncConductorQuantum(
-            base_url="https://yourhost.com/path/to/api",
+            token="YOUR_TOKEN",
         )
 
 
         async def main() -> None:
-            await client.models.get(
-                model_id=1,
+            await client.models.info(
+                model="coulomb-blockade-peak-detector",
             )
 
 
         asyncio.run(main())
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"models/{jsonable_encoder(model_id)}",
+            f"models/{jsonable_encoder(model)}",
             method="GET",
             request_options=request_options,
         )
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    Model,
+                    ModelInfo,
                     parse_obj_as(
-                        type_=Model,  # type: ignore
+                        type_=ModelInfo,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -651,25 +335,24 @@ class AsyncModelsClient:
         skip: typing.Optional[int] = None,
         limit: typing.Optional[int] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.List[Model]:
+    ) -> typing.List[ModelInfoListItem]:
         """
-        Get all models.
-
-        Returns:
-        A list of all models.
+        Retrieves a list of available models.
 
         Parameters
         ----------
         skip : typing.Optional[int]
+            The number of models to skip.
 
         limit : typing.Optional[int]
+            The number of models to include.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        typing.List[Model]
+        typing.List[ModelInfoListItem]
             Successful Response
 
         Examples
@@ -679,7 +362,7 @@ class AsyncModelsClient:
         from conductor_quantum import AsyncConductorQuantum
 
         client = AsyncConductorQuantum(
-            base_url="https://yourhost.com/path/to/api",
+            token="YOUR_TOKEN",
         )
 
 
@@ -701,9 +384,9 @@ class AsyncModelsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    typing.List[Model],
+                    typing.List[ModelInfoListItem],
                     parse_obj_as(
-                        type_=typing.List[Model],  # type: ignore
+                        type_=typing.List[ModelInfoListItem],  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -732,23 +415,16 @@ class AsyncModelsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def response(
-        self, *, request_info: str, file: core.File, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.Optional[typing.Any]:
+    async def execute(
+        self, *, model: ModelsEnum, file: core.File, request_options: typing.Optional[RequestOptions] = None
+    ) -> ModelRunOutput:
         """
-        Endpoint to perform inference on a model.
-
-        Args:
-        request_info: The model request information.
-        processed_file: The processed file containing the data.
-        database: The database session.
-
-        Returns:
-        The model response.
+        Executes a model with the provided data.
 
         Parameters
         ----------
-        request_info : str
+        model : ModelsEnum
+            The model to run.
 
         file : core.File
             See core.File for more documentation
@@ -758,7 +434,7 @@ class AsyncModelsClient:
 
         Returns
         -------
-        typing.Optional[typing.Any]
+        ModelRunOutput
             Successful Response
 
         Examples
@@ -768,13 +444,13 @@ class AsyncModelsClient:
         from conductor_quantum import AsyncConductorQuantum
 
         client = AsyncConductorQuantum(
-            base_url="https://yourhost.com/path/to/api",
+            token="YOUR_TOKEN",
         )
 
 
         async def main() -> None:
-            await client.models.response(
-                request_info="request_info",
+            await client.models.execute(
+                model="coulomb-blockade-peak-detector",
             )
 
 
@@ -784,7 +460,7 @@ class AsyncModelsClient:
             "models",
             method="POST",
             data={
-                "request_info": request_info,
+                "model": model,
             },
             files={
                 "file": file,
@@ -795,9 +471,9 @@ class AsyncModelsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    typing.Optional[typing.Any],
+                    ModelRunOutput,
                     parse_obj_as(
-                        type_=typing.Optional[typing.Any],  # type: ignore
+                        type_=ModelRunOutput,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -817,338 +493,6 @@ class AsyncModelsClient:
                         HttpValidationError,
                         parse_obj_as(
                             type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    async def turn_on_parameter_extractor_plot_input(
-        self, *, request_info: str, file: core.File, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.Optional[typing.Any]:
-        """
-        Endpoint to plot turn-on data from a .npy file.
-
-        Args:
-        data: a tensor of shape (N, 2) containing the data.
-        request_info: The model request information.
-
-        Returns:
-        The plotly figure as a JSON string.
-
-        Parameters
-        ----------
-        request_info : str
-
-        file : core.File
-            See core.File for more documentation
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        typing.Optional[typing.Any]
-            Successful Response
-
-        Examples
-        --------
-        import asyncio
-
-        from conductor_quantum import AsyncConductorQuantum
-
-        client = AsyncConductorQuantum(
-            base_url="https://yourhost.com/path/to/api",
-        )
-
-
-        async def main() -> None:
-            await client.models.turn_on_parameter_extractor_plot_input(
-                request_info="request_info",
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            "models/plot-input",
-            method="POST",
-            data={
-                "request_info": request_info,
-            },
-            files={
-                "file": file,
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    typing.Optional[typing.Any],
-                    parse_obj_as(
-                        type_=typing.Optional[typing.Any],  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    typing.cast(
-                        typing.Optional[typing.Any],
-                        parse_obj_as(
-                            type_=typing.Optional[typing.Any],  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    typing.cast(
-                        HttpValidationError,
-                        parse_obj_as(
-                            type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    async def create_user(
-        self, *, auth0id: str, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.Optional[User]:
-        """
-        Create a new user in the database
-
-        Args:
-        user: The user data to create
-
-        Returns:
-        The created user
-
-        Parameters
-        ----------
-        auth0id : str
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        typing.Optional[User]
-            Successful Response
-
-        Examples
-        --------
-        import asyncio
-
-        from conductor_quantum import AsyncConductorQuantum
-
-        client = AsyncConductorQuantum(
-            base_url="https://yourhost.com/path/to/api",
-        )
-
-
-        async def main() -> None:
-            await client.models.create_user(
-                auth0id="auth0_id",
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            "users",
-            method="POST",
-            json={
-                "auth0_id": auth0id,
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    typing.Optional[User],
-                    parse_obj_as(
-                        type_=typing.Optional[User],  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    typing.cast(
-                        typing.Optional[typing.Any],
-                        parse_obj_as(
-                            type_=typing.Optional[typing.Any],  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    typing.cast(
-                        HttpValidationError,
-                        parse_obj_as(
-                            type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    async def get_user_id_from_auth0id(
-        self, *, auth0id: str, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.Optional[int]:
-        """
-        Get the user id from the auth0_id
-
-        Args:
-        auth0_id: The auth0_id of the user
-
-        Returns:
-        The user id
-
-        Parameters
-        ----------
-        auth0id : str
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        typing.Optional[int]
-            Successful Response
-
-        Examples
-        --------
-        import asyncio
-
-        from conductor_quantum import AsyncConductorQuantum
-
-        client = AsyncConductorQuantum(
-            base_url="https://yourhost.com/path/to/api",
-        )
-
-
-        async def main() -> None:
-            await client.models.get_user_id_from_auth0id(
-                auth0id="auth0_id",
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            "users/post-login",
-            method="GET",
-            params={
-                "auth0_id": auth0id,
-            },
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    typing.Optional[int],
-                    parse_obj_as(
-                        type_=typing.Optional[int],  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    typing.cast(
-                        typing.Optional[typing.Any],
-                        parse_obj_as(
-                            type_=typing.Optional[typing.Any],  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    typing.cast(
-                        HttpValidationError,
-                        parse_obj_as(
-                            type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    async def delete_user(
-        self, *, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.Dict[str, typing.Optional[typing.Any]]:
-        """
-        Delete the user account
-
-        Args:
-        user_id: The ID of the user
-
-        Returns:
-        A message indicating the success of the operation
-
-        Parameters
-        ----------
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        typing.Dict[str, typing.Optional[typing.Any]]
-            Successful Response
-
-        Examples
-        --------
-        import asyncio
-
-        from conductor_quantum import AsyncConductorQuantum
-
-        client = AsyncConductorQuantum(
-            base_url="https://yourhost.com/path/to/api",
-        )
-
-
-        async def main() -> None:
-            await client.models.delete_user()
-
-
-        asyncio.run(main())
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            "users/me",
-            method="DELETE",
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    typing.Dict[str, typing.Optional[typing.Any]],
-                    parse_obj_as(
-                        type_=typing.Dict[str, typing.Optional[typing.Any]],  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    typing.cast(
-                        typing.Optional[typing.Any],
-                        parse_obj_as(
-                            type_=typing.Optional[typing.Any],  # type: ignore
                             object_=_response.json(),
                         ),
                     )
