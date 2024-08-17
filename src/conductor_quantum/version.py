@@ -1,3 +1,3 @@
 from importlib import metadata
 
-__version__ = metadata.version("conductor-quantum")
+__version__ = metadata.version("conductorquantum")

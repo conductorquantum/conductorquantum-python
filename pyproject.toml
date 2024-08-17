@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "conductor-quantum"
-version = "0.0.0"
+name = "conductorquantum"
+version = "0.0.3"
 description = ""
 readme = "README.md"
 authors = []
@@ -28,7 +28,7 @@ packages = [
 ]
 
 [project.urls]
-Repository = 'https://github.com/conductorquantum/python-sdk'
+Repository = 'https://github.com/conductorquantum/conductorquantum-python'
 
 [tool.poetry.dependencies]
 python = "^3.8"
