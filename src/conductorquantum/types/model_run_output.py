@@ -2,8 +2,8 @@
 
 from ..core.pydantic_utilities import UniversalBaseModel
 import pydantic
-from ..core.pydantic_utilities import IS_PYDANTIC_V2
 import typing
+from ..core.pydantic_utilities import IS_PYDANTIC_V2
 
 
 class ModelRunOutput(UniversalBaseModel):
@@ -11,7 +11,12 @@ class ModelRunOutput(UniversalBaseModel):
     Model run output schema.
     """
 
-    output: str = pydantic.Field()
+    id: str = pydantic.Field()
+    """
+    The ID of the associated model result.
+    """
+
+    output: typing.Dict[str, typing.Optional[typing.Any]] = pydantic.Field()
     """
     The output of the model.
     """

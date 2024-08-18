@@ -2,9 +2,9 @@
 
 from ..core.pydantic_utilities import UniversalBaseModel
 import pydantic
+import typing
 import datetime as dt
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
-import typing
 
 
 class ModelResultMasked(UniversalBaseModel):
@@ -20,6 +20,11 @@ class ModelResultMasked(UniversalBaseModel):
     model: str = pydantic.Field()
     """
     The id of the model used.
+    """
+
+    output: typing.Dict[str, typing.Optional[typing.Any]] = pydantic.Field()
+    """
+    The output of the model.
     """
 
     created_at: dt.datetime = pydantic.Field()

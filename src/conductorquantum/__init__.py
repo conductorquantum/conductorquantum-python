@@ -3,7 +3,6 @@
 from .types import (
     HttpValidationError,
     ModelInfo,
-    ModelInfoListItem,
     ModelResultInfo,
     ModelResultMasked,
     ModelRunOutput,
@@ -24,7 +23,6 @@ __all__ = [
     "ForbiddenError",
     "HttpValidationError",
     "ModelInfo",
-    "ModelInfoListItem",
     "ModelResultInfo",
     "ModelResultMasked",
     "ModelRunOutput",

@@ -2,7 +2,6 @@
 
 from .http_validation_error import HttpValidationError
 from .model_info import ModelInfo
-from .model_info_list_item import ModelInfoListItem
 from .model_result_info import ModelResultInfo
 from .model_result_masked import ModelResultMasked
 from .model_run_output import ModelRunOutput
@@ -13,7 +12,6 @@ from .validation_error_loc_item import ValidationErrorLocItem
 __all__ = [
     "HttpValidationError",
     "ModelInfo",
-    "ModelInfoListItem",
     "ModelResultInfo",
     "ModelResultMasked",
     "ModelRunOutput",

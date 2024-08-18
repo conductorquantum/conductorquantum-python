@@ -12,7 +12,6 @@ from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.http_validation_error import HttpValidationError
 from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
-from ..types.model_info_list_item import ModelInfoListItem
 from .. import core
 from ..types.model_run_output import ModelRunOutput
 from ..core.client_wrapper import AsyncClientWrapper
@@ -98,7 +97,7 @@ class ModelsClient:
         skip: typing.Optional[int] = None,
         limit: typing.Optional[int] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.List[ModelInfoListItem]:
+    ) -> typing.List[ModelInfo]:
         """
         Retrieves a list of available models.
 
@@ -115,7 +114,7 @@ class ModelsClient:
 
         Returns
         -------
-        typing.List[ModelInfoListItem]
+        typing.List[ModelInfo]
             Successful Response
 
         Examples
@@ -139,9 +138,9 @@ class ModelsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    typing.List[ModelInfoListItem],
+                    typing.List[ModelInfo],
                     parse_obj_as(
-                        type_=typing.List[ModelInfoListItem],  # type: ignore
+                        type_=typing.List[ModelInfo],  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -335,7 +334,7 @@ class AsyncModelsClient:
         skip: typing.Optional[int] = None,
         limit: typing.Optional[int] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.List[ModelInfoListItem]:
+    ) -> typing.List[ModelInfo]:
         """
         Retrieves a list of available models.
 
@@ -352,7 +351,7 @@ class AsyncModelsClient:
 
         Returns
         -------
-        typing.List[ModelInfoListItem]
+        typing.List[ModelInfo]
             Successful Response
 
         Examples
@@ -384,9 +383,9 @@ class AsyncModelsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    typing.List[ModelInfoListItem],
+                    typing.List[ModelInfo],
                     parse_obj_as(
-                        type_=typing.List[ModelInfoListItem],  # type: ignore
+                        type_=typing.List[ModelInfo],  # type: ignore
                         object_=_response.json(),
                     ),
                 )
