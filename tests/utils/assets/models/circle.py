@@ -4,7 +4,7 @@
 
 import typing_extensions
 
-from conductorquantum.core.serialization import FieldMetadata
+from conductor_quantum.core.serialization import FieldMetadata
 
 
 class CircleParams(typing_extensions.TypedDict):

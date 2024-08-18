@@ -1,9 +1,9 @@
-# Conductor Quantum Python Library
+# ConductorQuantum Python Library
 
 [![fern shield](https://img.shields.io/badge/%F0%9F%8C%BF-SDK%20generated%20by%20Fern-brightgreen)](https://github.com/fern-api/fern)
 [![pypi](https://img.shields.io/pypi/v/conductorquantum)](https://pypi.python.org/pypi/conductorquantum)
 
-The Conductor Quantum Python library provides convenient access to the Conductor Quantum API from Python.
+The ConductorQuantum Python library provides convenient access to the ConductorQuantum API from Python.
 
 ## Installation
 
@@ -16,7 +16,7 @@ pip install conductorquantum
 Instantiate and use the client with the following:
 
 ```python
-from conductorquantum import ConductorQuantum
+from conductor_quantum import ConductorQuantum
 
 client = ConductorQuantum(
     token="YOUR_TOKEN",
@@ -33,7 +33,7 @@ The SDK also exports an `async` client so that you can make non-blocking calls t
 ```python
 import asyncio
 
-from conductorquantum import AsyncConductorQuantum
+from conductor_quantum import AsyncConductorQuantum
 
 client = AsyncConductorQuantum(
     token="YOUR_TOKEN",
@@ -55,7 +55,7 @@ When the API returns a non-success status code (4xx or 5xx response), a subclass
 will be thrown.
 
 ```python
-from conductorquantum.core.api_error import ApiError
+from conductor_quantum.core.api_error import ApiError
 
 try:
     client.models.execute(...)
@@ -92,7 +92,7 @@ The SDK defaults to a 60 second timeout. You can configure this with a timeout o
 
 ```python
 
-from conductorquantum import ConductorQuantum
+from conductor_quantum import ConductorQuantum
 
 client = ConductorQuantum(
     ...,
@@ -112,7 +112,7 @@ You can override the `httpx` client to customize it for your use-case. Some comm
 and transports.
 ```python
 import httpx
-from conductorquantum import ConductorQuantum
+from conductor_quantum import ConductorQuantum
 
 client = ConductorQuantum(
     ...,
