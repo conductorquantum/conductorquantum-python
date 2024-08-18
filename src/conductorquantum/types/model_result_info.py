@@ -2,9 +2,9 @@
 
 from ..core.pydantic_utilities import UniversalBaseModel
 import pydantic
-import typing
 import datetime as dt
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
+import typing
 
 
 class ModelResultInfo(UniversalBaseModel):
@@ -20,11 +20,6 @@ class ModelResultInfo(UniversalBaseModel):
     id: str = pydantic.Field()
     """
     The UUID of the model result.
-    """
-
-    plotly_json: typing.Optional[str] = pydantic.Field(default=None)
-    """
-    The plotly JSON of the model result.
     """
 
     input_file_name: str = pydantic.Field()

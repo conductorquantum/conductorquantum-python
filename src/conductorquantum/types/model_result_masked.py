@@ -19,7 +19,7 @@ class ModelResultMasked(UniversalBaseModel):
 
     model: str = pydantic.Field()
     """
-    The name of the model.
+    The id of the model used.
     """
 
     created_at: dt.datetime = pydantic.Field()

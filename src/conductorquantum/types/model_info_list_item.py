@@ -32,9 +32,9 @@ class ModelInfoListItem(UniversalBaseModel):
     The number of times the model has been run.
     """
 
-    id: int = pydantic.Field()
+    id: str = pydantic.Field()
     """
-    The ID of the model.
+    The model identifier, which can be referenced in the API endpoints.
     """
 
     if IS_PYDANTIC_V2:

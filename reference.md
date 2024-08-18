@@ -239,7 +239,7 @@ core.File` — See core.File for more documentation
 <dl>
 <dd>
 
-Retrieves a list of model results.
+Retrieves a model result.
 </dd>
 </dl>
 </dd>
@@ -259,7 +259,9 @@ from conductorquantum import ConductorQuantum
 client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
-client.results.info()
+client.results.info(
+    id="id",
+)
 
 ```
 </dd>
@@ -275,15 +277,7 @@ client.results.info()
 <dl>
 <dd>
 
-**skip:** `typing.Optional[int]` — The number of model results to skip.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**limit:** `typing.Optional[int]` — The number of model results to include.
+**id:** `str` — The UUID of the model result.
     
 </dd>
 </dl>
@@ -354,6 +348,82 @@ client.results.delete(
 <dd>
 
 **id:** `str` — The UUID of the model result.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.results.<a href="src/conductorquantum/results/client.py">list</a>(...)</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Retrieves a list of model results.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from conductorquantum import ConductorQuantum
+
+client = ConductorQuantum(
+    token="YOUR_TOKEN",
+)
+client.results.list()
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**skip:** `typing.Optional[int]` — The number of model results to skip.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**limit:** `typing.Optional[int]` — The number of model results to include.
     
 </dd>
 </dl>

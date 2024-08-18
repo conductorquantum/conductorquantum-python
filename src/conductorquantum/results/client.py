@@ -3,15 +3,16 @@
 from ..core.client_wrapper import SyncClientWrapper
 import typing
 from ..core.request_options import RequestOptions
-from ..types.model_result_masked import ModelResultMasked
+from ..types.model_result_info import ModelResultInfo
+from ..core.jsonable_encoder import jsonable_encoder
 from ..core.pydantic_utilities import parse_obj_as
 from ..errors.not_found_error import NotFoundError
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.http_validation_error import HttpValidationError
 from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
-from ..core.jsonable_encoder import jsonable_encoder
 from ..errors.forbidden_error import ForbiddenError
+from ..types.model_result_masked import ModelResultMasked
 from ..core.client_wrapper import AsyncClientWrapper
 
 
@@ -19,30 +20,21 @@ class ResultsClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    def info(
-        self,
-        *,
-        skip: typing.Optional[int] = None,
-        limit: typing.Optional[int] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.List[ModelResultMasked]:
+    def info(self, id: str, *, request_options: typing.Optional[RequestOptions] = None) -> ModelResultInfo:
         """
-        Retrieves a list of model results.
+        Retrieves a model result.
 
         Parameters
         ----------
-        skip : typing.Optional[int]
-            The number of model results to skip.
-
-        limit : typing.Optional[int]
-            The number of model results to include.
+        id : str
+            The UUID of the model result.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        typing.List[ModelResultMasked]
+        ModelResultInfo
             Successful Response
 
         Examples
@@ -52,23 +44,21 @@ class ResultsClient:
         client = ConductorQuantum(
             token="YOUR_TOKEN",
         )
-        client.results.info()
+        client.results.info(
+            id="id",
+        )
         """
         _response = self._client_wrapper.httpx_client.request(
-            "model-results",
+            f"model-results/{jsonable_encoder(id)}",
             method="GET",
-            params={
-                "skip": skip,
-                "limit": limit,
-            },
             request_options=request_options,
         )
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    typing.List[ModelResultMasked],
+                    ModelResultInfo,
                     parse_obj_as(
-                        type_=typing.List[ModelResultMasked],  # type: ignore
+                        type_=ModelResultInfo,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -141,6 +131,84 @@ class ResultsClient:
                             object_=_response.json(),
                         ),
                     )
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    typing.cast(
+                        typing.Optional[typing.Any],
+                        parse_obj_as(
+                            type_=typing.Optional[typing.Any],  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    def list(
+        self,
+        *,
+        skip: typing.Optional[int] = None,
+        limit: typing.Optional[int] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> typing.List[ModelResultMasked]:
+        """
+        Retrieves a list of model results.
+
+        Parameters
+        ----------
+        skip : typing.Optional[int]
+            The number of model results to skip.
+
+        limit : typing.Optional[int]
+            The number of model results to include.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        typing.List[ModelResultMasked]
+            Successful Response
+
+        Examples
+        --------
+        from conductorquantum import ConductorQuantum
+
+        client = ConductorQuantum(
+            token="YOUR_TOKEN",
+        )
+        client.results.list()
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "model-results",
+            method="GET",
+            params={
+                "skip": skip,
+                "limit": limit,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    typing.List[ModelResultMasked],
+                    parse_obj_as(
+                        type_=typing.List[ModelResultMasked],  # type: ignore
+                        object_=_response.json(),
+                    ),
                 )
             if _response.status_code == 404:
                 raise NotFoundError(
@@ -246,30 +314,21 @@ class AsyncResultsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    async def info(
-        self,
-        *,
-        skip: typing.Optional[int] = None,
-        limit: typing.Optional[int] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.List[ModelResultMasked]:
+    async def info(self, id: str, *, request_options: typing.Optional[RequestOptions] = None) -> ModelResultInfo:
         """
-        Retrieves a list of model results.
+        Retrieves a model result.
 
         Parameters
         ----------
-        skip : typing.Optional[int]
-            The number of model results to skip.
-
-        limit : typing.Optional[int]
-            The number of model results to include.
+        id : str
+            The UUID of the model result.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        typing.List[ModelResultMasked]
+        ModelResultInfo
             Successful Response
 
         Examples
@@ -284,26 +343,24 @@ class AsyncResultsClient:
 
 
         async def main() -> None:
-            await client.results.info()
+            await client.results.info(
+                id="id",
+            )
 
 
         asyncio.run(main())
         """
         _response = await self._client_wrapper.httpx_client.request(
-            "model-results",
+            f"model-results/{jsonable_encoder(id)}",
             method="GET",
-            params={
-                "skip": skip,
-                "limit": limit,
-            },
             request_options=request_options,
         )
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    typing.List[ModelResultMasked],
+                    ModelResultInfo,
                     parse_obj_as(
-                        type_=typing.List[ModelResultMasked],  # type: ignore
+                        type_=ModelResultInfo,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -384,6 +441,92 @@ class AsyncResultsClient:
                             object_=_response.json(),
                         ),
                     )
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    typing.cast(
+                        typing.Optional[typing.Any],
+                        parse_obj_as(
+                            type_=typing.Optional[typing.Any],  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    async def list(
+        self,
+        *,
+        skip: typing.Optional[int] = None,
+        limit: typing.Optional[int] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> typing.List[ModelResultMasked]:
+        """
+        Retrieves a list of model results.
+
+        Parameters
+        ----------
+        skip : typing.Optional[int]
+            The number of model results to skip.
+
+        limit : typing.Optional[int]
+            The number of model results to include.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        typing.List[ModelResultMasked]
+            Successful Response
+
+        Examples
+        --------
+        import asyncio
+
+        from conductorquantum import AsyncConductorQuantum
+
+        client = AsyncConductorQuantum(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.results.list()
+
+
+        asyncio.run(main())
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "model-results",
+            method="GET",
+            params={
+                "skip": skip,
+                "limit": limit,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                return typing.cast(
+                    typing.List[ModelResultMasked],
+                    parse_obj_as(
+                        type_=typing.List[ModelResultMasked],  # type: ignore
+                        object_=_response.json(),
+                    ),
                 )
             if _response.status_code == 404:
                 raise NotFoundError(
