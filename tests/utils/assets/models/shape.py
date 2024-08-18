@@ -8,7 +8,7 @@ import typing
 
 import typing_extensions
 
-from conductor_quantum.core.serialization import FieldMetadata
+from conductorquantum.core.serialization import FieldMetadata
 
 
 class Base(typing_extensions.TypedDict):
