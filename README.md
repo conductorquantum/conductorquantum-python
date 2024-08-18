@@ -1,9 +1,9 @@
-# ConductorQuantum Python Library
+# Conductor Quantum Python Library
 
 [![fern shield](https://img.shields.io/badge/%F0%9F%8C%BF-SDK%20generated%20by%20Fern-brightgreen)](https://github.com/fern-api/fern)
 [![pypi](https://img.shields.io/pypi/v/conductorquantum)](https://pypi.python.org/pypi/conductorquantum)
 
-The ConductorQuantum Python library provides convenient access to the ConductorQuantum API from Python.
+The Conductor Quantum Python library provides convenient access to the Conductor Quantum API from Python.
 
 ## Installation
 
