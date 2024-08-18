@@ -24,7 +24,7 @@ classifiers = [
     "Typing :: Typed"
 ]
 packages = [
-    { include = "conductor_quantum", from = "src"}
+    { include = "conductorquantum", from = "src"}
 ]
 
 [project.urls]
