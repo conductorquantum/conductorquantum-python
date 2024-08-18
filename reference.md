@@ -260,7 +260,7 @@ client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
 client.results.info(
-    id="id",
+    id="08047949-7263-4557-9122-ab293a49cae5",
 )
 
 ```
@@ -330,7 +330,7 @@ client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
 client.results.delete(
-    id="id",
+    id="08047949-7263-4557-9122-ab293a49cae5",
 )
 
 ```

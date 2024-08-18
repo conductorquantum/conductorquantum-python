@@ -45,7 +45,7 @@ class ResultsClient:
             token="YOUR_TOKEN",
         )
         client.results.info(
-            id="id",
+            id="08047949-7263-4557-9122-ab293a49cae5",
         )
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -111,7 +111,7 @@ class ResultsClient:
             token="YOUR_TOKEN",
         )
         client.results.delete(
-            id="id",
+            id="08047949-7263-4557-9122-ab293a49cae5",
         )
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -344,7 +344,7 @@ class AsyncResultsClient:
 
         async def main() -> None:
             await client.results.info(
-                id="id",
+                id="08047949-7263-4557-9122-ab293a49cae5",
             )
 
 
@@ -418,7 +418,7 @@ class AsyncResultsClient:
 
         async def main() -> None:
             await client.results.delete(
-                id="id",
+                id="08047949-7263-4557-9122-ab293a49cae5",
             )
 
 
