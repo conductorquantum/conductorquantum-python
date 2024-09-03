@@ -20,13 +20,13 @@ class ResultsClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    def info(self, result_id: str, *, request_options: typing.Optional[RequestOptions] = None) -> ModelResultInfo:
+    def info(self, id: str, *, request_options: typing.Optional[RequestOptions] = None) -> ModelResultInfo:
         """
         Retrieves a model result.
 
         Parameters
         ----------
-        result_id : str
+        id : str
             The UUID of the model result.
 
         request_options : typing.Optional[RequestOptions]
@@ -45,11 +45,11 @@ class ResultsClient:
             token="YOUR_TOKEN",
         )
         client.results.info(
-            result_id="08047949-7263-4557-9122-ab293a49cae5",
+            id="08047949-7263-4557-9122-ab293a49cae5",
         )
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"model-results/{jsonable_encoder(result_id)}",
+            f"model-results/{jsonable_encoder(id)}",
             method="GET",
             request_options=request_options,
         )
@@ -97,13 +97,13 @@ class ResultsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def delete(self, result_id: str, *, request_options: typing.Optional[RequestOptions] = None) -> None:
+    def delete(self, id: str, *, request_options: typing.Optional[RequestOptions] = None) -> None:
         """
         Deletes a model result.
 
         Parameters
         ----------
-        result_id : str
+        id : str
             The UUID of the model result.
 
         request_options : typing.Optional[RequestOptions]
@@ -121,11 +121,11 @@ class ResultsClient:
             token="YOUR_TOKEN",
         )
         client.results.delete(
-            result_id="08047949-7263-4557-9122-ab293a49cae5",
+            id="08047949-7263-4557-9122-ab293a49cae5",
         )
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"model-results/{jsonable_encoder(result_id)}",
+            f"model-results/{jsonable_encoder(id)}",
             method="DELETE",
             request_options=request_options,
         )
@@ -245,15 +245,13 @@ class ResultsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def download(
-        self, result_id: str, *, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.Iterator[bytes]:
+    def download(self, id: str, *, request_options: typing.Optional[RequestOptions] = None) -> typing.Iterator[bytes]:
         """
         Downloads a model result as a JSON file zipped with the input file.
 
         Parameters
         ----------
-        result_id : str
+        id : str
             The UUID of the model result.
 
         request_options : typing.Optional[RequestOptions]
@@ -272,11 +270,11 @@ class ResultsClient:
             token="YOUR_TOKEN",
         )
         client.results.download(
-            result_id="string",
+            id="string",
         )
         """
         with self._client_wrapper.httpx_client.stream(
-            f"model-results/{jsonable_encoder(result_id)}/download",
+            f"model-results/{jsonable_encoder(id)}/download",
             method="GET",
             request_options=request_options,
         ) as _response:
@@ -326,13 +324,13 @@ class AsyncResultsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    async def info(self, result_id: str, *, request_options: typing.Optional[RequestOptions] = None) -> ModelResultInfo:
+    async def info(self, id: str, *, request_options: typing.Optional[RequestOptions] = None) -> ModelResultInfo:
         """
         Retrieves a model result.
 
         Parameters
         ----------
-        result_id : str
+        id : str
             The UUID of the model result.
 
         request_options : typing.Optional[RequestOptions]
@@ -356,14 +354,14 @@ class AsyncResultsClient:
 
         async def main() -> None:
             await client.results.info(
-                result_id="08047949-7263-4557-9122-ab293a49cae5",
+                id="08047949-7263-4557-9122-ab293a49cae5",
             )
 
 
         asyncio.run(main())
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"model-results/{jsonable_encoder(result_id)}",
+            f"model-results/{jsonable_encoder(id)}",
             method="GET",
             request_options=request_options,
         )
@@ -411,13 +409,13 @@ class AsyncResultsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def delete(self, result_id: str, *, request_options: typing.Optional[RequestOptions] = None) -> None:
+    async def delete(self, id: str, *, request_options: typing.Optional[RequestOptions] = None) -> None:
         """
         Deletes a model result.
 
         Parameters
         ----------
-        result_id : str
+        id : str
             The UUID of the model result.
 
         request_options : typing.Optional[RequestOptions]
@@ -440,14 +438,14 @@ class AsyncResultsClient:
 
         async def main() -> None:
             await client.results.delete(
-                result_id="08047949-7263-4557-9122-ab293a49cae5",
+                id="08047949-7263-4557-9122-ab293a49cae5",
             )
 
 
         asyncio.run(main())
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"model-results/{jsonable_encoder(result_id)}",
+            f"model-results/{jsonable_encoder(id)}",
             method="DELETE",
             request_options=request_options,
         )
@@ -576,14 +574,14 @@ class AsyncResultsClient:
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
     async def download(
-        self, result_id: str, *, request_options: typing.Optional[RequestOptions] = None
+        self, id: str, *, request_options: typing.Optional[RequestOptions] = None
     ) -> typing.AsyncIterator[bytes]:
         """
         Downloads a model result as a JSON file zipped with the input file.
 
         Parameters
         ----------
-        result_id : str
+        id : str
             The UUID of the model result.
 
         request_options : typing.Optional[RequestOptions]
@@ -607,14 +605,14 @@ class AsyncResultsClient:
 
         async def main() -> None:
             await client.results.download(
-                result_id="string",
+                id="string",
             )
 
 
         asyncio.run(main())
         """
         async with self._client_wrapper.httpx_client.stream(
-            f"model-results/{jsonable_encoder(result_id)}/download",
+            f"model-results/{jsonable_encoder(id)}/download",
             method="GET",
             request_options=request_options,
         ) as _response:

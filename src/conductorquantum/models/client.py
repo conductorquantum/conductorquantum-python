@@ -13,7 +13,7 @@ from ..types.http_validation_error import HttpValidationError
 from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
 from .. import core
-from ..types.model_run_output import ModelRunOutput
+from ..types.model_result_info import ModelResultInfo
 from ..core.client_wrapper import AsyncClientWrapper
 
 # this is used as the default value for optional parameters
@@ -171,7 +171,7 @@ class ModelsClient:
 
     def execute(
         self, *, model: ModelsEnum, file: core.File, request_options: typing.Optional[RequestOptions] = None
-    ) -> ModelRunOutput:
+    ) -> ModelResultInfo:
         """
         Executes a model with the provided data.
 
@@ -188,7 +188,7 @@ class ModelsClient:
 
         Returns
         -------
-        ModelRunOutput
+        ModelResultInfo
             Successful Response
 
         Examples
@@ -217,9 +217,9 @@ class ModelsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    ModelRunOutput,
+                    ModelResultInfo,
                     parse_obj_as(
-                        type_=ModelRunOutput,  # type: ignore
+                        type_=ModelResultInfo,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -416,7 +416,7 @@ class AsyncModelsClient:
 
     async def execute(
         self, *, model: ModelsEnum, file: core.File, request_options: typing.Optional[RequestOptions] = None
-    ) -> ModelRunOutput:
+    ) -> ModelResultInfo:
         """
         Executes a model with the provided data.
 
@@ -433,7 +433,7 @@ class AsyncModelsClient:
 
         Returns
         -------
-        ModelRunOutput
+        ModelResultInfo
             Successful Response
 
         Examples
@@ -470,9 +470,9 @@ class AsyncModelsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    ModelRunOutput,
+                    ModelResultInfo,
                     parse_obj_as(
-                        type_=ModelRunOutput,  # type: ignore
+                        type_=ModelResultInfo,  # type: ignore
                         object_=_response.json(),
                     ),
                 )

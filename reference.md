@@ -260,7 +260,7 @@ client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
 client.results.info(
-    result_id="08047949-7263-4557-9122-ab293a49cae5",
+    id="08047949-7263-4557-9122-ab293a49cae5",
 )
 
 ```
@@ -277,7 +277,7 @@ client.results.info(
 <dl>
 <dd>
 
-**result_id:** `str` — The UUID of the model result.
+**id:** `str` — The UUID of the model result.
     
 </dd>
 </dl>
@@ -330,7 +330,7 @@ client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
 client.results.delete(
-    result_id="08047949-7263-4557-9122-ab293a49cae5",
+    id="08047949-7263-4557-9122-ab293a49cae5",
 )
 
 ```
@@ -347,7 +347,7 @@ client.results.delete(
 <dl>
 <dd>
 
-**result_id:** `str` — The UUID of the model result.
+**id:** `str` — The UUID of the model result.
     
 </dd>
 </dl>
@@ -476,7 +476,7 @@ client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
 client.results.download(
-    result_id="string",
+    id="string",
 )
 
 ```
@@ -493,7 +493,7 @@ client.results.download(
 <dl>
 <dd>
 
-**result_id:** `str` — The UUID of the model result.
+**id:** `str` — The UUID of the model result.
     
 </dd>
 </dl>

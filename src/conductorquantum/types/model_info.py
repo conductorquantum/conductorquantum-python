@@ -12,6 +12,11 @@ class ModelInfo(UniversalBaseModel):
     Model information schema.
     """
 
+    id: str = pydantic.Field()
+    """
+    The ID of the model.
+    """
+
     name: str = pydantic.Field()
     """
     The name of the model.
@@ -30,6 +35,11 @@ class ModelInfo(UniversalBaseModel):
     number_of_runs: int = pydantic.Field()
     """
     The number of times the model has been run.
+    """
+
+    input_file_requirements: str = pydantic.Field()
+    """
+    The input file requirements for the model.
     """
 
     if IS_PYDANTIC_V2:
