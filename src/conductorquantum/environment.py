@@ -4,4 +4,4 @@ import enum
 
 
 class ConductorQuantumEnvironment(enum.Enum):
-    DEFAULT = "http://api.conductorquantum.com"
+    DEFAULT = "http://api.conductorquantum.com/v0"
