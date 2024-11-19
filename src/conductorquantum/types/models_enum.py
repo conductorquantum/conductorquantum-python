@@ -10,6 +10,8 @@ ModelsEnum = typing.Union[
         "turn-on-parameter-extractor",
         "pinch-off-classifier",
         "pinch-off-parameter-extractor",
+        "charge-stability-diagram-segmenter",
+        "charge-stability-diagram-classifier",
     ],
     typing.Any,
 ]
