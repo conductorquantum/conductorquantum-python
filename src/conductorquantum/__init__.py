@@ -11,14 +11,14 @@ from .types import (
 )
 from .errors import ForbiddenError, NotFoundError, UnprocessableEntityError
 from . import models, results
-from .client import AsyncConductorQuantum, ConductorQuantum
-from .environment import ConductorQuantumEnvironment
+from .client import AsyncClient, Client
+from .environment import ClientEnvironment
 from .version import __version__
 
 __all__ = [
-    "AsyncConductorQuantum",
-    "ConductorQuantum",
-    "ConductorQuantumEnvironment",
+    "AsyncClient",
+    "Client",
+    "ClientEnvironment",
     "ForbiddenError",
     "HttpValidationError",
     "ModelInfo",

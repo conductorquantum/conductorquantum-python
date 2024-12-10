@@ -27,9 +27,9 @@ Retrieves a model's details.
 <dd>
 
 ```python
-from conductorquantum import ConductorQuantum
+from conductorquantum import Client
 
-client = ConductorQuantum(
+client = Client(
     token="YOUR_TOKEN",
 )
 client.models.info(
@@ -97,9 +97,9 @@ Retrieves a list of available models.
 <dd>
 
 ```python
-from conductorquantum import ConductorQuantum
+from conductorquantum import Client
 
-client = ConductorQuantum(
+client = Client(
     token="YOUR_TOKEN",
 )
 client.models.list()
@@ -173,9 +173,9 @@ Executes a model with the provided data.
 <dd>
 
 ```python
-from conductorquantum import ConductorQuantum
+from conductorquantum import Client
 
-client = ConductorQuantum(
+client = Client(
     token="YOUR_TOKEN",
 )
 client.models.execute(
@@ -254,9 +254,9 @@ Retrieves a model result.
 <dd>
 
 ```python
-from conductorquantum import ConductorQuantum
+from conductorquantum import Client
 
-client = ConductorQuantum(
+client = Client(
     token="YOUR_TOKEN",
 )
 client.results.info(
@@ -324,9 +324,9 @@ Deletes a model result.
 <dd>
 
 ```python
-from conductorquantum import ConductorQuantum
+from conductorquantum import Client
 
-client = ConductorQuantum(
+client = Client(
     token="YOUR_TOKEN",
 )
 client.results.delete(
@@ -394,9 +394,9 @@ Retrieves a list of model results.
 <dd>
 
 ```python
-from conductorquantum import ConductorQuantum
+from conductorquantum import Client
 
-client = ConductorQuantum(
+client = Client(
     token="YOUR_TOKEN",
 )
 client.results.list()
@@ -470,9 +470,9 @@ Downloads a model result as a JSON file zipped with the input file.
 <dd>
 
 ```python
-from conductorquantum import ConductorQuantum
+from conductorquantum import Client
 
-client = ConductorQuantum(
+client = Client(
     token="YOUR_TOKEN",
 )
 client.results.download(
