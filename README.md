@@ -16,9 +16,9 @@ pip install conductorquantum
 Instantiate and use the client with the following:
 
 ```python
-from conductorquantum import Client
+from conductor_quantum import ConductorQuantum
 
-client = Client(
+client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
 client.models.execute(
@@ -33,9 +33,9 @@ The SDK also exports an `async` client so that you can make non-blocking calls t
 ```python
 import asyncio
 
-from conductorquantum import AsyncClient
+from conductor_quantum import AsyncConductorQuantum
 
-client = AsyncClient(
+client = AsyncConductorQuantum(
     token="YOUR_TOKEN",
 )
 
@@ -55,7 +55,7 @@ When the API returns a non-success status code (4xx or 5xx response), a subclass
 will be thrown.
 
 ```python
-from conductorquantum.core.api_error import ApiError
+from conductor_quantum.core.api_error import ApiError
 
 try:
     client.models.execute(...)
@@ -92,9 +92,9 @@ The SDK defaults to a 60 second timeout. You can configure this with a timeout o
 
 ```python
 
-from conductorquantum import Client
+from conductor_quantum import ConductorQuantum
 
-client = Client(
+client = ConductorQuantum(
     ...,
     timeout=20.0,
 )
@@ -112,9 +112,9 @@ You can override the `httpx` client to customize it for your use-case. Some comm
 and transports.
 ```python
 import httpx
-from conductorquantum import Client
+from conductor_quantum import ConductorQuantum
 
-client = Client(
+client = ConductorQuantum(
     ...,
     httpx_client=httpx.Client(
         proxies="http://my.test.proxy.example.com",

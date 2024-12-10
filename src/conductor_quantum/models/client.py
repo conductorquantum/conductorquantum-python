@@ -43,9 +43,9 @@ class ModelsClient:
 
         Examples
         --------
-        from conductorquantum import Client
+        from conductor_quantum import ConductorQuantum
 
-        client = Client(
+        client = ConductorQuantum(
             token="YOUR_TOKEN",
         )
         client.models.info(
@@ -119,9 +119,9 @@ class ModelsClient:
 
         Examples
         --------
-        from conductorquantum import Client
+        from conductor_quantum import ConductorQuantum
 
-        client = Client(
+        client = ConductorQuantum(
             token="YOUR_TOKEN",
         )
         client.models.list()
@@ -193,9 +193,9 @@ class ModelsClient:
 
         Examples
         --------
-        from conductorquantum import Client
+        from conductor_quantum import ConductorQuantum
 
-        client = Client(
+        client = ConductorQuantum(
             token="YOUR_TOKEN",
         )
         client.models.execute(
@@ -274,9 +274,9 @@ class AsyncModelsClient:
         --------
         import asyncio
 
-        from conductorquantum import AsyncClient
+        from conductor_quantum import AsyncConductorQuantum
 
-        client = AsyncClient(
+        client = AsyncConductorQuantum(
             token="YOUR_TOKEN",
         )
 
@@ -358,9 +358,9 @@ class AsyncModelsClient:
         --------
         import asyncio
 
-        from conductorquantum import AsyncClient
+        from conductor_quantum import AsyncConductorQuantum
 
-        client = AsyncClient(
+        client = AsyncConductorQuantum(
             token="YOUR_TOKEN",
         )
 
@@ -440,9 +440,9 @@ class AsyncModelsClient:
         --------
         import asyncio
 
-        from conductorquantum import AsyncClient
+        from conductor_quantum import AsyncConductorQuantum
 
-        client = AsyncClient(
+        client = AsyncConductorQuantum(
             token="YOUR_TOKEN",
         )
 

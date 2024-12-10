@@ -39,9 +39,9 @@ class ResultsClient:
 
         Examples
         --------
-        from conductorquantum import Client
+        from conductor_quantum import ConductorQuantum
 
-        client = Client(
+        client = ConductorQuantum(
             token="YOUR_TOKEN",
         )
         client.results.info(
@@ -115,9 +115,9 @@ class ResultsClient:
 
         Examples
         --------
-        from conductorquantum import Client
+        from conductor_quantum import ConductorQuantum
 
-        client = Client(
+        client = ConductorQuantum(
             token="YOUR_TOKEN",
         )
         client.results.delete(
@@ -195,9 +195,9 @@ class ResultsClient:
 
         Examples
         --------
-        from conductorquantum import Client
+        from conductor_quantum import ConductorQuantum
 
-        client = Client(
+        client = ConductorQuantum(
             token="YOUR_TOKEN",
         )
         client.results.list()
@@ -264,9 +264,9 @@ class ResultsClient:
 
         Examples
         --------
-        from conductorquantum import Client
+        from conductor_quantum import ConductorQuantum
 
-        client = Client(
+        client = ConductorQuantum(
             token="YOUR_TOKEN",
         )
         client.results.download(
@@ -345,9 +345,9 @@ class AsyncResultsClient:
         --------
         import asyncio
 
-        from conductorquantum import AsyncClient
+        from conductor_quantum import AsyncConductorQuantum
 
-        client = AsyncClient(
+        client = AsyncConductorQuantum(
             token="YOUR_TOKEN",
         )
 
@@ -429,9 +429,9 @@ class AsyncResultsClient:
         --------
         import asyncio
 
-        from conductorquantum import AsyncClient
+        from conductor_quantum import AsyncConductorQuantum
 
-        client = AsyncClient(
+        client = AsyncConductorQuantum(
             token="YOUR_TOKEN",
         )
 
@@ -517,9 +517,9 @@ class AsyncResultsClient:
         --------
         import asyncio
 
-        from conductorquantum import AsyncClient
+        from conductor_quantum import AsyncConductorQuantum
 
-        client = AsyncClient(
+        client = AsyncConductorQuantum(
             token="YOUR_TOKEN",
         )
 
@@ -596,9 +596,9 @@ class AsyncResultsClient:
         --------
         import asyncio
 
-        from conductorquantum import AsyncClient
+        from conductor_quantum import AsyncConductorQuantum
 
-        client = AsyncClient(
+        client = AsyncConductorQuantum(
             token="YOUR_TOKEN",
         )
 
