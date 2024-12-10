@@ -146,7 +146,7 @@ client.models.list()
 </dl>
 </details>
 
-<details><summary><code>client.models.<a href="src/conductor_quantum/models/client.py">execute</a>(...)</code></summary>
+<details><summary><code>client.models.<a href="src/conductor_quantum/models/client.py">execute_with_file</a>(...)</code></summary>
 <dl>
 <dd>
 
@@ -178,7 +178,7 @@ from conductor_quantum import ConductorQuantum
 client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
-client.models.execute(
+client.models.execute_with_file(
     model="coulomb-blockade-peak-detector",
 )
 
@@ -424,76 +424,6 @@ client.results.list()
 <dd>
 
 **limit:** `typing.Optional[int]` — The number of model results to include.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.results.<a href="src/conductor_quantum/results/client.py">download</a>(...)</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Downloads a model result as a JSON file zipped with the input file.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from conductor_quantum import ConductorQuantum
-
-client = ConductorQuantum(
-    token="YOUR_TOKEN",
-)
-client.results.download(
-    id="string",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**id:** `str` — The UUID of the model result.
     
 </dd>
 </dl>

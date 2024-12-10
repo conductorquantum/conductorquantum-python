@@ -169,7 +169,7 @@ class ModelsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def execute(
+    def execute_with_file(
         self, *, model: ModelsEnum, file: core.File, request_options: typing.Optional[RequestOptions] = None
     ) -> ModelResultInfo:
         """
@@ -198,7 +198,7 @@ class ModelsClient:
         client = ConductorQuantum(
             token="YOUR_TOKEN",
         )
-        client.models.execute(
+        client.models.execute_with_file(
             model="coulomb-blockade-peak-detector",
         )
         """
@@ -414,7 +414,7 @@ class AsyncModelsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def execute(
+    async def execute_with_file(
         self, *, model: ModelsEnum, file: core.File, request_options: typing.Optional[RequestOptions] = None
     ) -> ModelResultInfo:
         """
@@ -448,7 +448,7 @@ class AsyncModelsClient:
 
 
         async def main() -> None:
-            await client.models.execute(
+            await client.models.execute_with_file(
                 model="coulomb-blockade-peak-detector",
             )
 

@@ -261,17 +261,6 @@ class ResultsClient:
         ------
         typing.Iterator[bytes]
             A zip file containing the model result as JSON and the input file.
-
-        Examples
-        --------
-        from conductor_quantum import ConductorQuantum
-
-        client = ConductorQuantum(
-            token="YOUR_TOKEN",
-        )
-        client.results.download(
-            id="string",
-        )
         """
         with self._client_wrapper.httpx_client.stream(
             f"model-results/{jsonable_encoder(id)}/download",
@@ -591,25 +580,6 @@ class AsyncResultsClient:
         ------
         typing.AsyncIterator[bytes]
             A zip file containing the model result as JSON and the input file.
-
-        Examples
-        --------
-        import asyncio
-
-        from conductor_quantum import AsyncConductorQuantum
-
-        client = AsyncConductorQuantum(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.results.download(
-                id="string",
-            )
-
-
-        asyncio.run(main())
         """
         async with self._client_wrapper.httpx_client.stream(
             f"model-results/{jsonable_encoder(id)}/download",
