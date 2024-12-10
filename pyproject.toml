@@ -31,11 +31,13 @@ packages = [
 Repository = 'https://github.com/conductorquantum/conductorquantum-python'
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = ">=3.10,<4.0"
 httpx = ">=0.21.2"
 pydantic = ">= 1.9.2"
 pydantic-core = "^2.18.2"
 typing_extensions = ">= 4.0.0"
+numpy = "^2.2.0"
+torch = "^2.5.1"
 
 [tool.poetry.dev-dependencies]
 mypy = "1.0.1"
