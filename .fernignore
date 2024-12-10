@@ -1,5 +1,6 @@
 # Specify files that shouldn't be modified by Fern
 src/conductor_quantum/client.py
+src/conductor_quantum/models/extended_client.py
 
 # remove these once bug fixed that stops you from setting python version >3.10
 pyproject.toml
