@@ -1,2 +1,3 @@
 # Specify files that shouldn't be modified by Fern
 src/conductor_quantum/client.py
+pyproject.toml
