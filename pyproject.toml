@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "conductorquantum"
-version = "0.0.17"
+version = "0.0.18"
 description = ""
 readme = "README.md"
 authors = []
@@ -31,7 +31,7 @@ packages = [
 Repository = 'https://github.com/conductorquantum/conductorquantum-python'
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.8.1"
 httpx = ">=0.21.2"
 pydantic = ">= 1.9.2"
 pydantic-core = "^2.18.2"
