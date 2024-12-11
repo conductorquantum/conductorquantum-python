@@ -146,7 +146,7 @@ client.models.list()
 </dl>
 </details>
 
-<details><summary><code>client.models.<a href="src/conductor_quantum/models/client.py">execute_with_file</a>(...)</code></summary>
+<details><summary><code>client.models.<a href="src/conductor_quantum/models/client.py">execute</a>(...)</code></summary>
 <dl>
 <dd>
 
@@ -178,7 +178,7 @@ from conductor_quantum import ConductorQuantum
 client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
-client.models.execute_with_file(
+client.models.execute(
     model="coulomb-blockade-peak-detector",
 )
 
