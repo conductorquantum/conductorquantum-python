@@ -5,4 +5,5 @@ mypy.ini
 
 # remove these once bug fixed that stops you from setting python version >3.10
 pyproject.toml
+poetry.lock
 .github/workflows/ci.yml
