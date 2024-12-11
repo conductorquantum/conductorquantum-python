@@ -213,6 +213,10 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
             If the request is invalid.
         ApiError
             If there is an error processing the request.
+      Examples
+        --------
+        Testing...
+
         """
         file_obj = self._convert_to_file(data)
         _response = await self._client_wrapper.httpx_client.request(
