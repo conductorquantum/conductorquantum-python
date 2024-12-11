@@ -11,6 +11,10 @@ The ConductorQuantum Python library provides convenient access to the ConductorQ
 pip install conductorquantum
 ```
 
+## Reference
+
+A full reference for this library is available [here](./reference.md).
+
 ## Usage
 
 Instantiate and use the client with the following:
@@ -81,7 +85,7 @@ A request is deemed retriable when any of the following HTTP status codes is ret
 Use the `max_retries` request option to configure this behavior.
 
 ```python
-client.models.execute_with_file(..., {
+client.models.execute_with_file(..., request_options={
     "max_retries": 1
 })
 ```
@@ -101,7 +105,7 @@ client = ConductorQuantum(
 
 
 # Override timeout for a specific method
-client.models.execute_with_file(..., {
+client.models.execute_with_file(..., request_options={
     "timeout_in_seconds": 1
 })
 ```
