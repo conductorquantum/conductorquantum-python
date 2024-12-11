@@ -11,7 +11,7 @@ from .models.client import AsyncModelsClient
 from .results.client import AsyncResultsClient
 
 
-class ConductorQuantum:
+class BaseConductorQuantum:
     """
     Use this class to access the different functions within the SDK. You can instantiate any number of clients with different configuration that will propagate to these functions.
 
@@ -73,7 +73,7 @@ class ConductorQuantum:
         self.results = ResultsClient(client_wrapper=self._client_wrapper)
 
 
-class AsyncConductorQuantum:
+class AsyncBaseConductorQuantum:
     """
     Use this class to access the different functions within the SDK. You can instantiate any number of clients with different configuration that will propagate to these functions.
 

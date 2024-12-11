@@ -13,7 +13,7 @@ from ..types.http_validation_error import HttpValidationError
 from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
 from .. import core
-from .types.models_execute_response import ModelsExecuteResponse
+from .types.models_execute_with_file_response import ModelsExecuteWithFileResponse
 from ..core.client_wrapper import AsyncClientWrapper
 
 # this is used as the default value for optional parameters
@@ -169,7 +169,7 @@ class ModelsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def execute(
+    def execute_with_file(
         self,
         *,
         model: ModelsEnum,
@@ -177,7 +177,7 @@ class ModelsClient:
         plot: typing.Optional[bool] = OMIT,
         dark_mode: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> ModelsExecuteResponse:
+    ) -> ModelsExecuteWithFileResponse:
         """
         Executes a model with the provided data.
 
@@ -200,7 +200,7 @@ class ModelsClient:
 
         Returns
         -------
-        ModelsExecuteResponse
+        ModelsExecuteWithFileResponse
             Successful Response
 
         Examples
@@ -210,7 +210,7 @@ class ModelsClient:
         client = ConductorQuantum(
             token="YOUR_TOKEN",
         )
-        client.models.execute(
+        client.models.execute_with_file(
             model="coulomb-blockade-peak-detector",
         )
         """
@@ -231,9 +231,9 @@ class ModelsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    ModelsExecuteResponse,
+                    ModelsExecuteWithFileResponse,
                     parse_obj_as(
-                        type_=ModelsExecuteResponse,  # type: ignore
+                        type_=ModelsExecuteWithFileResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -428,7 +428,7 @@ class AsyncModelsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def execute(
+    async def execute_with_file(
         self,
         *,
         model: ModelsEnum,
@@ -436,7 +436,7 @@ class AsyncModelsClient:
         plot: typing.Optional[bool] = OMIT,
         dark_mode: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> ModelsExecuteResponse:
+    ) -> ModelsExecuteWithFileResponse:
         """
         Executes a model with the provided data.
 
@@ -459,7 +459,7 @@ class AsyncModelsClient:
 
         Returns
         -------
-        ModelsExecuteResponse
+        ModelsExecuteWithFileResponse
             Successful Response
 
         Examples
@@ -474,7 +474,7 @@ class AsyncModelsClient:
 
 
         async def main() -> None:
-            await client.models.execute(
+            await client.models.execute_with_file(
                 model="coulomb-blockade-peak-detector",
             )
 
@@ -498,9 +498,9 @@ class AsyncModelsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    ModelsExecuteResponse,
+                    ModelsExecuteWithFileResponse,
                     parse_obj_as(
-                        type_=ModelsExecuteResponse,  # type: ignore
+                        type_=ModelsExecuteWithFileResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
