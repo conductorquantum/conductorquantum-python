@@ -3,6 +3,7 @@
 from .http_validation_error import HttpValidationError
 from .model_info import ModelInfo
 from .model_result_info import ModelResultInfo
+from .model_result_info_with_plot import ModelResultInfoWithPlot
 from .model_result_masked import ModelResultMasked
 from .models_enum import ModelsEnum
 from .validation_error import ValidationError
@@ -12,6 +13,7 @@ __all__ = [
     "HttpValidationError",
     "ModelInfo",
     "ModelResultInfo",
+    "ModelResultInfoWithPlot",
     "ModelResultMasked",
     "ModelsEnum",
     "ValidationError",
