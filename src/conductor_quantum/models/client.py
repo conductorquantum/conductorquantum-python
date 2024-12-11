@@ -198,9 +198,12 @@ class ModelsClient:
         client = ConductorQuantum(
             token="YOUR_TOKEN",
         )
-        client.models.execute(
-            model="coulomb-blockade-peak-detector",
-        )
+     
+        with open("path/to/file.npy", "rb") as f:
+            client.models.execute(
+                model="coulomb-blockade-peak-detector",
+                file=f,
+            )
         """
         _response = self._client_wrapper.httpx_client.request(
             "models",

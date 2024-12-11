@@ -60,7 +60,7 @@ class ExtendedModelsClient(ModelsClient):
                     file_handle.close()
         return data
 
-    def execute(
+    def run(
         self, *, model: ModelsEnum, data: typing.Union[File, np.ndarray, torch.Tensor], request_options: typing.Optional[RequestOptions] = None
     ) -> ModelResultInfo:
         """
@@ -180,7 +180,7 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
                     file_handle.close()
         return data
 
-    async def execute(
+    async def run(
         self, *, model: ModelsEnum, data: typing.Union[File, np.ndarray, torch.Tensor], request_options: typing.Optional[RequestOptions] = None
     ) -> ModelResultInfo:
         """
