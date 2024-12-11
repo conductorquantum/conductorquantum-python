@@ -20,14 +20,17 @@ A full reference for this library is available [here](./reference.md).
 Instantiate and use the client with the following:
 
 ```python
-from conductor_quantum import ConductorQuantum
+from conductorquantum import ConductorQuantum
 
 client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
-client.models.execute_with_file(
-    model="coulomb-blockade-peak-detector",
-)
+
+with open("path/to/file.npy", "rb") as f:
+    client.models.execute(
+        model="coulomb-blockade-peak-detector",
+        file=f,
+    )
 ```
 
 ## Async Client
@@ -37,7 +40,7 @@ The SDK also exports an `async` client so that you can make non-blocking calls t
 ```python
 import asyncio
 
-from conductor_quantum import AsyncConductorQuantum
+from conductorquantum import AsyncConductorQuantum
 
 client = AsyncConductorQuantum(
     token="YOUR_TOKEN",
@@ -45,9 +48,11 @@ client = AsyncConductorQuantum(
 
 
 async def main() -> None:
-    await client.models.execute_with_file(
-        model="coulomb-blockade-peak-detector",
-    )
+    with open("path/to/file.npy", "rb") as f:
+        await client.models.execute(
+            model="coulomb-blockade-peak-detector",
+            file=f,
+        )
 
 
 asyncio.run(main())
@@ -59,7 +64,7 @@ When the API returns a non-success status code (4xx or 5xx response), a subclass
 will be thrown.
 
 ```python
-from conductor_quantum.core.api_error import ApiError
+from conductorquantum.core.api_error import ApiError
 
 try:
     client.models.execute_with_file(...)
@@ -96,7 +101,7 @@ The SDK defaults to a 60 second timeout. You can configure this with a timeout o
 
 ```python
 
-from conductor_quantum import ConductorQuantum
+from conductorquantum import ConductorQuantum
 
 client = ConductorQuantum(
     ...,
@@ -116,7 +121,7 @@ You can override the `httpx` client to customize it for your use-case. Some comm
 and transports.
 ```python
 import httpx
-from conductor_quantum import ConductorQuantum
+from conductorquantum import ConductorQuantum
 
 client = ConductorQuantum(
     ...,
