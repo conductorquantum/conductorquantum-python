@@ -61,45 +61,23 @@ class ExtendedModelsClient(ModelsClient):
         return data
 
     def execute(
-        self, *, model: ModelsEnum, data: typing.Union[File, np.ndarray, torch.Tensor], request_options: typing.Optional[RequestOptions] = None
+        self,
+        *,
+        model: ModelsEnum,
+        file: typing.Union[File, np.ndarray, torch.Tensor],
+        plot: typing.Optional[bool] = OMIT,
+        dark_mode: typing.Optional[bool] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> ModelResultInfo:
-        """
-        Executes a model with the provided data.
-
-        Parameters
-        ----------
-        model : ModelsEnum
-            The model to run.
-
-        data : Union[File, np.ndarray, torch.Tensor]
-            The input data. Can be:
-            - File: A file object (used as-is)
-            - np.ndarray: A numpy array (automatically converted to .npy file)
-            - torch.Tensor: A PyTorch tensor (converted to numpy then .npy file)
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        ModelResultInfo
-            Successful Response
-
-        Raises
-        ------
-        NotFoundError
-            If the model is not found.
-        UnprocessableEntityError
-            If the request is invalid.
-        ApiError
-            If there is an error processing the request.
-        """
-        file_obj = self._convert_to_file(data)
+        """Execute a model with the provided data."""
+        file_obj = self._convert_to_file(file)
         _response = self._client_wrapper.httpx_client.request(
             "models",
             method="POST",
             data={
                 "model": model,
+                "plot": plot,
+                "dark_mode": dark_mode,
             },
             files={
                 "file": file_obj,
