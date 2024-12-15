@@ -146,7 +146,7 @@ client.models.list()
 </dl>
 </details>
 
-<details><summary><code>client.models.<a href="src/conductorquantum/models/client.py">execute</a>(...)</code></summary>
+<details><summary><code>client.models.<a href="src/conductorquantum/models/client.py">execute_with_file</a>(...)</code></summary>
 <dl>
 <dd>
 
@@ -178,7 +178,7 @@ from conductorquantum import ConductorQuantum
 client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
-client.models.execute(
+client.models.execute_with_file(
     model="coulomb-blockade-peak-detector",
 )
 
@@ -530,7 +530,7 @@ client.model_results.download(
 </details>
 
 ## Simulators
-<details><summary><code>client.simulators.<a href="src/conductorquantum/simulators/client.py">retrieve_simulator</a>()</code></summary>
+<details><summary><code>client.simulators.<a href="src/conductorquantum/simulators/client.py">info</a>()</code></summary>
 <dl>
 <dd>
 
@@ -562,7 +562,7 @@ from conductorquantum import ConductorQuantum
 client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
-client.simulators.retrieve_simulator()
+client.simulators.info()
 
 ```
 </dd>
@@ -590,7 +590,7 @@ client.simulators.retrieve_simulator()
 </dl>
 </details>
 
-<details><summary><code>client.simulators.<a href="src/conductorquantum/simulators/client.py">list_simulators</a>()</code></summary>
+<details><summary><code>client.simulators.<a href="src/conductorquantum/simulators/client.py">list</a>()</code></summary>
 <dl>
 <dd>
 
@@ -622,7 +622,7 @@ from conductorquantum import ConductorQuantum
 client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
-client.simulators.list_simulators()
+client.simulators.list()
 
 ```
 </dd>
@@ -650,7 +650,7 @@ client.simulators.list_simulators()
 </dl>
 </details>
 
-<details><summary><code>client.simulators.<a href="src/conductorquantum/simulators/client.py">execute_simulator</a>(...)</code></summary>
+<details><summary><code>client.simulators.<a href="src/conductorquantum/simulators/client.py">execute</a>(...)</code></summary>
 <dl>
 <dd>
 
@@ -685,7 +685,7 @@ from conductorquantum import (
 client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
-client.simulators.execute_simulator(
+client.simulators.execute(
     options=QuantumDotArraySimulationExecutionRequest(
         c_dot_dot=[[1.1]],
         c_gate_dot=[[1.1]],
@@ -743,7 +743,7 @@ client.simulators.execute_simulator(
 </details>
 
 ## SimulatorResults
-<details><summary><code>client.simulator_results.<a href="src/conductorquantum/simulator_results/client.py">retrieve_simulator_result</a>(...)</code></summary>
+<details><summary><code>client.simulator_results.<a href="src/conductorquantum/simulator_results/client.py">info</a>(...)</code></summary>
 <dl>
 <dd>
 
@@ -775,8 +775,8 @@ from conductorquantum import ConductorQuantum
 client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
-client.simulator_results.retrieve_simulator_result(
-    result_id="08047949-7263-4557-9122-ab293a49cae5",
+client.simulator_results.info(
+    id="08047949-7263-4557-9122-ab293a49cae5",
 )
 
 ```
@@ -793,7 +793,7 @@ client.simulator_results.retrieve_simulator_result(
 <dl>
 <dd>
 
-**result_id:** `str` — The UUID of the simulator result.
+**id:** `str` — The UUID of the simulator result.
     
 </dd>
 </dl>
@@ -813,7 +813,7 @@ client.simulator_results.retrieve_simulator_result(
 </dl>
 </details>
 
-<details><summary><code>client.simulator_results.<a href="src/conductorquantum/simulator_results/client.py">delete_simulator_result</a>(...)</code></summary>
+<details><summary><code>client.simulator_results.<a href="src/conductorquantum/simulator_results/client.py">delete</a>(...)</code></summary>
 <dl>
 <dd>
 
@@ -845,8 +845,8 @@ from conductorquantum import ConductorQuantum
 client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
-client.simulator_results.delete_simulator_result(
-    result_id="08047949-7263-4557-9122-ab293a49cae5",
+client.simulator_results.delete(
+    id="08047949-7263-4557-9122-ab293a49cae5",
 )
 
 ```
@@ -863,7 +863,7 @@ client.simulator_results.delete_simulator_result(
 <dl>
 <dd>
 
-**result_id:** `str` — The UUID of the simulator result.
+**id:** `str` — The UUID of the simulator result.
     
 </dd>
 </dl>
@@ -883,7 +883,7 @@ client.simulator_results.delete_simulator_result(
 </dl>
 </details>
 
-<details><summary><code>client.simulator_results.<a href="src/conductorquantum/simulator_results/client.py">list_simulators_results</a>(...)</code></summary>
+<details><summary><code>client.simulator_results.<a href="src/conductorquantum/simulator_results/client.py">list</a>(...)</code></summary>
 <dl>
 <dd>
 
@@ -915,7 +915,7 @@ from conductorquantum import ConductorQuantum
 client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
-client.simulator_results.list_simulators_results()
+client.simulator_results.list()
 
 ```
 </dd>
@@ -959,7 +959,7 @@ client.simulator_results.list_simulators_results()
 </dl>
 </details>
 
-<details><summary><code>client.simulator_results.<a href="src/conductorquantum/simulator_results/client.py">download_simulator_result</a>(...)</code></summary>
+<details><summary><code>client.simulator_results.<a href="src/conductorquantum/simulator_results/client.py">download</a>(...)</code></summary>
 <dl>
 <dd>
 
@@ -991,8 +991,8 @@ from conductorquantum import ConductorQuantum
 client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
-client.simulator_results.download_simulator_result(
-    result_id="string",
+client.simulator_results.download(
+    id="string",
 )
 
 ```
@@ -1009,7 +1009,7 @@ client.simulator_results.download_simulator_result(
 <dl>
 <dd>
 
-**result_id:** `str` — The UUID of the simulator result.
+**id:** `str` — The UUID of the simulator result.
     
 </dd>
 </dl>

@@ -20,15 +20,13 @@ class SimulatorResultsClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    def retrieve_simulator_result(
-        self, result_id: str, *, request_options: typing.Optional[RequestOptions] = None
-    ) -> SimulatorResultInfo:
+    def info(self, id: str, *, request_options: typing.Optional[RequestOptions] = None) -> SimulatorResultInfo:
         """
         Get a simulator result by ID.
 
         Parameters
         ----------
-        result_id : str
+        id : str
             The UUID of the simulator result.
 
         request_options : typing.Optional[RequestOptions]
@@ -46,12 +44,12 @@ class SimulatorResultsClient:
         client = ConductorQuantum(
             token="YOUR_TOKEN",
         )
-        client.simulator_results.retrieve_simulator_result(
-            result_id="08047949-7263-4557-9122-ab293a49cae5",
+        client.simulator_results.info(
+            id="08047949-7263-4557-9122-ab293a49cae5",
         )
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"simulator-results/{jsonable_encoder(result_id)}",
+            f"simulator-results/{jsonable_encoder(id)}",
             method="GET",
             request_options=request_options,
         )
@@ -99,15 +97,13 @@ class SimulatorResultsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def delete_simulator_result(
-        self, result_id: str, *, request_options: typing.Optional[RequestOptions] = None
-    ) -> None:
+    def delete(self, id: str, *, request_options: typing.Optional[RequestOptions] = None) -> None:
         """
         Deletes a simulator result.
 
         Parameters
         ----------
-        result_id : str
+        id : str
             The UUID of the simulator result.
 
         request_options : typing.Optional[RequestOptions]
@@ -124,12 +120,12 @@ class SimulatorResultsClient:
         client = ConductorQuantum(
             token="YOUR_TOKEN",
         )
-        client.simulator_results.delete_simulator_result(
-            result_id="08047949-7263-4557-9122-ab293a49cae5",
+        client.simulator_results.delete(
+            id="08047949-7263-4557-9122-ab293a49cae5",
         )
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"simulator-results/{jsonable_encoder(result_id)}",
+            f"simulator-results/{jsonable_encoder(id)}",
             method="DELETE",
             request_options=request_options,
         )
@@ -171,7 +167,7 @@ class SimulatorResultsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def list_simulators_results(
+    def list(
         self,
         *,
         skip: typing.Optional[int] = None,
@@ -204,7 +200,7 @@ class SimulatorResultsClient:
         client = ConductorQuantum(
             token="YOUR_TOKEN",
         )
-        client.simulator_results.list_simulators_results()
+        client.simulator_results.list()
         """
         _response = self._client_wrapper.httpx_client.request(
             "simulator-results",
@@ -249,15 +245,13 @@ class SimulatorResultsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def download_simulator_result(
-        self, result_id: str, *, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.Iterator[bytes]:
+    def download(self, id: str, *, request_options: typing.Optional[RequestOptions] = None) -> typing.Iterator[bytes]:
         """
         Downloads a simulator result as a JSON file zipped with the input file.
 
         Parameters
         ----------
-        result_id : str
+        id : str
             The UUID of the simulator result.
 
         request_options : typing.Optional[RequestOptions]
@@ -275,12 +269,12 @@ class SimulatorResultsClient:
         client = ConductorQuantum(
             token="YOUR_TOKEN",
         )
-        client.simulator_results.download_simulator_result(
-            result_id="string",
+        client.simulator_results.download(
+            id="string",
         )
         """
         with self._client_wrapper.httpx_client.stream(
-            f"simulator-results/{jsonable_encoder(result_id)}/download",
+            f"simulator-results/{jsonable_encoder(id)}/download",
             method="GET",
             request_options=request_options,
         ) as _response:
@@ -331,15 +325,13 @@ class AsyncSimulatorResultsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    async def retrieve_simulator_result(
-        self, result_id: str, *, request_options: typing.Optional[RequestOptions] = None
-    ) -> SimulatorResultInfo:
+    async def info(self, id: str, *, request_options: typing.Optional[RequestOptions] = None) -> SimulatorResultInfo:
         """
         Get a simulator result by ID.
 
         Parameters
         ----------
-        result_id : str
+        id : str
             The UUID of the simulator result.
 
         request_options : typing.Optional[RequestOptions]
@@ -362,15 +354,15 @@ class AsyncSimulatorResultsClient:
 
 
         async def main() -> None:
-            await client.simulator_results.retrieve_simulator_result(
-                result_id="08047949-7263-4557-9122-ab293a49cae5",
+            await client.simulator_results.info(
+                id="08047949-7263-4557-9122-ab293a49cae5",
             )
 
 
         asyncio.run(main())
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"simulator-results/{jsonable_encoder(result_id)}",
+            f"simulator-results/{jsonable_encoder(id)}",
             method="GET",
             request_options=request_options,
         )
@@ -418,15 +410,13 @@ class AsyncSimulatorResultsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def delete_simulator_result(
-        self, result_id: str, *, request_options: typing.Optional[RequestOptions] = None
-    ) -> None:
+    async def delete(self, id: str, *, request_options: typing.Optional[RequestOptions] = None) -> None:
         """
         Deletes a simulator result.
 
         Parameters
         ----------
-        result_id : str
+        id : str
             The UUID of the simulator result.
 
         request_options : typing.Optional[RequestOptions]
@@ -448,15 +438,15 @@ class AsyncSimulatorResultsClient:
 
 
         async def main() -> None:
-            await client.simulator_results.delete_simulator_result(
-                result_id="08047949-7263-4557-9122-ab293a49cae5",
+            await client.simulator_results.delete(
+                id="08047949-7263-4557-9122-ab293a49cae5",
             )
 
 
         asyncio.run(main())
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"simulator-results/{jsonable_encoder(result_id)}",
+            f"simulator-results/{jsonable_encoder(id)}",
             method="DELETE",
             request_options=request_options,
         )
@@ -498,7 +488,7 @@ class AsyncSimulatorResultsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def list_simulators_results(
+    async def list(
         self,
         *,
         skip: typing.Optional[int] = None,
@@ -536,7 +526,7 @@ class AsyncSimulatorResultsClient:
 
 
         async def main() -> None:
-            await client.simulator_results.list_simulators_results()
+            await client.simulator_results.list()
 
 
         asyncio.run(main())
@@ -584,15 +574,15 @@ class AsyncSimulatorResultsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def download_simulator_result(
-        self, result_id: str, *, request_options: typing.Optional[RequestOptions] = None
+    async def download(
+        self, id: str, *, request_options: typing.Optional[RequestOptions] = None
     ) -> typing.AsyncIterator[bytes]:
         """
         Downloads a simulator result as a JSON file zipped with the input file.
 
         Parameters
         ----------
-        result_id : str
+        id : str
             The UUID of the simulator result.
 
         request_options : typing.Optional[RequestOptions]
@@ -615,15 +605,15 @@ class AsyncSimulatorResultsClient:
 
 
         async def main() -> None:
-            await client.simulator_results.download_simulator_result(
-                result_id="string",
+            await client.simulator_results.download(
+                id="string",
             )
 
 
         asyncio.run(main())
         """
         async with self._client_wrapper.httpx_client.stream(
-            f"simulator-results/{jsonable_encoder(result_id)}/download",
+            f"simulator-results/{jsonable_encoder(id)}/download",
             method="GET",
             request_options=request_options,
         ) as _response:

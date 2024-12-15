@@ -21,7 +21,7 @@ from .errors import ForbiddenError, NotFoundError, UnprocessableEntityError
 from . import model_results, models, simulator_results, simulators
 from .client import AsyncConductorQuantum, ConductorQuantum
 from .environment import ConductorQuantumEnvironment
-from .models import ModelsExecuteResponse
+from .models import ModelsExecuteWithFileResponse
 from .version import __version__
 
 __all__ = [
@@ -36,7 +36,7 @@ __all__ = [
     "ModelResultInfoWithPlot",
     "ModelResultMasked",
     "ModelsEnum",
-    "ModelsExecuteResponse",
+    "ModelsExecuteWithFileResponse",
     "NotFoundError",
     "QuantumDotArraySimulationExecutionRequest",
     "QuantumDotArraySimulationType",

@@ -24,7 +24,7 @@ class SimulatorsClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    def retrieve_simulator(self, *, request_options: typing.Optional[RequestOptions] = None) -> SimulatorInfoBase:
+    def info(self, *, request_options: typing.Optional[RequestOptions] = None) -> SimulatorInfoBase:
         """
         Retrieves a simulator's details.
 
@@ -45,7 +45,7 @@ class SimulatorsClient:
         client = ConductorQuantum(
             token="YOUR_TOKEN",
         )
-        client.simulators.retrieve_simulator()
+        client.simulators.info()
         """
         _response = self._client_wrapper.httpx_client.request(
             f"simulators/quantum-dot-array-simulator",
@@ -86,9 +86,7 @@ class SimulatorsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def list_simulators(
-        self, *, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.List[SimulatorInfoBase]:
+    def list(self, *, request_options: typing.Optional[RequestOptions] = None) -> typing.List[SimulatorInfoBase]:
         """
         Retrieves a list of available simulators.
 
@@ -109,7 +107,7 @@ class SimulatorsClient:
         client = ConductorQuantum(
             token="YOUR_TOKEN",
         )
-        client.simulators.list_simulators()
+        client.simulators.list()
         """
         _response = self._client_wrapper.httpx_client.request(
             "simulators",
@@ -150,7 +148,7 @@ class SimulatorsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def execute_simulator(
+    def execute(
         self,
         *,
         options: QuantumDotArraySimulationExecutionRequest,
@@ -184,7 +182,7 @@ class SimulatorsClient:
         client = ConductorQuantum(
             token="YOUR_TOKEN",
         )
-        client.simulators.execute_simulator(
+        client.simulators.execute(
             options=QuantumDotArraySimulationExecutionRequest(
                 c_dot_dot=[[1.1]],
                 c_gate_dot=[[1.1]],
@@ -250,7 +248,7 @@ class AsyncSimulatorsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    async def retrieve_simulator(self, *, request_options: typing.Optional[RequestOptions] = None) -> SimulatorInfoBase:
+    async def info(self, *, request_options: typing.Optional[RequestOptions] = None) -> SimulatorInfoBase:
         """
         Retrieves a simulator's details.
 
@@ -276,7 +274,7 @@ class AsyncSimulatorsClient:
 
 
         async def main() -> None:
-            await client.simulators.retrieve_simulator()
+            await client.simulators.info()
 
 
         asyncio.run(main())
@@ -320,9 +318,7 @@ class AsyncSimulatorsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def list_simulators(
-        self, *, request_options: typing.Optional[RequestOptions] = None
-    ) -> typing.List[SimulatorInfoBase]:
+    async def list(self, *, request_options: typing.Optional[RequestOptions] = None) -> typing.List[SimulatorInfoBase]:
         """
         Retrieves a list of available simulators.
 
@@ -348,7 +344,7 @@ class AsyncSimulatorsClient:
 
 
         async def main() -> None:
-            await client.simulators.list_simulators()
+            await client.simulators.list()
 
 
         asyncio.run(main())
@@ -392,7 +388,7 @@ class AsyncSimulatorsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def execute_simulator(
+    async def execute(
         self,
         *,
         options: QuantumDotArraySimulationExecutionRequest,
@@ -431,7 +427,7 @@ class AsyncSimulatorsClient:
 
 
         async def main() -> None:
-            await client.simulators.execute_simulator(
+            await client.simulators.execute(
                 options=QuantumDotArraySimulationExecutionRequest(
                     c_dot_dot=[[1.1]],
                     c_gate_dot=[[1.1]],
