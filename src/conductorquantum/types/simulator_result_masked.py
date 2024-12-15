@@ -7,24 +7,24 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2
 import typing
 
 
-class ModelResultMasked(UniversalBaseModel):
+class SimulatorResultMasked(UniversalBaseModel):
     """
-    Model result schema with the input file masked.
+    Simulator result schema with the input data masked.
     """
 
     id: str = pydantic.Field()
     """
-    The UUID of the model result.
+    The UUID of the simulator result.
     """
 
-    model: str = pydantic.Field()
+    simulator: str = pydantic.Field()
     """
-    The id of the model used.
+    The id of the simulator used.
     """
 
     created_at: dt.datetime = pydantic.Field()
     """
-    The UTC time the model result was created.
+    The UTC time the simulator result was created.
     """
 
     if IS_PYDANTIC_V2:

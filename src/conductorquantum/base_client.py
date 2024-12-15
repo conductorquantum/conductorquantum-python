@@ -5,10 +5,14 @@ from .environment import ConductorQuantumEnvironment
 import httpx
 from .core.client_wrapper import SyncClientWrapper
 from .models.client import ModelsClient
-from .results.client import ResultsClient
+from .model_results.client import ModelResultsClient
+from .simulators.client import SimulatorsClient
+from .simulator_results.client import SimulatorResultsClient
 from .core.client_wrapper import AsyncClientWrapper
 from .models.client import AsyncModelsClient
-from .results.client import AsyncResultsClient
+from .model_results.client import AsyncModelResultsClient
+from .simulators.client import AsyncSimulatorsClient
+from .simulator_results.client import AsyncSimulatorResultsClient
 
 
 class BaseConductorQuantum:
@@ -70,7 +74,9 @@ class BaseConductorQuantum:
             timeout=_defaulted_timeout,
         )
         self.models = ModelsClient(client_wrapper=self._client_wrapper)
-        self.results = ResultsClient(client_wrapper=self._client_wrapper)
+        self.model_results = ModelResultsClient(client_wrapper=self._client_wrapper)
+        self.simulators = SimulatorsClient(client_wrapper=self._client_wrapper)
+        self.simulator_results = SimulatorResultsClient(client_wrapper=self._client_wrapper)
 
 
 class AsyncBaseConductorQuantum:
@@ -132,7 +138,9 @@ class AsyncBaseConductorQuantum:
             timeout=_defaulted_timeout,
         )
         self.models = AsyncModelsClient(client_wrapper=self._client_wrapper)
-        self.results = AsyncResultsClient(client_wrapper=self._client_wrapper)
+        self.model_results = AsyncModelResultsClient(client_wrapper=self._client_wrapper)
+        self.simulators = AsyncSimulatorsClient(client_wrapper=self._client_wrapper)
+        self.simulator_results = AsyncSimulatorResultsClient(client_wrapper=self._client_wrapper)
 
 
 def _get_base_url(*, base_url: typing.Optional[str] = None, environment: ConductorQuantumEnvironment) -> str:

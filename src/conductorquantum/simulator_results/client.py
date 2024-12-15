@@ -3,7 +3,7 @@
 from ..core.client_wrapper import SyncClientWrapper
 import typing
 from ..core.request_options import RequestOptions
-from ..types.model_result_info import ModelResultInfo
+from ..types.simulator_result_info import SimulatorResultInfo
 from ..core.jsonable_encoder import jsonable_encoder
 from ..core.pydantic_utilities import parse_obj_as
 from ..errors.forbidden_error import ForbiddenError
@@ -12,29 +12,31 @@ from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.http_validation_error import HttpValidationError
 from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
-from ..types.model_result_masked import ModelResultMasked
+from ..types.simulator_result_masked import SimulatorResultMasked
 from ..core.client_wrapper import AsyncClientWrapper
 
 
-class ResultsClient:
+class SimulatorResultsClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    def info(self, id: str, *, request_options: typing.Optional[RequestOptions] = None) -> ModelResultInfo:
+    def retrieve_simulator_result(
+        self, result_id: str, *, request_options: typing.Optional[RequestOptions] = None
+    ) -> SimulatorResultInfo:
         """
-        Retrieves a model result.
+        Get a simulator result by ID.
 
         Parameters
         ----------
-        id : str
-            The UUID of the model result.
+        result_id : str
+            The UUID of the simulator result.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        ModelResultInfo
+        SimulatorResultInfo
             Successful Response
 
         Examples
@@ -44,21 +46,21 @@ class ResultsClient:
         client = ConductorQuantum(
             token="YOUR_TOKEN",
         )
-        client.results.info(
-            id="08047949-7263-4557-9122-ab293a49cae5",
+        client.simulator_results.retrieve_simulator_result(
+            result_id="08047949-7263-4557-9122-ab293a49cae5",
         )
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"model-results/{jsonable_encoder(id)}",
+            f"simulator-results/{jsonable_encoder(result_id)}",
             method="GET",
             request_options=request_options,
         )
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    ModelResultInfo,
+                    SimulatorResultInfo,
                     parse_obj_as(
-                        type_=ModelResultInfo,  # type: ignore
+                        type_=SimulatorResultInfo,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -97,14 +99,16 @@ class ResultsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def delete(self, id: str, *, request_options: typing.Optional[RequestOptions] = None) -> None:
+    def delete_simulator_result(
+        self, result_id: str, *, request_options: typing.Optional[RequestOptions] = None
+    ) -> None:
         """
-        Deletes a model result.
+        Deletes a simulator result.
 
         Parameters
         ----------
-        id : str
-            The UUID of the model result.
+        result_id : str
+            The UUID of the simulator result.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -120,12 +124,12 @@ class ResultsClient:
         client = ConductorQuantum(
             token="YOUR_TOKEN",
         )
-        client.results.delete(
-            id="08047949-7263-4557-9122-ab293a49cae5",
+        client.simulator_results.delete_simulator_result(
+            result_id="08047949-7263-4557-9122-ab293a49cae5",
         )
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"model-results/{jsonable_encoder(id)}",
+            f"simulator-results/{jsonable_encoder(result_id)}",
             method="DELETE",
             request_options=request_options,
         )
@@ -167,30 +171,30 @@ class ResultsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def list(
+    def list_simulators_results(
         self,
         *,
         skip: typing.Optional[int] = None,
         limit: typing.Optional[int] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.List[ModelResultMasked]:
+    ) -> typing.List[SimulatorResultMasked]:
         """
-        Retrieves a list of model results.
+        Get all simulator results.
 
         Parameters
         ----------
         skip : typing.Optional[int]
-            The number of model results to skip.
+            The number of simulator results to skip.
 
         limit : typing.Optional[int]
-            The number of model results to include.
+            The number of simulator results to include.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        typing.List[ModelResultMasked]
+        typing.List[SimulatorResultMasked]
             Successful Response
 
         Examples
@@ -200,10 +204,10 @@ class ResultsClient:
         client = ConductorQuantum(
             token="YOUR_TOKEN",
         )
-        client.results.list()
+        client.simulator_results.list_simulators_results()
         """
         _response = self._client_wrapper.httpx_client.request(
-            "model-results",
+            "simulator-results",
             method="GET",
             params={
                 "skip": skip,
@@ -214,9 +218,9 @@ class ResultsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    typing.List[ModelResultMasked],
+                    typing.List[SimulatorResultMasked],
                     parse_obj_as(
-                        type_=typing.List[ModelResultMasked],  # type: ignore
+                        type_=typing.List[SimulatorResultMasked],  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -245,14 +249,16 @@ class ResultsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def download(self, id: str, *, request_options: typing.Optional[RequestOptions] = None) -> typing.Iterator[bytes]:
+    def download_simulator_result(
+        self, result_id: str, *, request_options: typing.Optional[RequestOptions] = None
+    ) -> typing.Iterator[bytes]:
         """
-        Downloads a model result as a JSON file zipped with the input file.
+        Downloads a simulator result as a JSON file zipped with the input file.
 
         Parameters
         ----------
-        id : str
-            The UUID of the model result.
+        result_id : str
+            The UUID of the simulator result.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration. You can pass in configuration such as `chunk_size`, and more to customize the request and response.
@@ -260,10 +266,21 @@ class ResultsClient:
         Yields
         ------
         typing.Iterator[bytes]
-            A zip file containing the model result as JSON and the input file.
+            A zip file containing the simulator result as JSON and the input file.
+
+        Examples
+        --------
+        from conductorquantum import ConductorQuantum
+
+        client = ConductorQuantum(
+            token="YOUR_TOKEN",
+        )
+        client.simulator_results.download_simulator_result(
+            result_id="string",
+        )
         """
         with self._client_wrapper.httpx_client.stream(
-            f"model-results/{jsonable_encoder(id)}/download",
+            f"simulator-results/{jsonable_encoder(result_id)}/download",
             method="GET",
             request_options=request_options,
         ) as _response:
@@ -310,25 +327,27 @@ class ResultsClient:
             raise ApiError(status_code=_response.status_code, body=_response_json)
 
 
-class AsyncResultsClient:
+class AsyncSimulatorResultsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    async def info(self, id: str, *, request_options: typing.Optional[RequestOptions] = None) -> ModelResultInfo:
+    async def retrieve_simulator_result(
+        self, result_id: str, *, request_options: typing.Optional[RequestOptions] = None
+    ) -> SimulatorResultInfo:
         """
-        Retrieves a model result.
+        Get a simulator result by ID.
 
         Parameters
         ----------
-        id : str
-            The UUID of the model result.
+        result_id : str
+            The UUID of the simulator result.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        ModelResultInfo
+        SimulatorResultInfo
             Successful Response
 
         Examples
@@ -343,24 +362,24 @@ class AsyncResultsClient:
 
 
         async def main() -> None:
-            await client.results.info(
-                id="08047949-7263-4557-9122-ab293a49cae5",
+            await client.simulator_results.retrieve_simulator_result(
+                result_id="08047949-7263-4557-9122-ab293a49cae5",
             )
 
 
         asyncio.run(main())
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"model-results/{jsonable_encoder(id)}",
+            f"simulator-results/{jsonable_encoder(result_id)}",
             method="GET",
             request_options=request_options,
         )
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    ModelResultInfo,
+                    SimulatorResultInfo,
                     parse_obj_as(
-                        type_=ModelResultInfo,  # type: ignore
+                        type_=SimulatorResultInfo,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -399,14 +418,16 @@ class AsyncResultsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def delete(self, id: str, *, request_options: typing.Optional[RequestOptions] = None) -> None:
+    async def delete_simulator_result(
+        self, result_id: str, *, request_options: typing.Optional[RequestOptions] = None
+    ) -> None:
         """
-        Deletes a model result.
+        Deletes a simulator result.
 
         Parameters
         ----------
-        id : str
-            The UUID of the model result.
+        result_id : str
+            The UUID of the simulator result.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -427,15 +448,15 @@ class AsyncResultsClient:
 
 
         async def main() -> None:
-            await client.results.delete(
-                id="08047949-7263-4557-9122-ab293a49cae5",
+            await client.simulator_results.delete_simulator_result(
+                result_id="08047949-7263-4557-9122-ab293a49cae5",
             )
 
 
         asyncio.run(main())
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"model-results/{jsonable_encoder(id)}",
+            f"simulator-results/{jsonable_encoder(result_id)}",
             method="DELETE",
             request_options=request_options,
         )
@@ -477,30 +498,30 @@ class AsyncResultsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def list(
+    async def list_simulators_results(
         self,
         *,
         skip: typing.Optional[int] = None,
         limit: typing.Optional[int] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.List[ModelResultMasked]:
+    ) -> typing.List[SimulatorResultMasked]:
         """
-        Retrieves a list of model results.
+        Get all simulator results.
 
         Parameters
         ----------
         skip : typing.Optional[int]
-            The number of model results to skip.
+            The number of simulator results to skip.
 
         limit : typing.Optional[int]
-            The number of model results to include.
+            The number of simulator results to include.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        typing.List[ModelResultMasked]
+        typing.List[SimulatorResultMasked]
             Successful Response
 
         Examples
@@ -515,13 +536,13 @@ class AsyncResultsClient:
 
 
         async def main() -> None:
-            await client.results.list()
+            await client.simulator_results.list_simulators_results()
 
 
         asyncio.run(main())
         """
         _response = await self._client_wrapper.httpx_client.request(
-            "model-results",
+            "simulator-results",
             method="GET",
             params={
                 "skip": skip,
@@ -532,9 +553,9 @@ class AsyncResultsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    typing.List[ModelResultMasked],
+                    typing.List[SimulatorResultMasked],
                     parse_obj_as(
-                        type_=typing.List[ModelResultMasked],  # type: ignore
+                        type_=typing.List[SimulatorResultMasked],  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -563,16 +584,16 @@ class AsyncResultsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def download(
-        self, id: str, *, request_options: typing.Optional[RequestOptions] = None
+    async def download_simulator_result(
+        self, result_id: str, *, request_options: typing.Optional[RequestOptions] = None
     ) -> typing.AsyncIterator[bytes]:
         """
-        Downloads a model result as a JSON file zipped with the input file.
+        Downloads a simulator result as a JSON file zipped with the input file.
 
         Parameters
         ----------
-        id : str
-            The UUID of the model result.
+        result_id : str
+            The UUID of the simulator result.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration. You can pass in configuration such as `chunk_size`, and more to customize the request and response.
@@ -580,10 +601,29 @@ class AsyncResultsClient:
         Yields
         ------
         typing.AsyncIterator[bytes]
-            A zip file containing the model result as JSON and the input file.
+            A zip file containing the simulator result as JSON and the input file.
+
+        Examples
+        --------
+        import asyncio
+
+        from conductorquantum import AsyncConductorQuantum
+
+        client = AsyncConductorQuantum(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.simulator_results.download_simulator_result(
+                result_id="string",
+            )
+
+
+        asyncio.run(main())
         """
         async with self._client_wrapper.httpx_client.stream(
-            f"model-results/{jsonable_encoder(id)}/download",
+            f"simulator-results/{jsonable_encoder(result_id)}/download",
             method="GET",
             request_options=request_options,
         ) as _response:
