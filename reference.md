@@ -204,25 +204,9 @@ client.models.execute(
 <dl>
 <dd>
 
-**file:** `from __future__ import annotations
+**data:** `from __future__ import annotations
 
 core.File` — See core.File for more documentation
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**plot:** `typing.Optional[bool]` — Whether to include a plot in the response.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**dark_mode:** `typing.Optional[bool]` — Whether to use dark mode for the plot.
     
 </dd>
 </dl>

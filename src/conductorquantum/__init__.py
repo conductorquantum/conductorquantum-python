@@ -5,7 +5,6 @@ from .types import (
     HttpValidationError,
     ModelInfo,
     ModelResultInfo,
-    ModelResultInfoWithPlot,
     ModelResultMasked,
     ModelsEnum,
     QuantumDotArraySimulationExecutionRequest,
@@ -21,7 +20,6 @@ from .errors import ForbiddenError, NotFoundError, UnprocessableEntityError
 from . import model_results, models, simulator_results, simulators
 from .client import AsyncConductorQuantum, ConductorQuantum
 from .environment import ConductorQuantumEnvironment
-from .models import ModelsExecuteResponse
 from .version import __version__
 
 __all__ = [
@@ -33,10 +31,8 @@ __all__ = [
     "HttpValidationError",
     "ModelInfo",
     "ModelResultInfo",
-    "ModelResultInfoWithPlot",
     "ModelResultMasked",
     "ModelsEnum",
-    "ModelsExecuteResponse",
     "NotFoundError",
     "QuantumDotArraySimulationExecutionRequest",
     "QuantumDotArraySimulationType",

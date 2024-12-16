@@ -13,7 +13,7 @@ from ..types.http_validation_error import HttpValidationError
 from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
 from .. import core
-from .types.models_execute_response import ModelsExecuteResponse
+from ..types.model_result_info import ModelResultInfo
 from ..core.client_wrapper import AsyncClientWrapper
 
 # this is used as the default value for optional parameters
@@ -170,14 +170,8 @@ class ModelsClient:
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
     def execute(
-        self,
-        *,
-        model: ModelsEnum,
-        file: core.File,
-        plot: typing.Optional[bool] = OMIT,
-        dark_mode: typing.Optional[bool] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> ModelsExecuteResponse:
+        self, *, model: ModelsEnum, data: core.File, request_options: typing.Optional[RequestOptions] = None
+    ) -> ModelResultInfo:
         """
         Executes a model with the provided data.
 
@@ -186,21 +180,15 @@ class ModelsClient:
         model : ModelsEnum
             The model to run.
 
-        file : core.File
+        data : core.File
             See core.File for more documentation
-
-        plot : typing.Optional[bool]
-            Whether to include a plot in the response.
-
-        dark_mode : typing.Optional[bool]
-            Whether to use dark mode for the plot.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        ModelsExecuteResponse
+        ModelResultInfo
             Successful Response
 
         Examples
@@ -219,11 +207,9 @@ class ModelsClient:
             method="POST",
             data={
                 "model": model,
-                "plot": plot,
-                "dark_mode": dark_mode,
             },
             files={
-                "file": file,
+                "data": data,
             },
             request_options=request_options,
             omit=OMIT,
@@ -231,9 +217,9 @@ class ModelsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    ModelsExecuteResponse,
+                    ModelResultInfo,
                     parse_obj_as(
-                        type_=ModelsExecuteResponse,  # type: ignore
+                        type_=ModelResultInfo,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -429,14 +415,8 @@ class AsyncModelsClient:
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
     async def execute(
-        self,
-        *,
-        model: ModelsEnum,
-        file: core.File,
-        plot: typing.Optional[bool] = OMIT,
-        dark_mode: typing.Optional[bool] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> ModelsExecuteResponse:
+        self, *, model: ModelsEnum, data: core.File, request_options: typing.Optional[RequestOptions] = None
+    ) -> ModelResultInfo:
         """
         Executes a model with the provided data.
 
@@ -445,21 +425,15 @@ class AsyncModelsClient:
         model : ModelsEnum
             The model to run.
 
-        file : core.File
+        data : core.File
             See core.File for more documentation
-
-        plot : typing.Optional[bool]
-            Whether to include a plot in the response.
-
-        dark_mode : typing.Optional[bool]
-            Whether to use dark mode for the plot.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        ModelsExecuteResponse
+        ModelResultInfo
             Successful Response
 
         Examples
@@ -486,11 +460,9 @@ class AsyncModelsClient:
             method="POST",
             data={
                 "model": model,
-                "plot": plot,
-                "dark_mode": dark_mode,
             },
             files={
-                "file": file,
+                "data": data,
             },
             request_options=request_options,
             omit=OMIT,
@@ -498,9 +470,9 @@ class AsyncModelsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    ModelsExecuteResponse,
+                    ModelResultInfo,
                     parse_obj_as(
-                        type_=ModelsExecuteResponse,  # type: ignore
+                        type_=ModelResultInfo,  # type: ignore
                         object_=_response.json(),
                     ),
                 )

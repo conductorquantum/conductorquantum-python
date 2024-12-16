@@ -4,7 +4,6 @@ from .body_list_simulators_simulators_get import BodyListSimulatorsSimulatorsGet
 from .http_validation_error import HttpValidationError
 from .model_info import ModelInfo
 from .model_result_info import ModelResultInfo
-from .model_result_info_with_plot import ModelResultInfoWithPlot
 from .model_result_masked import ModelResultMasked
 from .models_enum import ModelsEnum
 from .quantum_dot_array_simulation_execution_request import QuantumDotArraySimulationExecutionRequest
@@ -21,7 +20,6 @@ __all__ = [
     "HttpValidationError",
     "ModelInfo",
     "ModelResultInfo",
-    "ModelResultInfoWithPlot",
     "ModelResultMasked",
     "ModelsEnum",
     "QuantumDotArraySimulationExecutionRequest",
