@@ -4,4 +4,4 @@ import typing
 from ...types.model_result_info import ModelResultInfo
 from ...types.model_result_info_with_plot import ModelResultInfoWithPlot
 
-ModelsExecuteWithFileResponse = typing.Union[ModelResultInfo, ModelResultInfoWithPlot]
+ModelsExecuteResponse = typing.Union[ModelResultInfo, ModelResultInfoWithPlot]
