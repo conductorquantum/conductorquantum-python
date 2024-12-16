@@ -64,13 +64,13 @@ class ExtendedModelsClient(ModelsClient):
         self,
         *,
         model: ModelsEnum,
-        file: typing.Union[File, np.ndarray, torch.Tensor],
+        data: typing.Union[File, np.ndarray, torch.Tensor],
         plot: typing.Optional[bool] = OMIT,
         dark_mode: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ModelResultInfo:
         """Execute a model with the provided data."""
-        file_obj = self._convert_to_file(file)
+        file_obj = self._convert_to_file(data)
         _response = self._client_wrapper.httpx_client.request(
             "models",
             method="POST",
