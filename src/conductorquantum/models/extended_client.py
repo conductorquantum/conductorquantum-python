@@ -204,7 +204,7 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
                 "model": model,
             },
             files={
-                "file": file_obj,
+                "data": file_obj,
             },
             request_options=request_options,
             omit=OMIT,
