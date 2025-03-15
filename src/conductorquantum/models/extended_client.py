@@ -80,7 +80,7 @@ class ExtendedModelsClient(ModelsClient):
                 "dark_mode": dark_mode,
             },
             files={
-                "file": file_obj,
+                "data": file_obj,
             },
             request_options=request_options,
             omit=OMIT,
