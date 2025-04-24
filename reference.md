@@ -28,13 +28,8 @@ Retrieves a model's details.
 
 ```python
 from conductorquantum import ConductorQuantum
-
-client = ConductorQuantum(
-    token="YOUR_TOKEN",
-)
-client.models.info(
-    model="coulomb-blockade-peak-detector-v1",
-)
+client = ConductorQuantum(token="YOUR_TOKEN", )
+client.models.info(model='coulomb-blockade-peak-detector-v1', )
 
 ```
 </dd>
@@ -98,10 +93,7 @@ Retrieves a list of available models.
 
 ```python
 from conductorquantum import ConductorQuantum
-
-client = ConductorQuantum(
-    token="YOUR_TOKEN",
-)
+client = ConductorQuantum(token="YOUR_TOKEN", )
 client.models.list()
 
 ```
@@ -174,13 +166,8 @@ Analyze your input data using the specified model. For more information about av
 
 ```python
 from conductorquantum import ConductorQuantum
-
-client = ConductorQuantum(
-    token="YOUR_TOKEN",
-)
-client.models.execute(
-    model="model",
-)
+client = ConductorQuantum(token="YOUR_TOKEN", )
+client.models.execute(model='model', )
 
 ```
 </dd>
@@ -205,7 +192,6 @@ client.models.execute(
 <dd>
 
 **data:** `from __future__ import annotations
-
 core.File` — See core.File for more documentation
     
 </dd>
@@ -255,13 +241,8 @@ Retrieves a model result.
 
 ```python
 from conductorquantum import ConductorQuantum
-
-client = ConductorQuantum(
-    token="YOUR_TOKEN",
-)
-client.model_results.info(
-    id="08047949-7263-4557-9122-ab293a49cae5",
-)
+client = ConductorQuantum(token="YOUR_TOKEN", )
+client.model_results.info(id='08047949-7263-4557-9122-ab293a49cae5', )
 
 ```
 </dd>
@@ -325,13 +306,8 @@ Deletes a model result.
 
 ```python
 from conductorquantum import ConductorQuantum
-
-client = ConductorQuantum(
-    token="YOUR_TOKEN",
-)
-client.model_results.delete(
-    id="08047949-7263-4557-9122-ab293a49cae5",
-)
+client = ConductorQuantum(token="YOUR_TOKEN", )
+client.model_results.delete(id='08047949-7263-4557-9122-ab293a49cae5', )
 
 ```
 </dd>
@@ -395,10 +371,7 @@ Retrieves a list of model results.
 
 ```python
 from conductorquantum import ConductorQuantum
-
-client = ConductorQuantum(
-    token="YOUR_TOKEN",
-)
+client = ConductorQuantum(token="YOUR_TOKEN", )
 client.model_results.list()
 
 ```
