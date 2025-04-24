@@ -3,7 +3,7 @@
 from ..core.client_wrapper import SyncClientWrapper
 import typing
 from ..core.request_options import RequestOptions
-from ..types.model_result_info import ModelResultInfo
+from ..types.model_result_public import ModelResultPublic
 from ..core.jsonable_encoder import jsonable_encoder
 from ..core.pydantic_utilities import parse_obj_as
 from ..errors.forbidden_error import ForbiddenError
@@ -12,7 +12,7 @@ from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.http_validation_error import HttpValidationError
 from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
-from ..types.model_result_masked import ModelResultMasked
+from ..types.model_result_public_masked import ModelResultPublicMasked
 from ..core.client_wrapper import AsyncClientWrapper
 
 
@@ -20,7 +20,7 @@ class ModelResultsClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    def info(self, id: str, *, request_options: typing.Optional[RequestOptions] = None) -> ModelResultInfo:
+    def info(self, id: str, *, request_options: typing.Optional[RequestOptions] = None) -> ModelResultPublic:
         """
         Retrieves a model result.
 
@@ -34,7 +34,7 @@ class ModelResultsClient:
 
         Returns
         -------
-        ModelResultInfo
+        ModelResultPublic
             Successful Response
 
         Examples
@@ -56,9 +56,9 @@ class ModelResultsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    ModelResultInfo,
+                    ModelResultPublic,
                     parse_obj_as(
-                        type_=ModelResultInfo,  # type: ignore
+                        type_=ModelResultPublic,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -173,7 +173,7 @@ class ModelResultsClient:
         skip: typing.Optional[int] = None,
         limit: typing.Optional[int] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.List[ModelResultMasked]:
+    ) -> typing.List[ModelResultPublicMasked]:
         """
         Retrieves a list of model results.
 
@@ -190,7 +190,7 @@ class ModelResultsClient:
 
         Returns
         -------
-        typing.List[ModelResultMasked]
+        typing.List[ModelResultPublicMasked]
             Successful Response
 
         Examples
@@ -214,9 +214,9 @@ class ModelResultsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    typing.List[ModelResultMasked],
+                    typing.List[ModelResultPublicMasked],
                     parse_obj_as(
-                        type_=typing.List[ModelResultMasked],  # type: ignore
+                        type_=typing.List[ModelResultPublicMasked],  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -261,17 +261,6 @@ class ModelResultsClient:
         ------
         typing.Iterator[bytes]
             A zip file containing the model result as JSON and the input file.
-
-        Examples
-        --------
-        from conductorquantum import ConductorQuantum
-
-        client = ConductorQuantum(
-            token="YOUR_TOKEN",
-        )
-        client.model_results.download(
-            id="string",
-        )
         """
         with self._client_wrapper.httpx_client.stream(
             f"model-results/{jsonable_encoder(id)}/download",
@@ -325,7 +314,7 @@ class AsyncModelResultsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    async def info(self, id: str, *, request_options: typing.Optional[RequestOptions] = None) -> ModelResultInfo:
+    async def info(self, id: str, *, request_options: typing.Optional[RequestOptions] = None) -> ModelResultPublic:
         """
         Retrieves a model result.
 
@@ -339,7 +328,7 @@ class AsyncModelResultsClient:
 
         Returns
         -------
-        ModelResultInfo
+        ModelResultPublic
             Successful Response
 
         Examples
@@ -369,9 +358,9 @@ class AsyncModelResultsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    ModelResultInfo,
+                    ModelResultPublic,
                     parse_obj_as(
-                        type_=ModelResultInfo,  # type: ignore
+                        type_=ModelResultPublic,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -494,7 +483,7 @@ class AsyncModelResultsClient:
         skip: typing.Optional[int] = None,
         limit: typing.Optional[int] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.List[ModelResultMasked]:
+    ) -> typing.List[ModelResultPublicMasked]:
         """
         Retrieves a list of model results.
 
@@ -511,7 +500,7 @@ class AsyncModelResultsClient:
 
         Returns
         -------
-        typing.List[ModelResultMasked]
+        typing.List[ModelResultPublicMasked]
             Successful Response
 
         Examples
@@ -543,9 +532,9 @@ class AsyncModelResultsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    typing.List[ModelResultMasked],
+                    typing.List[ModelResultPublicMasked],
                     parse_obj_as(
-                        type_=typing.List[ModelResultMasked],  # type: ignore
+                        type_=typing.List[ModelResultPublicMasked],  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -592,25 +581,6 @@ class AsyncModelResultsClient:
         ------
         typing.AsyncIterator[bytes]
             A zip file containing the model result as JSON and the input file.
-
-        Examples
-        --------
-        import asyncio
-
-        from conductorquantum import AsyncConductorQuantum
-
-        client = AsyncConductorQuantum(
-            token="YOUR_TOKEN",
-        )
-
-
-        async def main() -> None:
-            await client.model_results.download(
-                id="string",
-            )
-
-
-        asyncio.run(main())
         """
         async with self._client_wrapper.httpx_client.stream(
             f"model-results/{jsonable_encoder(id)}/download",
