@@ -2,3 +2,4 @@
 src/conductorquantum/client.py
 src/conductorquantum/models/extended_client.py
 README.md
+.github/workflows/ci.yml
