@@ -21,8 +21,6 @@ Instantiate and use the client with the following:
 
 ```python
 from conductorquantum import ConductorQuantum
-import numpy as np
-import torch
 
 client = ConductorQuantum(
     token="YOUR_TOKEN",
@@ -59,11 +57,9 @@ client = AsyncConductorQuantum(
 
 
 async def main() -> None:
-    with open("path/to/file.npy", "rb") as f:
-        await client.models.execute(
-            model="coulomb-blockade-peak-detector",
-            data=f,
-        )
+    await client.models.execute(
+        model="model",
+    )
 
 
 asyncio.run(main())
@@ -78,7 +74,7 @@ will be thrown.
 from conductorquantum.core.api_error import ApiError
 
 try:
-    client.models.execute_with_file(...)
+    client.models.execute(...)
 except ApiError as e:
     print(e.status_code)
     print(e.body)
@@ -101,7 +97,7 @@ A request is deemed retriable when any of the following HTTP status codes is ret
 Use the `max_retries` request option to configure this behavior.
 
 ```python
-client.models.execute_with_file(..., request_options={
+client.models.execute(..., request_options={
     "max_retries": 1
 })
 ```
@@ -121,7 +117,7 @@ client = ConductorQuantum(
 
 
 # Override timeout for a specific method
-client.models.execute_with_file(..., request_options={
+client.models.execute(..., request_options={
     "timeout_in_seconds": 1
 })
 ```

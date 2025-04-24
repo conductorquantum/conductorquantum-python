@@ -2,9 +2,8 @@
 
 import typing
 from ..core.client_wrapper import SyncClientWrapper
-from ..types.models_enum import ModelsEnum
 from ..core.request_options import RequestOptions
-from ..types.model_info import ModelInfo
+from ..types.model_public import ModelPublic
 from ..core.jsonable_encoder import jsonable_encoder
 from ..core.pydantic_utilities import parse_obj_as
 from ..errors.not_found_error import NotFoundError
@@ -13,7 +12,7 @@ from ..types.http_validation_error import HttpValidationError
 from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
 from .. import core
-from ..types.model_result_info import ModelResultInfo
+from ..types.model_result_public import ModelResultPublic
 from ..core.client_wrapper import AsyncClientWrapper
 
 # this is used as the default value for optional parameters
@@ -24,13 +23,13 @@ class ModelsClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    def info(self, model: ModelsEnum, *, request_options: typing.Optional[RequestOptions] = None) -> ModelInfo:
+    def info(self, model: str, *, request_options: typing.Optional[RequestOptions] = None) -> ModelPublic:
         """
         Retrieves a model's details.
 
         Parameters
         ----------
-        model : ModelsEnum
+        model : str
             The model to get information for.
 
         request_options : typing.Optional[RequestOptions]
@@ -38,7 +37,7 @@ class ModelsClient:
 
         Returns
         -------
-        ModelInfo
+        ModelPublic
             Successful Response
 
         Examples
@@ -49,7 +48,7 @@ class ModelsClient:
             token="YOUR_TOKEN",
         )
         client.models.info(
-            model="coulomb-blockade-peak-detector",
+            model="coulomb-blockade-peak-detector-v1",
         )
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -60,9 +59,9 @@ class ModelsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    ModelInfo,
+                    ModelPublic,
                     parse_obj_as(
-                        type_=ModelInfo,  # type: ignore
+                        type_=ModelPublic,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -97,7 +96,7 @@ class ModelsClient:
         skip: typing.Optional[int] = None,
         limit: typing.Optional[int] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.List[ModelInfo]:
+    ) -> typing.List[ModelPublic]:
         """
         Retrieves a list of available models.
 
@@ -114,7 +113,7 @@ class ModelsClient:
 
         Returns
         -------
-        typing.List[ModelInfo]
+        typing.List[ModelPublic]
             Successful Response
 
         Examples
@@ -138,9 +137,9 @@ class ModelsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    typing.List[ModelInfo],
+                    typing.List[ModelPublic],
                     parse_obj_as(
-                        type_=typing.List[ModelInfo],  # type: ignore
+                        type_=typing.List[ModelPublic],  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -170,14 +169,14 @@ class ModelsClient:
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
     def execute(
-        self, *, model: ModelsEnum, data: core.File, request_options: typing.Optional[RequestOptions] = None
-    ) -> ModelResultInfo:
+        self, *, model: str, data: core.File, request_options: typing.Optional[RequestOptions] = None
+    ) -> ModelResultPublic:
         """
-        Executes a model with the provided data.
+        Analyze your input data using the specified model. For more information about available models and their capabilities, see our [overview](/models/overview).
 
         Parameters
         ----------
-        model : ModelsEnum
+        model : str
             The model to run.
 
         data : core.File
@@ -188,7 +187,7 @@ class ModelsClient:
 
         Returns
         -------
-        ModelResultInfo
+        ModelResultPublic
             Successful Response
 
         Examples
@@ -199,7 +198,7 @@ class ModelsClient:
             token="YOUR_TOKEN",
         )
         client.models.execute(
-            model="coulomb-blockade-peak-detector",
+            model="model",
         )
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -217,9 +216,9 @@ class ModelsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    ModelResultInfo,
+                    ModelResultPublic,
                     parse_obj_as(
-                        type_=ModelResultInfo,  # type: ignore
+                        type_=ModelResultPublic,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -253,13 +252,13 @@ class AsyncModelsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    async def info(self, model: ModelsEnum, *, request_options: typing.Optional[RequestOptions] = None) -> ModelInfo:
+    async def info(self, model: str, *, request_options: typing.Optional[RequestOptions] = None) -> ModelPublic:
         """
         Retrieves a model's details.
 
         Parameters
         ----------
-        model : ModelsEnum
+        model : str
             The model to get information for.
 
         request_options : typing.Optional[RequestOptions]
@@ -267,7 +266,7 @@ class AsyncModelsClient:
 
         Returns
         -------
-        ModelInfo
+        ModelPublic
             Successful Response
 
         Examples
@@ -283,7 +282,7 @@ class AsyncModelsClient:
 
         async def main() -> None:
             await client.models.info(
-                model="coulomb-blockade-peak-detector",
+                model="coulomb-blockade-peak-detector-v1",
             )
 
 
@@ -297,9 +296,9 @@ class AsyncModelsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    ModelInfo,
+                    ModelPublic,
                     parse_obj_as(
-                        type_=ModelInfo,  # type: ignore
+                        type_=ModelPublic,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -334,7 +333,7 @@ class AsyncModelsClient:
         skip: typing.Optional[int] = None,
         limit: typing.Optional[int] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.List[ModelInfo]:
+    ) -> typing.List[ModelPublic]:
         """
         Retrieves a list of available models.
 
@@ -351,7 +350,7 @@ class AsyncModelsClient:
 
         Returns
         -------
-        typing.List[ModelInfo]
+        typing.List[ModelPublic]
             Successful Response
 
         Examples
@@ -383,9 +382,9 @@ class AsyncModelsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    typing.List[ModelInfo],
+                    typing.List[ModelPublic],
                     parse_obj_as(
-                        type_=typing.List[ModelInfo],  # type: ignore
+                        type_=typing.List[ModelPublic],  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -415,14 +414,14 @@ class AsyncModelsClient:
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
     async def execute(
-        self, *, model: ModelsEnum, data: core.File, request_options: typing.Optional[RequestOptions] = None
-    ) -> ModelResultInfo:
+        self, *, model: str, data: core.File, request_options: typing.Optional[RequestOptions] = None
+    ) -> ModelResultPublic:
         """
-        Executes a model with the provided data.
+        Analyze your input data using the specified model. For more information about available models and their capabilities, see our [overview](/models/overview).
 
         Parameters
         ----------
-        model : ModelsEnum
+        model : str
             The model to run.
 
         data : core.File
@@ -433,7 +432,7 @@ class AsyncModelsClient:
 
         Returns
         -------
-        ModelResultInfo
+        ModelResultPublic
             Successful Response
 
         Examples
@@ -449,7 +448,7 @@ class AsyncModelsClient:
 
         async def main() -> None:
             await client.models.execute(
-                model="coulomb-blockade-peak-detector",
+                model="model",
             )
 
 
@@ -470,9 +469,9 @@ class AsyncModelsClient:
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    ModelResultInfo,
+                    ModelResultPublic,
                     parse_obj_as(
-                        type_=ModelResultInfo,  # type: ignore
+                        type_=ModelResultPublic,  # type: ignore
                         object_=_response.json(),
                     ),
                 )

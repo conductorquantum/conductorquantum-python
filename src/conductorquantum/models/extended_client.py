@@ -7,6 +7,7 @@ from json.decoder import JSONDecodeError
 from typing import Union, Any
 
 import numpy as np
+import torch
 
 from ..core.api_error import ApiError
 from ..core.pydantic_utilities import parse_obj_as
@@ -16,8 +17,7 @@ from ..errors.not_found_error import NotFoundError
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from .client import ModelsClient, AsyncModelsClient
 from ..types.http_validation_error import HttpValidationError
-from ..types.model_result_info import ModelResultInfo
-from ..types.models_enum import ModelsEnum
+from ..types.model_result_public import ModelResultPublic
 
 OMIT = typing.cast(Any, ...)
 
@@ -59,12 +59,12 @@ class ExtendedModelsClient(ModelsClient):
     def execute(
         self,
         *,
-        model: ModelsEnum,
+        model: str,
         data: typing.Union[File, np.ndarray],
         plot: typing.Optional[bool] = OMIT,
         dark_mode: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> ModelResultInfo:
+    ) -> ModelResultPublic:
         """Execute a model with the provided data."""
         file_obj = self._convert_to_file(data)
         _response = self._client_wrapper.httpx_client.request(
@@ -84,9 +84,9 @@ class ExtendedModelsClient(ModelsClient):
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    ModelResultInfo,
+                    ModelResultPublic,
                     parse_obj_as(
-                        type_=ModelResultInfo,  # type: ignore
+                        type_=ModelResultPublic,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -152,14 +152,14 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
         return data
 
     async def execute(
-        self, *, model: ModelsEnum, data: typing.Union[File, np.ndarray], request_options: typing.Optional[RequestOptions] = None
-    ) -> ModelResultInfo:
+        self, *, model: str, data: typing.Union[File, np.ndarray], request_options: typing.Optional[RequestOptions] = None
+    ) -> ModelResultPublic:
         """
         Executes a model with the provided data.
 
         Parameters
         ----------
-        model : ModelsEnum
+        model : str
             The model to run.
 
         data : Union[File, np.ndarray]
@@ -172,7 +172,7 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
 
         Returns
         -------
-        ModelResultInfo
+        ModelResultPublic
             Successful Response
 
         Raises
@@ -204,9 +204,9 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
         try:
             if 200 <= _response.status_code < 300:
                 return typing.cast(
-                    ModelResultInfo,
+                    ModelResultPublic,
                     parse_obj_as(
-                        type_=ModelResultInfo,  # type: ignore
+                        type_=ModelResultPublic,  # type: ignore
                         object_=_response.json(),
                     ),
                 )

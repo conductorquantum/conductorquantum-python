@@ -7,39 +7,39 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2
 import typing
 
 
-class ModelInfo(UniversalBaseModel):
+class ModelPublic(UniversalBaseModel):
     """
-    Model information schema.
+    Public API model for Model
     """
 
     id: str = pydantic.Field()
     """
-    The ID of the model.
+    The string ID of the model
     """
 
     name: str = pydantic.Field()
     """
-    The name of the model.
+    The name of the model
     """
 
     description: str = pydantic.Field()
     """
-    The description of the model.
+    The description of the model
     """
 
     released: dt.datetime = pydantic.Field()
     """
-    The UTC release date of the model.
+    The UTC time the model was released
     """
 
     number_of_runs: int = pydantic.Field()
     """
-    The number of times the model has been run.
+    The number of times the model has been run
     """
 
-    input_file_requirements: str = pydantic.Field()
+    input_shape_requirements: str = pydantic.Field()
     """
-    The input file requirements for the model.
+    The input shape requirements for the model
     """
 
     if IS_PYDANTIC_V2:
