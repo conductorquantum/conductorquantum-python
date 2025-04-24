@@ -57,8 +57,10 @@ client = AsyncConductorQuantum(
 
 
 async def main() -> None:
+    arr = np.array([2.643e-12, 2.164e-12 8.481e-13, ..., 2.320e-11, 2.153e-11, 1.984e-11])
     await client.models.execute(
         model="model",
+        data=arr,
     )
 
 
