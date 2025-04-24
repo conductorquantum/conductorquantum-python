@@ -7,7 +7,6 @@ from json.decoder import JSONDecodeError
 from typing import Union, Any
 
 import numpy as np
-import torch
 
 from ..core.api_error import ApiError
 from ..core.pydantic_utilities import parse_obj_as
@@ -22,7 +21,7 @@ from ..types.model_result_public import ModelResultPublic
 OMIT = typing.cast(Any, ...)
 
 class ExtendedModelsClient(ModelsClient):
-    """Extended models client that adds support for numpy arrays and PyTorch tensors."""
+    """Extended models client that adds support for numpy arrays."""
 
     def _convert_to_file(self, data: Union[File, np.ndarray]) -> File:
         """
@@ -67,7 +66,7 @@ class ExtendedModelsClient(ModelsClient):
     ) -> ModelResultPublic:
         """Execute a model with the provided data."""
         file_obj = self._convert_to_file(data)
-        _response = self._client_wrapper.httpx_client.request(
+        _response = self._raw_client._client_wrapper.httpx_client.request( # pylint: disable=protected-access
             "models",
             method="POST",
             data={
@@ -117,7 +116,7 @@ class ExtendedModelsClient(ModelsClient):
 
 
 class AsyncExtendedModelsClient(AsyncModelsClient):
-    """Async version of ExtendedModelsClient with support for numpy arrays and PyTorch tensors."""
+    """Async version of ExtendedModelsClient with support for numpy arrays."""
 
     def _convert_to_file(self, data: Union[File, np.ndarray]) -> File:
         """
@@ -189,7 +188,7 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
 
         """
         file_obj = self._convert_to_file(data)
-        _response = await self._client_wrapper.httpx_client.request(
+        _response = await self._raw_client._client_wrapper.httpx_client.request( # pylint: disable=protected-access
             "models",
             method="POST",
             data={
