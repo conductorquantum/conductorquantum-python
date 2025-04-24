@@ -31,7 +31,7 @@ client = ConductorQuantum(
 # Using a file
 with open("path/to/file.npy", "rb") as f:
     client.models.execute(
-        model="coulomb-blockade-peak-detector",
+        model="coulomb-blockade-peak-detector-v1",
         data=f,
     )
 
