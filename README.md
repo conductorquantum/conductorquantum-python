@@ -37,33 +37,10 @@ with open("path/to/file.npy", "rb") as f:
 
 
 # Using a numpy array
-arr = np.array([
-    [0.0, 2.643e-12],
-    [0.101, 2.164e-12],
-    [0.202, 8.481e-13],
-    ...,
-    [9.798, 2.320e-11],
-    [9.899, 2.153e-11],
-    [10.0, 1.984e-11]
-])
+arr = np.array([2.643e-12, 2.164e-12 8.481e-13, ..., 2.320e-11, 2.153e-11, 1.984e-11])
 client.models.execute(
-    model="coulomb-blockade-peak-detector",
+    model="coulomb-blockade-peak-detector-v1",
     data=arr,
-)
-
-# Using a PyTorch tensor
-tensor = torch.tensor([
-    [0.0, 2.643e-12],
-    [0.101, 2.164e-12],
-    [0.202, 8.481e-13],
-    ...,
-    [9.798, 2.320e-11],
-    [9.899, 2.153e-11],
-    [10.0, 1.984e-11]
-])
-client.models.execute(
-    model="coulomb-blockade-peak-detector",
-    data=tensor,
 )
 ```
 

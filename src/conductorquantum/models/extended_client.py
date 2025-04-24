@@ -7,7 +7,6 @@ from json.decoder import JSONDecodeError
 from typing import Union, Any
 
 import numpy as np
-import torch
 
 from ..core.api_error import ApiError
 from ..core.pydantic_utilities import parse_obj_as
@@ -25,13 +24,13 @@ OMIT = typing.cast(Any, ...)
 class ExtendedModelsClient(ModelsClient):
     """Extended models client that adds support for numpy arrays and PyTorch tensors."""
 
-    def _convert_to_file(self, data: Union[File, np.ndarray, torch.Tensor]) -> File:
+    def _convert_to_file(self, data: Union[File, np.ndarray]) -> File:
         """
         Convert input data to a File object if necessary.
         
         Parameters
         ----------
-        data : Union[File, np.ndarray, torch.Tensor]
+        data : Union[File, np.ndarray,]
             The input data to convert
             
         Returns
@@ -39,10 +38,7 @@ class ExtendedModelsClient(ModelsClient):
         File
             A file object containing the data
         """
-        if isinstance(data, (np.ndarray, torch.Tensor)):
-            # Convert torch tensor to numpy if needed
-            if isinstance(data, torch.Tensor):
-                data = data.detach().cpu().numpy()
+        if isinstance(data, np.ndarray):
             
             # Create a temporary file and save the numpy array
             temp_file = tempfile.NamedTemporaryFile(suffix='.npy', delete=False)
@@ -64,7 +60,7 @@ class ExtendedModelsClient(ModelsClient):
         self,
         *,
         model: ModelsEnum,
-        data: typing.Union[File, np.ndarray, torch.Tensor],
+        data: typing.Union[File, np.ndarray],
         plot: typing.Optional[bool] = OMIT,
         dark_mode: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -123,13 +119,13 @@ class ExtendedModelsClient(ModelsClient):
 class AsyncExtendedModelsClient(AsyncModelsClient):
     """Async version of ExtendedModelsClient with support for numpy arrays and PyTorch tensors."""
 
-    def _convert_to_file(self, data: Union[File, np.ndarray, torch.Tensor]) -> File:
+    def _convert_to_file(self, data: Union[File, np.ndarray]) -> File:
         """
         Convert input data to a File object if necessary.
         
         Parameters
         ----------
-        data : Union[File, np.ndarray, torch.Tensor]
+        data : Union[File, np.ndarray]
             The input data to convert
             
         Returns
@@ -137,11 +133,8 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
         File
             A file object containing the data
         """
-        if isinstance(data, (np.ndarray, torch.Tensor)):
-            # Convert torch tensor to numpy if needed
-            if isinstance(data, torch.Tensor):
-                data = data.detach().cpu().numpy()
-            
+        if isinstance(data, np.ndarray):
+  
             # Create a temporary file and save the numpy array
             temp_file = tempfile.NamedTemporaryFile(suffix='.npy', delete=False)
             file_handle = None
@@ -159,7 +152,7 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
         return data
 
     async def execute(
-        self, *, model: ModelsEnum, data: typing.Union[File, np.ndarray, torch.Tensor], request_options: typing.Optional[RequestOptions] = None
+        self, *, model: ModelsEnum, data: typing.Union[File, np.ndarray], request_options: typing.Optional[RequestOptions] = None
     ) -> ModelResultInfo:
         """
         Executes a model with the provided data.
@@ -169,11 +162,10 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
         model : ModelsEnum
             The model to run.
 
-        data : Union[File, np.ndarray, torch.Tensor]
+        data : Union[File, np.ndarray]
             The input data. Can be:
             - File: A file object (used as-is)
             - np.ndarray: A numpy array (automatically converted to .npy file)
-            - torch.Tensor: A PyTorch tensor (converted to numpy then .npy file)
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
