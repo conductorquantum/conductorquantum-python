@@ -5,6 +5,8 @@ import tempfile
 import typing
 from json.decoder import JSONDecodeError
 from typing import Union, Any
+import logging
+import io
 
 import numpy as np
 
@@ -20,40 +22,51 @@ from ..types.model_result_public import ModelResultPublic
 
 OMIT = typing.cast(Any, ...)
 
+logger = logging.getLogger(__name__)
+
+
 class ExtendedModelsClient(ModelsClient):
     """Extended models client that adds support for numpy arrays."""
 
-    def _convert_to_file(self, data: Union[File, np.ndarray]) -> File:
+    def _convert_to_file(
+        self, data: Union[File, np.ndarray]
+    ) -> tuple[File, typing.Optional[str]]:
         """
         Convert input data to a File object if necessary.
-        
+
         Parameters
         ----------
-        data : Union[File, np.ndarray,]
+        data : Union[File, np.ndarray]
             The input data to convert
-            
+
         Returns
         -------
-        File
-            A file object containing the data
+        tuple[File, Optional[str]]
+            A file object containing the data and path to cleanup if temporary file was created
         """
+        logger.info("Converting data to file in ExtendedModelsClient")
         if isinstance(data, np.ndarray):
-            
             # Create a temporary file and save the numpy array
-            temp_file = tempfile.NamedTemporaryFile(suffix='.npy', delete=False)
-            file_handle = None
+            temp_file = tempfile.NamedTemporaryFile(suffix=".npy", delete=False)
+            temp_path = temp_file.name
+            temp_file.close()  # Close immediately to avoid issues on Windows
             try:
-                np.save(temp_file, data)
-                temp_file.close()
-                # Open in binary read mode for upload
-                file_handle = open(temp_file.name, 'rb')
-                return file_handle
-            finally:
-                # Schedule file for deletion after it's closed
-                os.unlink(temp_file.name)
-                if file_handle and file_handle.closed:
-                    file_handle.close()
-        return data
+                np.save(temp_path, data)
+            except Exception as e:
+                logger.error(f"Failed to save numpy array to file: {e}")
+                try:
+                    os.remove(
+                        temp_path
+                    )  # Use os.remove instead of unlink for better Windows compatibility
+                except (OSError, PermissionError) as err:
+                    logger.warning(
+                        f"Failed to remove temporary file {temp_path}: {err}"
+                    )
+                raise
+            # Open in binary read mode for upload
+            file_handle = open(temp_path, "rb")
+            return file_handle, temp_path
+        return data, None
 
     def execute(
         self,
@@ -65,22 +78,23 @@ class ExtendedModelsClient(ModelsClient):
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ModelResultPublic:
         """Execute a model with the provided data."""
-        file_obj = self._convert_to_file(data)
-        _response = self._raw_client._client_wrapper.httpx_client.request( # pylint: disable=protected-access
-            "models",
-            method="POST",
-            data={
-                "model": model,
-                "plot": plot,
-                "dark_mode": dark_mode,
-            },
-            files={
-                "data": file_obj,
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
+        logger.info(f"Executing model {model} in ExtendedModelsClient")
+        file_obj, temp_path = self._convert_to_file(data)
         try:
+            _response = self._raw_client._client_wrapper.httpx_client.request(  # pylint: disable=protected-access
+                "models",
+                method="POST",
+                data={
+                    "model": model,
+                    "plot": plot,
+                    "dark_mode": dark_mode,
+                },
+                files={
+                    "data": file_obj,
+                },
+                request_options=request_options,
+                omit=OMIT,
+            )
             if 200 <= _response.status_code < 300:
                 return typing.cast(
                     ModelResultPublic,
@@ -111,47 +125,74 @@ class ExtendedModelsClient(ModelsClient):
                 )
             _response_json = _response.json()
         except JSONDecodeError as err:
-            raise ApiError(status_code=_response.status_code, body=_response.text) from err
+            raise ApiError(
+                status_code=_response.status_code, body=_response.text
+            ) from err
+        finally:
+            # Clean up resources
+            if isinstance(file_obj, (io.IOBase, typing.BinaryIO)):
+                file_obj.close()
+            if temp_path and os.path.exists(temp_path):
+                try:
+                    os.remove(
+                        temp_path
+                    )  # Use os.remove instead of unlink for better Windows compatibility
+                except (OSError, PermissionError) as err:
+                    logger.warning(
+                        f"Failed to remove temporary file {temp_path}: {err}"
+                    )
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
 
 class AsyncExtendedModelsClient(AsyncModelsClient):
     """Async version of ExtendedModelsClient with support for numpy arrays."""
 
-    def _convert_to_file(self, data: Union[File, np.ndarray]) -> File:
+    def _convert_to_file(
+        self, data: Union[File, np.ndarray]
+    ) -> tuple[File, typing.Optional[str]]:
         """
         Convert input data to a File object if necessary.
-        
+
         Parameters
         ----------
         data : Union[File, np.ndarray]
             The input data to convert
-            
+
         Returns
         -------
-        File
-            A file object containing the data
+        tuple[File, Optional[str]]
+            A file object containing the data and path to cleanup if temporary file was created
         """
+        logger.info("Converting data to file in ExtendedModelsClient")
         if isinstance(data, np.ndarray):
-  
             # Create a temporary file and save the numpy array
-            temp_file = tempfile.NamedTemporaryFile(suffix='.npy', delete=False)
-            file_handle = None
+            temp_file = tempfile.NamedTemporaryFile(suffix=".npy", delete=False)
+            temp_path = temp_file.name
+            temp_file.close()  # Close immediately to avoid issues on Windows
             try:
-                np.save(temp_file, data)
-                temp_file.close()
-                # Open in binary read mode for upload
-                file_handle = open(temp_file.name, 'rb')
-                return file_handle
-            finally:
-                # Schedule file for deletion after it's closed
-                os.unlink(temp_file.name)
-                if file_handle and file_handle.closed:
-                    file_handle.close()
-        return data
+                np.save(temp_path, data)
+            except Exception as e:
+                logger.error(f"Failed to save numpy array to file: {e}")
+                try:
+                    os.remove(
+                        temp_path
+                    )  # Use os.remove instead of unlink for better Windows compatibility
+                except (OSError, PermissionError) as err:
+                    logger.warning(
+                        f"Failed to remove temporary file {temp_path}: {err}"
+                    )
+                raise
+            # Open in binary read mode for upload
+            file_handle = open(temp_path, "rb")
+            return file_handle, temp_path
+        return data, None
 
     async def execute(
-        self, *, model: str, data: typing.Union[File, np.ndarray], request_options: typing.Optional[RequestOptions] = None
+        self,
+        *,
+        model: str,
+        data: typing.Union[File, np.ndarray],
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> ModelResultPublic:
         """
         Executes a model with the provided data.
@@ -182,25 +223,22 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
             If the request is invalid.
         ApiError
             If there is an error processing the request.
-      Examples
-        --------
-        Testing...
-
         """
-        file_obj = self._convert_to_file(data)
-        _response = await self._raw_client._client_wrapper.httpx_client.request( # pylint: disable=protected-access
-            "models",
-            method="POST",
-            data={
-                "model": model,
-            },
-            files={
-                "data": file_obj,
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
+        logger.info(f"Executing model {model} in ExtendedModelsClient")
+        file_obj, temp_path = self._convert_to_file(data)
         try:
+            _response = await self._raw_client._client_wrapper.httpx_client.request(  # pylint: disable=protected-access
+                "models",
+                method="POST",
+                data={
+                    "model": model,
+                },
+                files={
+                    "data": file_obj,
+                },
+                request_options=request_options,
+                omit=OMIT,
+            )
             if 200 <= _response.status_code < 300:
                 return typing.cast(
                     ModelResultPublic,
@@ -231,5 +269,20 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
                 )
             _response_json = _response.json()
         except JSONDecodeError as err:
-            raise ApiError(status_code=_response.status_code, body=_response.text) from err
-        raise ApiError(status_code=_response.status_code, body=_response_json) 
+            raise ApiError(
+                status_code=_response.status_code, body=_response.text
+            ) from err
+        finally:
+            # Clean up resources
+            if isinstance(file_obj, (io.IOBase, typing.BinaryIO)):
+                file_obj.close()
+            if temp_path and os.path.exists(temp_path):
+                try:
+                    os.remove(
+                        temp_path
+                    )  # Use os.remove instead of unlink for better Windows compatibility
+                except (OSError, PermissionError) as err:
+                    logger.warning(
+                        f"Failed to remove temporary file {temp_path}: {err}"
+                    )
+        raise ApiError(status_code=_response.status_code, body=_response_json)
