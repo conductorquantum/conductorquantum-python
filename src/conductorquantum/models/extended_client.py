@@ -6,6 +6,7 @@ import typing
 from json.decoder import JSONDecodeError
 from typing import Union, Any
 import logging
+import io
 
 import numpy as np
 
@@ -129,7 +130,7 @@ class ExtendedModelsClient(ModelsClient):
             ) from err
         finally:
             # Clean up resources
-            if hasattr(file_obj, "close"):
+            if isinstance(file_obj, (io.IOBase, typing.BinaryIO)):
                 file_obj.close()
             if temp_path and os.path.exists(temp_path):
                 try:
@@ -273,7 +274,7 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
             ) from err
         finally:
             # Clean up resources
-            if hasattr(file_obj, "close"):
+            if isinstance(file_obj, (io.IOBase, typing.BinaryIO)):
                 file_obj.close()
             if temp_path and os.path.exists(temp_path):
                 try:
