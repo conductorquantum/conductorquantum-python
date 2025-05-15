@@ -47,16 +47,24 @@ class ExtendedModelsClient(ModelsClient):
         if isinstance(data, np.ndarray):
             # Create a temporary file and save the numpy array
             temp_file = tempfile.NamedTemporaryFile(suffix=".npy", delete=False)
+            temp_path = temp_file.name
+            temp_file.close()  # Close immediately to avoid issues on Windows
             try:
-                np.save(temp_file, data)
+                np.save(temp_path, data)
             except Exception as e:
                 logger.error(f"Failed to save numpy array to file: {e}")
-                temp_file.close()
-                os.unlink(temp_file.name)
+                try:
+                    os.remove(
+                        temp_path
+                    )  # Use os.remove instead of unlink for better Windows compatibility
+                except (OSError, PermissionError) as err:
+                    logger.warning(
+                        f"Failed to remove temporary file {temp_path}: {err}"
+                    )
                 raise
             # Open in binary read mode for upload
-            file_handle = open(temp_file.name, "rb")
-            return file_handle, temp_file.name
+            file_handle = open(temp_path, "rb")
+            return file_handle, temp_path
         return data, None
 
     def execute(
@@ -125,9 +133,13 @@ class ExtendedModelsClient(ModelsClient):
                 file_obj.close()
             if temp_path and os.path.exists(temp_path):
                 try:
-                    os.unlink(temp_path)
-                except (OSError, PermissionError):
-                    pass
+                    os.remove(
+                        temp_path
+                    )  # Use os.remove instead of unlink for better Windows compatibility
+                except (OSError, PermissionError) as err:
+                    logger.warning(
+                        f"Failed to remove temporary file {temp_path}: {err}"
+                    )
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
 
@@ -154,16 +166,24 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
         if isinstance(data, np.ndarray):
             # Create a temporary file and save the numpy array
             temp_file = tempfile.NamedTemporaryFile(suffix=".npy", delete=False)
+            temp_path = temp_file.name
+            temp_file.close()  # Close immediately to avoid issues on Windows
             try:
-                np.save(temp_file, data)
+                np.save(temp_path, data)
             except Exception as e:
                 logger.error(f"Failed to save numpy array to file: {e}")
-                temp_file.close()
-                os.unlink(temp_file.name)
+                try:
+                    os.remove(
+                        temp_path
+                    )  # Use os.remove instead of unlink for better Windows compatibility
+                except (OSError, PermissionError) as err:
+                    logger.warning(
+                        f"Failed to remove temporary file {temp_path}: {err}"
+                    )
                 raise
             # Open in binary read mode for upload
-            file_handle = open(temp_file.name, "rb")
-            return file_handle, temp_file.name
+            file_handle = open(temp_path, "rb")
+            return file_handle, temp_path
         return data, None
 
     async def execute(
@@ -174,38 +194,34 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ModelResultPublic:
         """
-          Executes a model with the provided data.
+        Executes a model with the provided data.
 
-          Parameters
-          ----------
-          model : str
-              The model to run.
+        Parameters
+        ----------
+        model : str
+            The model to run.
 
-          data : Union[File, np.ndarray]
-              The input data. Can be:
-              - File: A file object (used as-is)
-              - np.ndarray: A numpy array (automatically converted to .npy file)
+        data : Union[File, np.ndarray]
+            The input data. Can be:
+            - File: A file object (used as-is)
+            - np.ndarray: A numpy array (automatically converted to .npy file)
 
-          request_options : typing.Optional[RequestOptions]
-              Request-specific configuration.
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
 
-          Returns
-          -------
-          ModelResultPublic
-              Successful Response
+        Returns
+        -------
+        ModelResultPublic
+            Successful Response
 
-          Raises
-          ------
-          NotFoundError
-              If the model is not found.
-          UnprocessableEntityError
-              If the request is invalid.
-          ApiError
-              If there is an error processing the request.
-        Examples
-          --------
-          Testing...
-
+        Raises
+        ------
+        NotFoundError
+            If the model is not found.
+        UnprocessableEntityError
+            If the request is invalid.
+        ApiError
+            If there is an error processing the request.
         """
         logger.info(f"Executing model {model} in ExtendedModelsClient")
         file_obj, temp_path = self._convert_to_file(data)
@@ -261,7 +277,11 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
                 file_obj.close()
             if temp_path and os.path.exists(temp_path):
                 try:
-                    os.unlink(temp_path)
-                except (OSError, PermissionError):
-                    pass
+                    os.remove(
+                        temp_path
+                    )  # Use os.remove instead of unlink for better Windows compatibility
+                except (OSError, PermissionError) as err:
+                    logger.warning(
+                        f"Failed to remove temporary file {temp_path}: {err}"
+                    )
         raise ApiError(status_code=_response.status_code, body=_response_json)
