@@ -44,8 +44,13 @@ class ModelResultsClient:
         Examples
         --------
         from conductorquantum import ConductorQuantum
-        client = ConductorQuantum(token="YOUR_TOKEN", )
-        client.model_results.info(id='08047949-7263-4557-9122-ab293a49cae5', )
+
+        client = ConductorQuantum(
+            token="YOUR_TOKEN",
+        )
+        client.model_results.info(
+            id="08047949-7263-4557-9122-ab293a49cae5",
+        )
         """
         _response = self._raw_client.info(id, request_options=request_options)
         return _response.data
@@ -69,8 +74,13 @@ class ModelResultsClient:
         Examples
         --------
         from conductorquantum import ConductorQuantum
-        client = ConductorQuantum(token="YOUR_TOKEN", )
-        client.model_results.delete(id='08047949-7263-4557-9122-ab293a49cae5', )
+
+        client = ConductorQuantum(
+            token="YOUR_TOKEN",
+        )
+        client.model_results.delete(
+            id="08047949-7263-4557-9122-ab293a49cae5",
+        )
         """
         _response = self._raw_client.delete(id, request_options=request_options)
         return _response.data
@@ -104,8 +114,14 @@ class ModelResultsClient:
         Examples
         --------
         from conductorquantum import ConductorQuantum
-        client = ConductorQuantum(token="YOUR_TOKEN", )
-        client.model_results.list()
+
+        client = ConductorQuantum(
+            token="YOUR_TOKEN",
+        )
+        client.model_results.list(
+            skip=1,
+            limit=1,
+        )
         """
         _response = self._raw_client.list(skip=skip, limit=limit, request_options=request_options)
         return _response.data
@@ -126,6 +142,17 @@ class ModelResultsClient:
         -------
         typing.Iterator[bytes]
             A zip file containing the model result as JSON and the input file.
+
+        Examples
+        --------
+        from conductorquantum import ConductorQuantum
+
+        client = ConductorQuantum(
+            token="YOUR_TOKEN",
+        )
+        client.model_results.download(
+            id="id",
+        )
         """
         with self._raw_client.download(id, request_options=request_options) as r:
             yield from r.data
@@ -165,11 +192,21 @@ class AsyncModelResultsClient:
 
         Examples
         --------
-        from conductorquantum import AsyncConductorQuantum
         import asyncio
-        client = AsyncConductorQuantum(token="YOUR_TOKEN", )
+
+        from conductorquantum import AsyncConductorQuantum
+
+        client = AsyncConductorQuantum(
+            token="YOUR_TOKEN",
+        )
+
+
         async def main() -> None:
-            await client.model_results.info(id='08047949-7263-4557-9122-ab293a49cae5', )
+            await client.model_results.info(
+                id="08047949-7263-4557-9122-ab293a49cae5",
+            )
+
+
         asyncio.run(main())
         """
         _response = await self._raw_client.info(id, request_options=request_options)
@@ -193,11 +230,21 @@ class AsyncModelResultsClient:
 
         Examples
         --------
-        from conductorquantum import AsyncConductorQuantum
         import asyncio
-        client = AsyncConductorQuantum(token="YOUR_TOKEN", )
+
+        from conductorquantum import AsyncConductorQuantum
+
+        client = AsyncConductorQuantum(
+            token="YOUR_TOKEN",
+        )
+
+
         async def main() -> None:
-            await client.model_results.delete(id='08047949-7263-4557-9122-ab293a49cae5', )
+            await client.model_results.delete(
+                id="08047949-7263-4557-9122-ab293a49cae5",
+            )
+
+
         asyncio.run(main())
         """
         _response = await self._raw_client.delete(id, request_options=request_options)
@@ -231,11 +278,22 @@ class AsyncModelResultsClient:
 
         Examples
         --------
-        from conductorquantum import AsyncConductorQuantum
         import asyncio
-        client = AsyncConductorQuantum(token="YOUR_TOKEN", )
+
+        from conductorquantum import AsyncConductorQuantum
+
+        client = AsyncConductorQuantum(
+            token="YOUR_TOKEN",
+        )
+
+
         async def main() -> None:
-            await client.model_results.list()
+            await client.model_results.list(
+                skip=1,
+                limit=1,
+            )
+
+
         asyncio.run(main())
         """
         _response = await self._raw_client.list(skip=skip, limit=limit, request_options=request_options)
@@ -259,7 +317,26 @@ class AsyncModelResultsClient:
         -------
         typing.AsyncIterator[bytes]
             A zip file containing the model result as JSON and the input file.
+
+        Examples
+        --------
+        import asyncio
+
+        from conductorquantum import AsyncConductorQuantum
+
+        client = AsyncConductorQuantum(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.model_results.download(
+                id="id",
+            )
+
+
+        asyncio.run(main())
         """
         async with self._raw_client.download(id, request_options=request_options) as r:
-            async for data in r.data:
-                yield data
+            async for _chunk in r.data:
+                yield _chunk

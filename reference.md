@@ -1,5 +1,5 @@
 # Reference
-## Models
+## models
 <details><summary><code>client.models.<a href="src/conductorquantum/models/client.py">info</a>(...)</code></summary>
 <dl>
 <dd>
@@ -28,8 +28,13 @@ Retrieves a model's details.
 
 ```python
 from conductorquantum import ConductorQuantum
-client = ConductorQuantum(token="YOUR_TOKEN", )
-client.models.info(model='coulomb-blockade-peak-detector-v1', )
+
+client = ConductorQuantum(
+    token="YOUR_TOKEN",
+)
+client.models.info(
+    model="coulomb-blockade-peak-detector-v1",
+)
 
 ```
 </dd>
@@ -93,8 +98,14 @@ Retrieves a list of available models.
 
 ```python
 from conductorquantum import ConductorQuantum
-client = ConductorQuantum(token="YOUR_TOKEN", )
-client.models.list()
+
+client = ConductorQuantum(
+    token="YOUR_TOKEN",
+)
+client.models.list(
+    skip=1,
+    limit=1,
+)
 
 ```
 </dd>
@@ -166,8 +177,13 @@ Analyze your input data using the specified model. For more information about av
 
 ```python
 from conductorquantum import ConductorQuantum
-client = ConductorQuantum(token="YOUR_TOKEN", )
-client.models.execute(model='model', )
+
+client = ConductorQuantum(
+    token="YOUR_TOKEN",
+)
+client.models.execute(
+    model="model",
+)
 
 ```
 </dd>
@@ -192,6 +208,7 @@ client.models.execute(model='model', )
 <dd>
 
 **data:** `from __future__ import annotations
+
 core.File` — See core.File for more documentation
     
 </dd>
@@ -241,8 +258,13 @@ Retrieves a model result.
 
 ```python
 from conductorquantum import ConductorQuantum
-client = ConductorQuantum(token="YOUR_TOKEN", )
-client.model_results.info(id='08047949-7263-4557-9122-ab293a49cae5', )
+
+client = ConductorQuantum(
+    token="YOUR_TOKEN",
+)
+client.model_results.info(
+    id="08047949-7263-4557-9122-ab293a49cae5",
+)
 
 ```
 </dd>
@@ -306,8 +328,13 @@ Deletes a model result.
 
 ```python
 from conductorquantum import ConductorQuantum
-client = ConductorQuantum(token="YOUR_TOKEN", )
-client.model_results.delete(id='08047949-7263-4557-9122-ab293a49cae5', )
+
+client = ConductorQuantum(
+    token="YOUR_TOKEN",
+)
+client.model_results.delete(
+    id="08047949-7263-4557-9122-ab293a49cae5",
+)
 
 ```
 </dd>
@@ -371,8 +398,14 @@ Retrieves a list of model results.
 
 ```python
 from conductorquantum import ConductorQuantum
-client = ConductorQuantum(token="YOUR_TOKEN", )
-client.model_results.list()
+
+client = ConductorQuantum(
+    token="YOUR_TOKEN",
+)
+client.model_results.list(
+    skip=1,
+    limit=1,
+)
 
 ```
 </dd>
@@ -405,6 +438,76 @@ client.model_results.list()
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.model_results.<a href="src/conductorquantum/model_results/client.py">download</a>(...)</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Downloads a model result as a JSON file zipped with the input file.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from conductorquantum import ConductorQuantum
+
+client = ConductorQuantum(
+    token="YOUR_TOKEN",
+)
+client.model_results.download(
+    id="id",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**id:** `str` — The UUID of the model result.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration. You can pass in configuration such as `chunk_size`, and more to customize the request and response.
     
 </dd>
 </dl>

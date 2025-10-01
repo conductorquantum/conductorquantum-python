@@ -3,7 +3,7 @@ name = "conductorquantum"
 
 [tool.poetry]
 name = "conductorquantum"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
 readme = "README.md"
 authors = []
@@ -34,11 +34,11 @@ packages = [
 Repository = 'https://github.com/conductorquantum/conductorquantum-python'
 
 [tool.poetry.dependencies]
-python = "^3.9.0"
+python = "^3.11.0"
 httpx = ">=0.21.2"
-numpy = "^1.23.0"
+numpy = "^2.1.0"
 pydantic = ">= 1.9.2"
-pydantic-core = "^2.18.2"
+pydantic-core = ">=2.18.2"
 typing_extensions = ">= 4.0.0"
 
 [tool.poetry.group.dev.dependencies]

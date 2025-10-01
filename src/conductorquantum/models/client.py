@@ -48,8 +48,13 @@ class ModelsClient:
         Examples
         --------
         from conductorquantum import ConductorQuantum
-        client = ConductorQuantum(token="YOUR_TOKEN", )
-        client.models.info(model='coulomb-blockade-peak-detector-v1', )
+
+        client = ConductorQuantum(
+            token="YOUR_TOKEN",
+        )
+        client.models.info(
+            model="coulomb-blockade-peak-detector-v1",
+        )
         """
         _response = self._raw_client.info(model, request_options=request_options)
         return _response.data
@@ -83,8 +88,14 @@ class ModelsClient:
         Examples
         --------
         from conductorquantum import ConductorQuantum
-        client = ConductorQuantum(token="YOUR_TOKEN", )
-        client.models.list()
+
+        client = ConductorQuantum(
+            token="YOUR_TOKEN",
+        )
+        client.models.list(
+            skip=1,
+            limit=1,
+        )
         """
         _response = self._raw_client.list(skip=skip, limit=limit, request_options=request_options)
         return _response.data
@@ -114,8 +125,13 @@ class ModelsClient:
         Examples
         --------
         from conductorquantum import ConductorQuantum
-        client = ConductorQuantum(token="YOUR_TOKEN", )
-        client.models.execute(model='model', )
+
+        client = ConductorQuantum(
+            token="YOUR_TOKEN",
+        )
+        client.models.execute(
+            model="model",
+        )
         """
         _response = self._raw_client.execute(model=model, data=data, request_options=request_options)
         return _response.data
@@ -155,11 +171,21 @@ class AsyncModelsClient:
 
         Examples
         --------
-        from conductorquantum import AsyncConductorQuantum
         import asyncio
-        client = AsyncConductorQuantum(token="YOUR_TOKEN", )
+
+        from conductorquantum import AsyncConductorQuantum
+
+        client = AsyncConductorQuantum(
+            token="YOUR_TOKEN",
+        )
+
+
         async def main() -> None:
-            await client.models.info(model='coulomb-blockade-peak-detector-v1', )
+            await client.models.info(
+                model="coulomb-blockade-peak-detector-v1",
+            )
+
+
         asyncio.run(main())
         """
         _response = await self._raw_client.info(model, request_options=request_options)
@@ -193,11 +219,22 @@ class AsyncModelsClient:
 
         Examples
         --------
-        from conductorquantum import AsyncConductorQuantum
         import asyncio
-        client = AsyncConductorQuantum(token="YOUR_TOKEN", )
+
+        from conductorquantum import AsyncConductorQuantum
+
+        client = AsyncConductorQuantum(
+            token="YOUR_TOKEN",
+        )
+
+
         async def main() -> None:
-            await client.models.list()
+            await client.models.list(
+                skip=1,
+                limit=1,
+            )
+
+
         asyncio.run(main())
         """
         _response = await self._raw_client.list(skip=skip, limit=limit, request_options=request_options)
@@ -227,11 +264,21 @@ class AsyncModelsClient:
 
         Examples
         --------
-        from conductorquantum import AsyncConductorQuantum
         import asyncio
-        client = AsyncConductorQuantum(token="YOUR_TOKEN", )
+
+        from conductorquantum import AsyncConductorQuantum
+
+        client = AsyncConductorQuantum(
+            token="YOUR_TOKEN",
+        )
+
+
         async def main() -> None:
-            await client.models.execute(model='model', )
+            await client.models.execute(
+                model="model",
+            )
+
+
         asyncio.run(main())
         """
         _response = await self._raw_client.execute(model=model, data=data, request_options=request_options)
