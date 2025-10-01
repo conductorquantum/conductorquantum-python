@@ -29,7 +29,7 @@ class ConductorQuantum(BaseConductorQuantum):
             follow_redirects=follow_redirects,
             httpx_client=httpx_client,
         )
-        self.models = ExtendedModelsClient(client_wrapper=self._client_wrapper)
+        self._models = ExtendedModelsClient(client_wrapper=self._client_wrapper)
 
 
 class AsyncConductorQuantum(AsyncBaseConductorQuantum):
@@ -53,4 +53,4 @@ class AsyncConductorQuantum(AsyncBaseConductorQuantum):
             follow_redirects=follow_redirects,
             httpx_client=httpx_client,
         )
-        self.models = AsyncExtendedModelsClient(client_wrapper=self._client_wrapper)
+        self._models = AsyncExtendedModelsClient(client_wrapper=self._client_wrapper)
