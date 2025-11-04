@@ -128,6 +128,15 @@ class ExtendedModelsClient(ModelsClient):
                     )
                     if attempt == DEFAULT_RETRY_ATTEMPTS:
                         raise
+                    # Reset file pointer to the beginning for retry if seekable
+                    if hasattr(file_obj, "seekable") and callable(
+                        getattr(file_obj, "seekable", None)
+                    ):
+                        try:
+                            if file_obj.seekable():  # type: ignore
+                                file_obj.seek(0)  # type: ignore
+                        except (AttributeError, OSError):
+                            pass  # If seek fails, continue without resetting
             if response is None:
                 raise ApiError(status_code=0, body="Request failed without response.")
             if 200 <= response.status_code < 300:
@@ -291,6 +300,15 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
                     )
                     if attempt == DEFAULT_RETRY_ATTEMPTS:
                         raise
+                    # Reset file pointer to the beginning for retry if seekable
+                    if hasattr(file_obj, "seekable") and callable(
+                        getattr(file_obj, "seekable", None)
+                    ):
+                        try:
+                            if file_obj.seekable():  # type: ignore
+                                file_obj.seek(0)  # type: ignore
+                        except (AttributeError, OSError):
+                            pass  # If seek fails, continue without resetting
             if response is None:
                 raise ApiError(status_code=0, body="Request failed without response.")
             if 200 <= response.status_code < 300:
