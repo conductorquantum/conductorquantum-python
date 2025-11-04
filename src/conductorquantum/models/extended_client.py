@@ -9,6 +9,7 @@ import logging
 import io
 
 import numpy as np
+import httpx
 
 from ..core.api_error import ApiError
 from ..core.pydantic_utilities import parse_obj_as
@@ -23,6 +24,23 @@ from ..types.model_result_public import ModelResultPublic
 OMIT = typing.cast(Any, ...)
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_TIMEOUT_SECONDS = 120
+DEFAULT_RETRY_ATTEMPTS = 3
+_HTTP_CLIENT_RETRY_OFFSET = 2
+# HttpClient starts its retry counter at 2, so apply an offset to preserve real retry count.
+DEFAULT_HTTP_CLIENT_MAX_RETRIES = DEFAULT_RETRY_ATTEMPTS + _HTTP_CLIENT_RETRY_OFFSET
+
+
+def _merge_request_options(
+    request_options: typing.Optional[RequestOptions],
+) -> RequestOptions:
+    options: RequestOptions = typing.cast(RequestOptions, dict(request_options or {}))
+    if options.get("timeout_in_seconds") is None:
+        options["timeout_in_seconds"] = DEFAULT_TIMEOUT_SECONDS
+    if options.get("max_retries") is None:
+        options["max_retries"] = DEFAULT_HTTP_CLIENT_MAX_RETRIES
+    return options
 
 
 class ExtendedModelsClient(ModelsClient):
@@ -80,53 +98,71 @@ class ExtendedModelsClient(ModelsClient):
         """Execute a model with the provided data."""
         logger.info(f"Executing model {model} in ExtendedModelsClient")
         file_obj, temp_path = self._convert_to_file(data)
+        effective_request_options = _merge_request_options(request_options)
+        response: typing.Optional[httpx.Response] = None
         try:
-            _response = self._raw_client._client_wrapper.httpx_client.request(  # pylint: disable=protected-access
-                "models",
-                method="POST",
-                data={
-                    "model": model,
-                    "plot": plot,
-                    "dark_mode": dark_mode,
-                },
-                files={
-                    "data": file_obj,
-                },
-                request_options=request_options,
-                omit=OMIT,
-            )
-            if 200 <= _response.status_code < 300:
+            for attempt in range(DEFAULT_RETRY_ATTEMPTS + 1):
+                try:
+                    response = self._raw_client._client_wrapper.httpx_client.request(  # pylint: disable=protected-access
+                        "models",
+                        method="POST",
+                        data={
+                            "model": model,
+                            "plot": plot,
+                            "dark_mode": dark_mode,
+                        },
+                        files={
+                            "data": file_obj,
+                        },
+                        request_options=effective_request_options,
+                        omit=OMIT,
+                    )
+                    break
+                except httpx.TimeoutException as exc:
+                    logger.warning(
+                        "Model execution timed out for %s (attempt %d/%d): %s",
+                        model,
+                        attempt + 1,
+                        DEFAULT_RETRY_ATTEMPTS + 1,
+                        exc,
+                    )
+                    if attempt == DEFAULT_RETRY_ATTEMPTS:
+                        raise
+            if response is None:
+                raise ApiError(status_code=0, body="Request failed without response.")
+            if 200 <= response.status_code < 300:
                 return typing.cast(
                     ModelResultPublic,
                     parse_obj_as(
                         type_=ModelResultPublic,  # type: ignore
-                        object_=_response.json(),
+                        object_=response.json(),
                     ),
                 )
-            if _response.status_code == 404:
+            if response.status_code == 404:
                 raise NotFoundError(
                     typing.cast(
                         typing.Optional[typing.Any],
                         parse_obj_as(
                             type_=typing.Optional[typing.Any],  # type: ignore
-                            object_=_response.json(),
+                            object_=response.json(),
                         ),
                     )
                 )
-            if _response.status_code == 422:
+            if response.status_code == 422:
                 raise UnprocessableEntityError(
                     typing.cast(
                         HttpValidationError,
                         parse_obj_as(
                             type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
+                            object_=response.json(),
                         ),
                     )
                 )
-            _response_json = _response.json()
+            _response_json = response.json()
         except JSONDecodeError as err:
             raise ApiError(
-                status_code=_response.status_code, body=_response.text
+                status_code=response.status_code if response is not None else 0,
+                body=response.text if response is not None else "Unable to decode response.",
             ) from err
         finally:
             # Clean up resources
@@ -141,7 +177,8 @@ class ExtendedModelsClient(ModelsClient):
                     logger.warning(
                         f"Failed to remove temporary file {temp_path}: {err}"
                     )
-        raise ApiError(status_code=_response.status_code, body=_response_json)
+        assert response is not None
+        raise ApiError(status_code=response.status_code, body=_response_json)
 
 
 class AsyncExtendedModelsClient(AsyncModelsClient):
@@ -226,51 +263,69 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
         """
         logger.info(f"Executing model {model} in ExtendedModelsClient")
         file_obj, temp_path = self._convert_to_file(data)
+        effective_request_options = _merge_request_options(request_options)
+        response: typing.Optional[httpx.Response] = None
         try:
-            _response = await self._raw_client._client_wrapper.httpx_client.request(  # pylint: disable=protected-access
-                "models",
-                method="POST",
-                data={
-                    "model": model,
-                },
-                files={
-                    "data": file_obj,
-                },
-                request_options=request_options,
-                omit=OMIT,
-            )
-            if 200 <= _response.status_code < 300:
+            for attempt in range(DEFAULT_RETRY_ATTEMPTS + 1):
+                try:
+                    response = await self._raw_client._client_wrapper.httpx_client.request(  # pylint: disable=protected-access
+                        "models",
+                        method="POST",
+                        data={
+                            "model": model,
+                        },
+                        files={
+                            "data": file_obj,
+                        },
+                        request_options=effective_request_options,
+                        omit=OMIT,
+                    )
+                    break
+                except httpx.TimeoutException as exc:
+                    logger.warning(
+                        "Model execution timed out for %s (attempt %d/%d): %s",
+                        model,
+                        attempt + 1,
+                        DEFAULT_RETRY_ATTEMPTS + 1,
+                        exc,
+                    )
+                    if attempt == DEFAULT_RETRY_ATTEMPTS:
+                        raise
+            if response is None:
+                raise ApiError(status_code=0, body="Request failed without response.")
+            if 200 <= response.status_code < 300:
                 return typing.cast(
                     ModelResultPublic,
                     parse_obj_as(
                         type_=ModelResultPublic,  # type: ignore
-                        object_=_response.json(),
+                        object_=response.json(),
                     ),
                 )
-            if _response.status_code == 404:
+            if response.status_code == 404:
                 raise NotFoundError(
                     typing.cast(
                         typing.Optional[typing.Any],
                         parse_obj_as(
                             type_=typing.Optional[typing.Any],  # type: ignore
-                            object_=_response.json(),
+                            object_=response.json(),
                         ),
                     )
                 )
-            if _response.status_code == 422:
+            if response.status_code == 422:
                 raise UnprocessableEntityError(
                     typing.cast(
                         HttpValidationError,
                         parse_obj_as(
                             type_=HttpValidationError,  # type: ignore
-                            object_=_response.json(),
+                            object_=response.json(),
                         ),
                     )
                 )
-            _response_json = _response.json()
+            _response_json = response.json()
         except JSONDecodeError as err:
             raise ApiError(
-                status_code=_response.status_code, body=_response.text
+                status_code=response.status_code if response is not None else 0,
+                body=response.text if response is not None else "Unable to decode response.",
             ) from err
         finally:
             # Clean up resources
@@ -285,4 +340,5 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
                     logger.warning(
                         f"Failed to remove temporary file {temp_path}: {err}"
                     )
-        raise ApiError(status_code=_response.status_code, body=_response_json)
+        assert response is not None
+        raise ApiError(status_code=response.status_code, body=_response_json)

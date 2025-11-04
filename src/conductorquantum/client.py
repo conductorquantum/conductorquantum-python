@@ -8,6 +8,8 @@ from .base_client import BaseConductorQuantum, AsyncBaseConductorQuantum
 from .environment import ConductorQuantumEnvironment
 from .models.extended_client import ExtendedModelsClient, AsyncExtendedModelsClient
 
+DEFAULT_TIMEOUT_SECONDS = 120
+
 class ConductorQuantum(BaseConductorQuantum):
     """Main client for interacting with the Conductor Quantum API."""
 
@@ -17,7 +19,7 @@ class ConductorQuantum(BaseConductorQuantum):
         base_url: typing.Optional[str] = None,
         environment: ConductorQuantumEnvironment = ConductorQuantumEnvironment.DEFAULT,
         token: typing.Union[str, typing.Callable[[], str]],
-        timeout: typing.Optional[float] = None,
+        timeout: typing.Optional[float] = DEFAULT_TIMEOUT_SECONDS,
         follow_redirects: typing.Optional[bool] = True,
         httpx_client: typing.Optional[httpx.Client] = None,
     ):
@@ -41,7 +43,7 @@ class AsyncConductorQuantum(AsyncBaseConductorQuantum):
         base_url: typing.Optional[str] = None,
         environment: ConductorQuantumEnvironment = ConductorQuantumEnvironment.DEFAULT,
         token: typing.Union[str, typing.Callable[[], str]],
-        timeout: typing.Optional[float] = None,
+        timeout: typing.Optional[float] = DEFAULT_TIMEOUT_SECONDS,
         follow_redirects: typing.Optional[bool] = True,
         httpx_client: typing.Optional[httpx.AsyncClient] = None,
     ):
