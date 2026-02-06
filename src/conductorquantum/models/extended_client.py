@@ -1,25 +1,24 @@
 from __future__ import annotations
 
+import io
+import logging
 import os
 import tempfile
 import typing
 from json.decoder import JSONDecodeError
-from typing import Union, Any
-import logging
-import io
+from typing import Any, Union
 
-import numpy as np
 import httpx
-
+import numpy as np
+from ..core import File
 from ..core.api_error import ApiError
 from ..core.pydantic_utilities import parse_obj_as
 from ..core.request_options import RequestOptions
-from ..core import File
 from ..errors.not_found_error import NotFoundError
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
-from .client import ModelsClient, AsyncModelsClient
 from ..types.http_validation_error import HttpValidationError
 from ..types.model_result_public import ModelResultPublic
+from .client import AsyncModelsClient, ModelsClient
 
 OMIT = typing.cast(Any, ...)
 

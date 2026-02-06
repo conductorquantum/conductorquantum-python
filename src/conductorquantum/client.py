@@ -3,10 +3,9 @@ from __future__ import annotations
 import typing
 
 import httpx
-
-from .base_client import BaseConductorQuantum, AsyncBaseConductorQuantum
+from .base_client import AsyncBaseConductorQuantum, BaseConductorQuantum
 from .environment import ConductorQuantumEnvironment
-from .models.extended_client import ExtendedModelsClient, AsyncExtendedModelsClient
+from .models.extended_client import AsyncExtendedModelsClient, ExtendedModelsClient
 
 DEFAULT_TIMEOUT_SECONDS = 120
 

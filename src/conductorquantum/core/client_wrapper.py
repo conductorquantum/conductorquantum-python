@@ -32,10 +32,29 @@ class BaseClientWrapper:
         return headers
 
     def _get_token(self) -> str:
+        token: typing.Any
         if isinstance(self._token, str):
-            return self._token
+            token = self._token
+        elif callable(self._token):
+            token = self._token()
         else:
-            return self._token()
+            token = self._token
+        if token is None:
+            raise ValueError(
+                "Token is required but was not provided. Pass `token` as a non-empty string "
+                "or a callable that returns a non-empty string."
+            )
+        if not isinstance(token, str):
+            raise ValueError(
+                f"Token must be a string, but got {type(token).__name__}. Pass `token` as a "
+                "non-empty string or a callable that returns a non-empty string."
+            )
+        if token.strip() == "":
+            raise ValueError(
+                "Token is required but was empty. Pass `token` as a non-empty string "
+                "or a callable that returns a non-empty string."
+            )
+        return token
 
     def get_custom_headers(self) -> typing.Optional[typing.Dict[str, str]]:
         return self._headers
