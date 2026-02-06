@@ -22,39 +22,20 @@ class BaseClientWrapper:
 
     def get_headers(self) -> typing.Dict[str, str]:
         headers: typing.Dict[str, str] = {
-            "User-Agent": "conductorquantum/0.1.2",
+            "User-Agent": "conductorquantum/0.1.3",
             "X-Fern-Language": "Python",
             "X-Fern-SDK-Name": "conductorquantum",
-            "X-Fern-SDK-Version": "0.1.2",
+            "X-Fern-SDK-Version": "0.1.3",
             **(self.get_custom_headers() or {}),
         }
         headers["Authorization"] = f"Bearer {self._get_token()}"
         return headers
 
     def _get_token(self) -> str:
-        token: typing.Any
         if isinstance(self._token, str):
-            token = self._token
-        elif callable(self._token):
-            token = self._token()
+            return self._token
         else:
-            token = self._token
-        if token is None:
-            raise ValueError(
-                "Token is required but was not provided. Pass `token` as a non-empty string "
-                "or a callable that returns a non-empty string."
-            )
-        if not isinstance(token, str):
-            raise ValueError(
-                f"Token must be a string, but got {type(token).__name__}. Pass `token` as a "
-                "non-empty string or a callable that returns a non-empty string."
-            )
-        if token.strip() == "":
-            raise ValueError(
-                "Token is required but was empty. Pass `token` as a non-empty string "
-                "or a callable that returns a non-empty string."
-            )
-        return token
+            return self._token()
 
     def get_custom_headers(self) -> typing.Optional[typing.Dict[str, str]]:
         return self._headers
