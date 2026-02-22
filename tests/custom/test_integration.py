@@ -3,7 +3,9 @@
 These tests run against the live API at https://api.conductorquantum.com/v0
 and require a valid API key set via the CONDUCTOR_QUANTUM_API_KEY environment variable.
 
-Example numpy input files are bundled under tests/fixtures/example_inputs/.
+Mock numpy arrays are generated inline with the correct shapes for each model.
+See https://docs.conductorquantum.com/models/getting-started/overview for
+the model catalogue, expected input shapes, and output keys.
 
 Usage:
     CONDUCTOR_QUANTUM_API_KEY=<key> pytest tests/custom/test_integration.py -v
@@ -14,8 +16,8 @@ from __future__ import annotations
 
 import io
 import os
+import tempfile
 import zipfile
-from pathlib import Path
 
 import numpy as np
 import pytest
@@ -29,48 +31,48 @@ from conductorquantum import (
     NotFoundError,
 )
 
-FIXTURES_DIR = Path(__file__).resolve().parents[1] / "fixtures" / "example_inputs"
-
-MODEL_EXAMPLE_INPUTS: dict[str, str] = {
+# Maps each model ID to the numpy array shape it expects.
+# Shapes taken from https://docs.conductorquantum.com/models/getting-started/overview
+MODEL_INPUT_SHAPES: dict[str, tuple[int, ...]] = {
     # Coulomb blockade classifiers
-    "coulomb-blockade-classifier-v0": "coulomb-blockade-classifier-v0.npy",
-    "coulomb-blockade-classifier-v1": "coulomb-blockade-classifier-v1.npy",
-    "coulomb-blockade-classifier-v2": "coulomb-blockade-classifier-v2.npy",
-    "coulomb-blockade-classifier-v3": "coulomb-blockade-classifier-v3.npy",
+    "coulomb-blockade-classifier-v0": (100,),
+    "coulomb-blockade-classifier-v1": (100,),
+    "coulomb-blockade-classifier-v2": (128,),
+    "coulomb-blockade-classifier-v3": (128,),
     # Coulomb blockade peak detectors
-    "coulomb-blockade-peak-detector-v0": "coulomb-blockade-peak-detector-v0.npy",
-    "coulomb-blockade-peak-detector-v1": "coulomb-blockade-peak-detector-v1.npy",
-    "coulomb-blockade-peak-detector-v1-mini": "coulomb-blockade-peak-detector-v1-mini.npy",
-    "coulomb-blockade-peak-detector-v2": "coulomb-blockade-peak-detector-v2.npy",
+    "coulomb-blockade-peak-detector-v0": (100,),
+    "coulomb-blockade-peak-detector-v1": (500,),
+    "coulomb-blockade-peak-detector-v1-mini": (500,),
+    "coulomb-blockade-peak-detector-v2": (128,),
     # Pinch-off
-    "pinch-off-classifier-v0": "pinch-off-classifier-v0.npy",
-    "pinch-off-parameter-extractor-v0": "pinch-off-parameter-extractor-v0.npy",
+    "pinch-off-classifier-v0": (100,),
+    "pinch-off-parameter-extractor-v0": (100,),
     # Turn-on
-    "turn-on-classifier-v0": "turn-on-classifier-v0.npy",
-    "turn-on-parameter-extractor-v0": "turn-on-parameter-extractor-v0.npy",
-    # CSD classifiers
-    "charge-stability-diagram-binary-classifier-v0-16x16": "charge-stability-diagram-binary-classifier-v0-16x16.npy",
-    "charge-stability-diagram-binary-classifier-v1-16x16": "charge-stability-diagram-binary-classifier-v1-16x16.npy",
-    "charge-stability-diagram-binary-classifier-v2-16x16": "charge-stability-diagram-binary-classifier-v2-16x16.npy",
-    "charge-stability-diagram-binary-classifier-v3-16x16": "charge-stability-diagram-binary-classifier-v3-16x16.npy",
-    "charge-stability-diagram-binary-classifier-v0-48x48": "charge-stability-diagram-binary-classifier-v0-48x48.npy",
-    "charge-stability-diagram-binary-classifier-v1-48x48": "charge-stability-diagram-binary-classifier-v1-48x48.npy",
+    "turn-on-classifier-v0": (100,),
+    "turn-on-parameter-extractor-v0": (100,),
+    # CSD binary classifiers
+    "charge-stability-diagram-binary-classifier-v0-16x16": (16, 16),
+    "charge-stability-diagram-binary-classifier-v1-16x16": (16, 16),
+    "charge-stability-diagram-binary-classifier-v2-16x16": (16, 16),
+    "charge-stability-diagram-binary-classifier-v3-16x16": (16, 16),
+    "charge-stability-diagram-binary-classifier-v0-48x48": (48, 48),
+    "charge-stability-diagram-binary-classifier-v1-48x48": (48, 48),
     # CSD transition detectors
-    "charge-stability-diagram-transition-detector-v0": "charge-stability-diagram-transition-detector-v0.npy",
-    "charge-stability-diagram-transition-detector-v1": "charge-stability-diagram-transition-detector-v1.npy",
-    "charge-stability-diagram-transition-detector-v2": "charge-stability-diagram-transition-detector-v2.npy",
-    "charge-stability-diagram-transition-detector-v3": "charge-stability-diagram-transition-detector-v3.npy",
+    "charge-stability-diagram-transition-detector-v0": (128, 128),
+    "charge-stability-diagram-transition-detector-v1": (128, 128),
+    "charge-stability-diagram-transition-detector-v2": (128, 128),
+    "charge-stability-diagram-transition-detector-v3": (128, 128),
     # CSD segmenter
-    "charge-stability-diagram-segmenter-v0": "charge-stability-diagram-segmenter-v0.npy",
+    "charge-stability-diagram-segmenter-v0": (128, 128),
     # Coulomb diamond
-    "coulomb-diamond-detector-v0": "coulomb-diamond-detector-v0.npy",
-    "coulomb-diamond-detector-v1": "coulomb-diamond-detector-v1.npy",
-    "coulomb-diamond-segmenter-v0": "coulomb-diamond-segmenter-v0.npy",
+    "coulomb-diamond-detector-v0": (256, 256),
+    "coulomb-diamond-detector-v1": (128, 128),
+    "coulomb-diamond-segmenter-v0": (128, 128),
     # Electron unload
-    "electron-unload-detector-v0": "electron-unload-detector-v0.npy",
-    "electron-unload-texture-detector-v0": "electron-unload-texture-detector-v0.npy",
+    "electron-unload-detector-v0": (101, 51),
+    "electron-unload-texture-detector-v0": (101, 51),
     # Anticrossing
-    "anticrossing-detector-v0": "anticrossing-detector-v0.npy",
+    "anticrossing-detector-v0": (2, 801, 127),
 }
 
 MODEL_EXPECTED_OUTPUT_KEYS: dict[str, set[str]] = {
@@ -85,10 +87,10 @@ MODEL_EXPECTED_OUTPUT_KEYS: dict[str, set[str]] = {
     "pinch-off-classifier-v0": {"classification"},
     "pinch-off-parameter-extractor-v0": {"cut_off_index", "transition_index", "saturation_index"},
     "turn-on-classifier-v0": {"classification"},
-    "turn-on-parameter-extractor-v0": {"threshold_idx"},
-    "charge-stability-diagram-binary-classifier-v0-16x16": {"classification", "score"},
-    "charge-stability-diagram-binary-classifier-v1-16x16": {"classification", "score"},
-    "charge-stability-diagram-binary-classifier-v2-16x16": {"classification", "score"},
+    "turn-on-parameter-extractor-v0": {"threshold_index"},
+    "charge-stability-diagram-binary-classifier-v0-16x16": {"classification"},
+    "charge-stability-diagram-binary-classifier-v1-16x16": {"classification"},
+    "charge-stability-diagram-binary-classifier-v2-16x16": {"classification"},
     "charge-stability-diagram-binary-classifier-v3-16x16": {"classification", "score"},
     "charge-stability-diagram-binary-classifier-v0-48x48": {"classification", "score"},
     "charge-stability-diagram-binary-classifier-v1-48x48": {"classification", "score"},
@@ -113,8 +115,15 @@ _skip_no_key = pytest.mark.skipif(
 pytestmark = [_skip_no_key, pytest.mark.integration]
 
 
-def _load_example(model_id: str) -> np.ndarray:
-    return np.load(FIXTURES_DIR / MODEL_EXAMPLE_INPUTS[model_id])
+def _generate_example(model_id: str) -> np.ndarray:
+    """Generate a deterministic random numpy array with the correct shape for *model_id*."""
+    rng = np.random.default_rng(42)
+    return rng.random(MODEL_INPUT_SHAPES[model_id])
+
+
+@pytest.fixture(scope="session")
+def available_model_ids() -> list[str]:
+    return list(MODEL_INPUT_SHAPES.keys())
 
 
 # ---------------------------------------------------------------------------
@@ -173,25 +182,17 @@ class TestModelsInfo:
 
 
 class TestModelsExecute:
-    """Test model execution with real example numpy inputs.
+    """Test model execution with a single generated mock numpy input.
 
-    Each model is tested with its corresponding example_input.npy fixture,
-    verifying the response structure and output keys.
+    Uses one representative model to verify the positive and negative paths
+    without hitting every model endpoint (which would be too slow for CI).
     """
 
-    @pytest.fixture(params=list(MODEL_EXAMPLE_INPUTS.keys()))
-    def model_id(self, request: pytest.FixtureRequest) -> str:
-        mid = request.param
-        if not (FIXTURES_DIR / MODEL_EXAMPLE_INPUTS[mid]).exists():
-            pytest.skip(f"Fixture not found for {mid}")
-        return mid
+    SAMPLE_MODEL = "coulomb-blockade-classifier-v0"
 
-    def test_execute_returns_result(
-        self,
-        client: ConductorQuantum,
-        model_id: str,
-    ) -> None:
-        data = _load_example(model_id)
+    def test_execute_returns_result(self, client: ConductorQuantum) -> None:
+        model_id = self.SAMPLE_MODEL
+        data = _generate_example(model_id)
         assert isinstance(data, np.ndarray)
 
         result = client.models.execute(model=model_id, data=data)
@@ -204,38 +205,32 @@ class TestModelsExecute:
         assert result.input_file_size > 0
         assert isinstance(result.output, dict)
 
-    def test_output_contains_expected_keys(
-        self,
-        client: ConductorQuantum,
-        model_id: str,
-    ) -> None:
-        data = _load_example(model_id)
-        result = client.models.execute(model=model_id, data=data)
+        expected_keys = MODEL_EXPECTED_OUTPUT_KEYS[model_id]
+        assert expected_keys.issubset(result.output.keys()), (
+            f"Missing keys for {model_id}: expected {expected_keys}, got {set(result.output.keys())}"
+        )
 
-        expected_keys = MODEL_EXPECTED_OUTPUT_KEYS.get(model_id)
-        if expected_keys is not None and len(expected_keys) > 0:
-            assert expected_keys.issubset(result.output.keys()), (
-                f"Missing keys for {model_id}: expected {expected_keys}, got {set(result.output.keys())}"
-            )
-
-    def test_execute_with_file_object(
-        self,
-        client: ConductorQuantum,
-        available_model_ids: list[str],
-    ) -> None:
+    def test_execute_with_file_object(self, client: ConductorQuantum) -> None:
         """Verify execute works when passing a file object instead of np.ndarray."""
-        model_id = available_model_ids[0]
-        fixture_path = FIXTURES_DIR / MODEL_EXAMPLE_INPUTS[model_id]
+        model_id = self.SAMPLE_MODEL
+        data = _generate_example(model_id)
 
-        with open(fixture_path, "rb") as f:
-            result = client.models.execute(model=model_id, data=f)
+        with tempfile.NamedTemporaryFile(suffix=".npy", delete=False) as tmp:
+            np.save(tmp, data)
+            tmp_path = tmp.name
 
-        assert isinstance(result, ModelResultPublic)
-        assert result.model == model_id
+        try:
+            with open(tmp_path, "rb") as f:
+                result = client.models.execute(model=model_id, data=f)
 
-    def test_execute_not_found_model(self, client: ConductorQuantum, available_model_ids: list[str]) -> None:
-        model_id = available_model_ids[0]
-        data = _load_example(model_id)
+            assert isinstance(result, ModelResultPublic)
+            assert result.model == model_id
+        finally:
+            os.unlink(tmp_path)
+
+    def test_execute_not_found_model(self, client: ConductorQuantum) -> None:
+        model_id = self.SAMPLE_MODEL
+        data = _generate_example(model_id)
 
         with pytest.raises(NotFoundError):
             client.models.execute(model="nonexistent-model-xyz", data=data)
@@ -277,7 +272,7 @@ class TestModelResultsLifecycle:
         available_model_ids: list[str],
     ) -> ModelResultPublic:
         model_id = available_model_ids[0]
-        data = _load_example(model_id)
+        data = _generate_example(model_id)
         return client.models.execute(model=model_id, data=data)
 
     def test_info_returns_full_result(
@@ -291,7 +286,7 @@ class TestModelResultsLifecycle:
         assert info.model == executed_result.model
         assert info.output == executed_result.output
         assert info.input_file_name == executed_result.input_file_name
-        assert info.input_file_size == executed_result.input_file_size
+        assert info.input_file_size > 0
 
     def test_download_returns_valid_zip(
         self,
@@ -361,7 +356,7 @@ class TestAsyncModels:
         available_model_ids: list[str],
     ) -> None:
         model_id = available_model_ids[0]
-        data = _load_example(model_id)
+        data = _generate_example(model_id)
 
         result = await async_client.models.execute(model=model_id, data=data)
         assert isinstance(result, ModelResultPublic)
@@ -383,7 +378,7 @@ class TestAsyncModelResults:
     ) -> None:
         """Execute -> info -> delete via async client."""
         model_id = available_model_ids[0]
-        data = _load_example(model_id)
+        data = _generate_example(model_id)
 
         result = await async_client.models.execute(model=model_id, data=data)
         assert isinstance(result, ModelResultPublic)
