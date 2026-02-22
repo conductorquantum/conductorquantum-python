@@ -12,6 +12,7 @@ if typing.TYPE_CHECKING:
     from .model_result_public_masked import ModelResultPublicMasked
     from .validation_error import ValidationError
     from .validation_error_loc_item import ValidationErrorLocItem
+    from .vote_response import VoteResponse
 _dynamic_imports: typing.Dict[str, str] = {
     "HttpValidationError": ".http_validation_error",
     "ModelPublic": ".model_public",
@@ -19,6 +20,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "ModelResultPublicMasked": ".model_result_public_masked",
     "ValidationError": ".validation_error",
     "ValidationErrorLocItem": ".validation_error_loc_item",
+    "VoteResponse": ".vote_response",
 }
 
 
@@ -50,4 +52,5 @@ __all__ = [
     "ModelResultPublicMasked",
     "ValidationError",
     "ValidationErrorLocItem",
+    "VoteResponse",
 ]

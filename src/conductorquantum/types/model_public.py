@@ -42,6 +42,16 @@ class ModelPublic(UniversalBaseModel):
     The input shape requirements for the model
     """
 
+    nn_input_shape_requirements: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    The NN input shape requirements for the model
+    """
+
+    nn_output_shape_requirements: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    The NN output shape requirements for the model
+    """
+
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
     else:

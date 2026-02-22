@@ -42,6 +42,11 @@ class ModelResultPublic(UniversalBaseModel):
     The string ID of the model
     """
 
+    user_vote: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Current user's vote: 1, -1, or null
+    """
+
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
     else:

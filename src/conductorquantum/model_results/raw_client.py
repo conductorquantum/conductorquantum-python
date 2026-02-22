@@ -16,11 +16,156 @@ from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.http_validation_error import HttpValidationError
 from ..types.model_result_public import ModelResultPublic
 from ..types.model_result_public_masked import ModelResultPublicMasked
+from ..types.vote_response import VoteResponse
+
+# this is used as the default value for optional parameters
+OMIT = typing.cast(typing.Any, ...)
 
 
 class RawModelResultsClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
+
+    def vote_on_model_result(
+        self,
+        result_id: str,
+        *,
+        vote: int,
+        feedback: typing.Optional[str] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[VoteResponse]:
+        """
+        Create or update a vote on a model result.
+
+        Parameters
+        ----------
+        result_id : str
+            The UUID of the model result.
+
+        vote : int
+            1 for upvote, -1 for downvote
+
+        feedback : typing.Optional[str]
+            Optional text feedback
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[VoteResponse]
+            Successful Response
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"model-results/{jsonable_encoder(result_id)}/vote",
+            method="PUT",
+            json={
+                "vote": vote,
+                "feedback": feedback,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    VoteResponse,
+                    parse_obj_as(
+                        type_=VoteResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Optional[typing.Any],
+                        parse_obj_as(
+                            type_=typing.Optional[typing.Any],  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def remove_vote_on_model_result(
+        self, result_id: str, *, request_options: typing.Optional[RequestOptions] = None
+    ) -> HttpResponse[typing.Dict[str, str]]:
+        """
+        Remove a user's vote on a model result.
+
+        Parameters
+        ----------
+        result_id : str
+            The UUID of the model result.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[typing.Dict[str, str]]
+            Successful Response
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"model-results/{jsonable_encoder(result_id)}/vote",
+            method="DELETE",
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    typing.Dict[str, str],
+                    parse_obj_as(
+                        type_=typing.Dict[str, str],  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Optional[typing.Any],
+                        parse_obj_as(
+                            type_=typing.Optional[typing.Any],  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def info(
         self, id: str, *, request_options: typing.Optional[RequestOptions] = None
@@ -161,6 +306,9 @@ class RawModelResultsClient:
         *,
         skip: typing.Optional[int] = None,
         limit: typing.Optional[int] = None,
+        model_str_id: typing.Optional[str] = None,
+        start_date: typing.Optional[str] = None,
+        end_date: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[typing.List[ModelResultPublicMasked]]:
         """
@@ -173,6 +321,15 @@ class RawModelResultsClient:
 
         limit : typing.Optional[int]
             The number of model results to include.
+
+        model_str_id : typing.Optional[str]
+            Filter by model str_id.
+
+        start_date : typing.Optional[str]
+            Filter results created on or after this date.
+
+        end_date : typing.Optional[str]
+            Filter results created on or before this date.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -188,6 +345,9 @@ class RawModelResultsClient:
             params={
                 "skip": skip,
                 "limit": limit,
+                "model_str_id": model_str_id,
+                "start_date": start_date,
+                "end_date": end_date,
             },
             request_options=request_options,
         )
@@ -308,6 +468,147 @@ class RawModelResultsClient:
 class AsyncRawModelResultsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
+
+    async def vote_on_model_result(
+        self,
+        result_id: str,
+        *,
+        vote: int,
+        feedback: typing.Optional[str] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[VoteResponse]:
+        """
+        Create or update a vote on a model result.
+
+        Parameters
+        ----------
+        result_id : str
+            The UUID of the model result.
+
+        vote : int
+            1 for upvote, -1 for downvote
+
+        feedback : typing.Optional[str]
+            Optional text feedback
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[VoteResponse]
+            Successful Response
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"model-results/{jsonable_encoder(result_id)}/vote",
+            method="PUT",
+            json={
+                "vote": vote,
+                "feedback": feedback,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    VoteResponse,
+                    parse_obj_as(
+                        type_=VoteResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Optional[typing.Any],
+                        parse_obj_as(
+                            type_=typing.Optional[typing.Any],  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def remove_vote_on_model_result(
+        self, result_id: str, *, request_options: typing.Optional[RequestOptions] = None
+    ) -> AsyncHttpResponse[typing.Dict[str, str]]:
+        """
+        Remove a user's vote on a model result.
+
+        Parameters
+        ----------
+        result_id : str
+            The UUID of the model result.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[typing.Dict[str, str]]
+            Successful Response
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"model-results/{jsonable_encoder(result_id)}/vote",
+            method="DELETE",
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    typing.Dict[str, str],
+                    parse_obj_as(
+                        type_=typing.Dict[str, str],  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Optional[typing.Any],
+                        parse_obj_as(
+                            type_=typing.Optional[typing.Any],  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        HttpValidationError,
+                        parse_obj_as(
+                            type_=HttpValidationError,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def info(
         self, id: str, *, request_options: typing.Optional[RequestOptions] = None
@@ -450,6 +751,9 @@ class AsyncRawModelResultsClient:
         *,
         skip: typing.Optional[int] = None,
         limit: typing.Optional[int] = None,
+        model_str_id: typing.Optional[str] = None,
+        start_date: typing.Optional[str] = None,
+        end_date: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[typing.List[ModelResultPublicMasked]]:
         """
@@ -462,6 +766,15 @@ class AsyncRawModelResultsClient:
 
         limit : typing.Optional[int]
             The number of model results to include.
+
+        model_str_id : typing.Optional[str]
+            Filter by model str_id.
+
+        start_date : typing.Optional[str]
+            Filter results created on or after this date.
+
+        end_date : typing.Optional[str]
+            Filter results created on or before this date.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -477,6 +790,9 @@ class AsyncRawModelResultsClient:
             params={
                 "skip": skip,
                 "limit": limit,
+                "model_str_id": model_str_id,
+                "start_date": start_date,
+                "end_date": end_date,
             },
             request_options=request_options,
         )

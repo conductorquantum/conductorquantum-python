@@ -6,7 +6,11 @@ from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
 from ..types.model_result_public import ModelResultPublic
 from ..types.model_result_public_masked import ModelResultPublicMasked
+from ..types.vote_response import VoteResponse
 from .raw_client import AsyncRawModelResultsClient, RawModelResultsClient
+
+# this is used as the default value for optional parameters
+OMIT = typing.cast(typing.Any, ...)
 
 
 class ModelResultsClient:
@@ -23,6 +27,86 @@ class ModelResultsClient:
         RawModelResultsClient
         """
         return self._raw_client
+
+    def vote_on_model_result(
+        self,
+        result_id: str,
+        *,
+        vote: int,
+        feedback: typing.Optional[str] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> VoteResponse:
+        """
+        Create or update a vote on a model result.
+
+        Parameters
+        ----------
+        result_id : str
+            The UUID of the model result.
+
+        vote : int
+            1 for upvote, -1 for downvote
+
+        feedback : typing.Optional[str]
+            Optional text feedback
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        VoteResponse
+            Successful Response
+
+        Examples
+        --------
+        from conductorquantum import ConductorQuantum
+
+        client = ConductorQuantum(
+            token="YOUR_TOKEN",
+        )
+        client.model_results.vote_on_model_result(
+            result_id="result_id",
+            vote=1,
+        )
+        """
+        _response = self._raw_client.vote_on_model_result(
+            result_id, vote=vote, feedback=feedback, request_options=request_options
+        )
+        return _response.data
+
+    def remove_vote_on_model_result(
+        self, result_id: str, *, request_options: typing.Optional[RequestOptions] = None
+    ) -> typing.Dict[str, str]:
+        """
+        Remove a user's vote on a model result.
+
+        Parameters
+        ----------
+        result_id : str
+            The UUID of the model result.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        typing.Dict[str, str]
+            Successful Response
+
+        Examples
+        --------
+        from conductorquantum import ConductorQuantum
+
+        client = ConductorQuantum(
+            token="YOUR_TOKEN",
+        )
+        client.model_results.remove_vote_on_model_result(
+            result_id="result_id",
+        )
+        """
+        _response = self._raw_client.remove_vote_on_model_result(result_id, request_options=request_options)
+        return _response.data
 
     def info(self, id: str, *, request_options: typing.Optional[RequestOptions] = None) -> ModelResultPublic:
         """
@@ -90,6 +174,9 @@ class ModelResultsClient:
         *,
         skip: typing.Optional[int] = None,
         limit: typing.Optional[int] = None,
+        model_str_id: typing.Optional[str] = None,
+        start_date: typing.Optional[str] = None,
+        end_date: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> typing.List[ModelResultPublicMasked]:
         """
@@ -102,6 +189,15 @@ class ModelResultsClient:
 
         limit : typing.Optional[int]
             The number of model results to include.
+
+        model_str_id : typing.Optional[str]
+            Filter by model str_id.
+
+        start_date : typing.Optional[str]
+            Filter results created on or after this date.
+
+        end_date : typing.Optional[str]
+            Filter results created on or before this date.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -121,9 +217,19 @@ class ModelResultsClient:
         client.model_results.list(
             skip=1,
             limit=1,
+            model_str_id="model_str_id",
+            start_date="start_date",
+            end_date="end_date",
         )
         """
-        _response = self._raw_client.list(skip=skip, limit=limit, request_options=request_options)
+        _response = self._raw_client.list(
+            skip=skip,
+            limit=limit,
+            model_str_id=model_str_id,
+            start_date=start_date,
+            end_date=end_date,
+            request_options=request_options,
+        )
         return _response.data
 
     def download(self, id: str, *, request_options: typing.Optional[RequestOptions] = None) -> typing.Iterator[bytes]:
@@ -172,6 +278,102 @@ class AsyncModelResultsClient:
         AsyncRawModelResultsClient
         """
         return self._raw_client
+
+    async def vote_on_model_result(
+        self,
+        result_id: str,
+        *,
+        vote: int,
+        feedback: typing.Optional[str] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> VoteResponse:
+        """
+        Create or update a vote on a model result.
+
+        Parameters
+        ----------
+        result_id : str
+            The UUID of the model result.
+
+        vote : int
+            1 for upvote, -1 for downvote
+
+        feedback : typing.Optional[str]
+            Optional text feedback
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        VoteResponse
+            Successful Response
+
+        Examples
+        --------
+        import asyncio
+
+        from conductorquantum import AsyncConductorQuantum
+
+        client = AsyncConductorQuantum(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.model_results.vote_on_model_result(
+                result_id="result_id",
+                vote=1,
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.vote_on_model_result(
+            result_id, vote=vote, feedback=feedback, request_options=request_options
+        )
+        return _response.data
+
+    async def remove_vote_on_model_result(
+        self, result_id: str, *, request_options: typing.Optional[RequestOptions] = None
+    ) -> typing.Dict[str, str]:
+        """
+        Remove a user's vote on a model result.
+
+        Parameters
+        ----------
+        result_id : str
+            The UUID of the model result.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        typing.Dict[str, str]
+            Successful Response
+
+        Examples
+        --------
+        import asyncio
+
+        from conductorquantum import AsyncConductorQuantum
+
+        client = AsyncConductorQuantum(
+            token="YOUR_TOKEN",
+        )
+
+
+        async def main() -> None:
+            await client.model_results.remove_vote_on_model_result(
+                result_id="result_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.remove_vote_on_model_result(result_id, request_options=request_options)
+        return _response.data
 
     async def info(self, id: str, *, request_options: typing.Optional[RequestOptions] = None) -> ModelResultPublic:
         """
@@ -255,6 +457,9 @@ class AsyncModelResultsClient:
         *,
         skip: typing.Optional[int] = None,
         limit: typing.Optional[int] = None,
+        model_str_id: typing.Optional[str] = None,
+        start_date: typing.Optional[str] = None,
+        end_date: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> typing.List[ModelResultPublicMasked]:
         """
@@ -267,6 +472,15 @@ class AsyncModelResultsClient:
 
         limit : typing.Optional[int]
             The number of model results to include.
+
+        model_str_id : typing.Optional[str]
+            Filter by model str_id.
+
+        start_date : typing.Optional[str]
+            Filter results created on or after this date.
+
+        end_date : typing.Optional[str]
+            Filter results created on or before this date.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -291,12 +505,22 @@ class AsyncModelResultsClient:
             await client.model_results.list(
                 skip=1,
                 limit=1,
+                model_str_id="model_str_id",
+                start_date="start_date",
+                end_date="end_date",
             )
 
 
         asyncio.run(main())
         """
-        _response = await self._raw_client.list(skip=skip, limit=limit, request_options=request_options)
+        _response = await self._raw_client.list(
+            skip=skip,
+            limit=limit,
+            model_str_id=model_str_id,
+            start_date=start_date,
+            end_date=end_date,
+            request_options=request_options,
+        )
         return _response.data
 
     async def download(

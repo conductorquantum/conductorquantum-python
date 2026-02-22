@@ -13,6 +13,7 @@ if typing.TYPE_CHECKING:
         ModelResultPublicMasked,
         ValidationError,
         ValidationErrorLocItem,
+        VoteResponse,
     )
     from .errors import ForbiddenError, NotFoundError, UnprocessableEntityError
     from . import model_results, models
@@ -32,6 +33,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "UnprocessableEntityError": ".errors",
     "ValidationError": ".types",
     "ValidationErrorLocItem": ".types",
+    "VoteResponse": ".types",
     "__version__": ".version",
     "model_results": ".model_results",
     "models": ".models",
@@ -72,6 +74,7 @@ __all__ = [
     "UnprocessableEntityError",
     "ValidationError",
     "ValidationErrorLocItem",
+    "VoteResponse",
     "__version__",
     "model_results",
     "models",
