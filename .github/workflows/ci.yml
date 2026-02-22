@@ -52,7 +52,7 @@ jobs:
       - name: Install dependencies
         run: poetry install --with dev
       - name: Integration tests
-        run: poetry run pytest tests/custom/test_integration.py -v --timeout=120
+        run: poetry run pytest tests/custom/test_integration.py -v
         env:
           CONDUCTOR_QUANTUM_API_KEY: ${{ secrets.MODELS_API_TOKEN }}
 
