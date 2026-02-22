@@ -36,8 +36,28 @@ jobs:
       - name: Test
         run: poetry run pytest -rP .
 
-  publish:
+  integration-test:
+    runs-on: ubuntu-latest
     needs: [compile, test]
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Set up python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11.13
+      - name: Bootstrap poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python - -y --version 1.5.1
+      - name: Install dependencies
+        run: poetry install --with dev
+      - name: Integration tests
+        run: poetry run pytest tests/custom/test_integration.py -v --timeout=120
+        env:
+          CONDUCTOR_QUANTUM_API_KEY: ${{ secrets.MODELS_API_TOKEN }}
+
+  publish:
+    needs: [compile, test, integration-test]
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:

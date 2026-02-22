@@ -52,6 +52,9 @@ ruff = "==0.11.5"
 [tool.pytest.ini_options]
 testpaths = [ "tests" ]
 asyncio_mode = "auto"
+markers = [
+    "integration: tests that hit the live Conductor Quantum API (require CONDUCTOR_QUANTUM_API_KEY)",
+]
 
 [tool.mypy]
 plugins = ["pydantic.mypy"]
