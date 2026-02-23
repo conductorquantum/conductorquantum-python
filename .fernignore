@@ -3,3 +3,5 @@ src/conductorquantum/client.py
 src/conductorquantum/models/extended_client.py
 README.md
 .github/workflows/ci.yml
+tests/conftest.py
+tests/custom/test_integration.py
