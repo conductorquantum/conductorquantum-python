@@ -51,10 +51,14 @@ jobs:
           curl -sSL https://install.python-poetry.org | python - -y --version 1.5.1
       - name: Install dependencies
         run: poetry install --with dev
-      - name: Integration tests
+      - name: Models integration tests
         run: poetry run pytest tests/custom/test_models_integration.py -v
         env:
           CONDUCTOR_QUANTUM_API_KEY: ${{ secrets.MODELS_API_TOKEN }}
+      - name: Coda integration tests
+        run: poetry run pytest tests/custom/test_coda_integration.py -v
+        env:
+          CONDUCTOR_QUANTUM_API_KEY: ${{ secrets.CODA_API_TOKEN }}
 
   publish:
     needs: [compile, test, integration-test]
