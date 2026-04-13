@@ -47,7 +47,9 @@ def _assert_agents_sse_invariants(events: list[dict]) -> None:
         assert isinstance(t, str) and len(t) > 0, f"Each event needs non-empty str type, got {ev!r}"
         types.append(t)
     terminal_positions = [i for i, t in enumerate(types) if t in _AGENTS_TERMINAL_TYPES]
-    assert len(terminal_positions) == 1, f"Expected exactly one terminal event ({_AGENTS_TERMINAL_TYPES}), types={types}"
+    assert len(terminal_positions) == 1, (
+        f"Expected exactly one terminal event ({_AGENTS_TERMINAL_TYPES}), types={types}"
+    )
     assert terminal_positions[0] == len(events) - 1, f"Terminal event must be last, types={types}"
 
 

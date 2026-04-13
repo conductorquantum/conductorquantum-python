@@ -4,12 +4,13 @@ import typing
 
 import httpx
 from .base_client import AsyncBaseConductorQuantum, BaseConductorQuantum
+from .coda.client import AsyncCodaClient, CodaClient
 from .environment import ConductorQuantumEnvironment
 from .models.extended_client import AsyncExtendedModelsClient, ExtendedModelsClient
-from .coda.client import AsyncCodaClient, CodaClient
 from .version import __version__
 
 DEFAULT_TIMEOUT_SECONDS = 120
+
 
 class ConductorQuantum(BaseConductorQuantum):
     """Main client for interacting with the Conductor Quantum API."""

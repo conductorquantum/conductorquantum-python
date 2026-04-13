@@ -8,7 +8,7 @@ src/conductorquantum/coda/errors.py
 README.md
 .github/workflows/ci.yml
 tests/conftest.py
-tests/custom/test_integration.py
+tests/custom/test_models_integration.py
 tests/custom/test_coda.py
 tests/custom/test_coda_integration.py
 .gitignore

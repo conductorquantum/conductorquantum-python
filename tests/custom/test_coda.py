@@ -7,7 +7,6 @@ httpx and pytest-asyncio (already in dev deps).
 from __future__ import annotations
 
 import json
-from typing import Any
 
 import httpx
 import pytest
@@ -349,12 +348,14 @@ class TestCodaClientAgents:
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
         client._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
-        list(client.agents(
-            messages=[{"role": "user", "content": "test"}],
-            thread_id="t-1",
-            fast=True,
-            mode="learn",
-        ))
+        list(
+            client.agents(
+                messages=[{"role": "user", "content": "test"}],
+                thread_id="t-1",
+                fast=True,
+                mode="learn",
+            )
+        )
 
     def test_agents_omits_thread_id_when_none(self):
         def handler(request: httpx.Request) -> httpx.Response:
@@ -553,12 +554,15 @@ class TestAsyncCodaClientAgents:
 
         client = AsyncCodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
         client._client = httpx.AsyncClient(base_url=BASE_URL, transport=httpx.MockTransport(handler))
-        _ = [ev async for ev in client.agents(
-            messages=[{"role": "user", "content": "test"}],
-            thread_id="t-2",
-            fast=True,
-            mode="learn",
-        )]
+        _ = [
+            ev
+            async for ev in client.agents(
+                messages=[{"role": "user", "content": "test"}],
+                thread_id="t-2",
+                fast=True,
+                mode="learn",
+            )
+        ]
 
     async def test_agents_skips_keepalive_lines(self):
         async def handler(request: httpx.Request) -> httpx.Response:
