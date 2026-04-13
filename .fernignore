@@ -1,6 +1,7 @@
 # Specify files that shouldn't be modified by Fern
 src/conductorquantum/client.py
 src/conductorquantum/models/extended_client.py
+src/conductorquantum/control.py
 src/conductorquantum/coda/__init__.py
 src/conductorquantum/coda/client.py
 src/conductorquantum/coda/_http.py

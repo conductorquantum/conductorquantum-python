@@ -67,6 +67,115 @@ class TestRootClientCoda:
 
 
 # ---------------------------------------------------------------------------
+# Control namespace and top-level shortcuts
+# ---------------------------------------------------------------------------
+
+
+class TestRootClientControl:
+    def test_sync_client_exposes_control(self):
+        client = ConductorQuantum(token=TOKEN)
+        assert hasattr(client, "control")
+        assert hasattr(client.control, "models")
+        assert hasattr(client.control, "model_results")
+
+    def test_async_client_exposes_control(self):
+        client = AsyncConductorQuantum(token=TOKEN)
+        assert hasattr(client, "control")
+        assert hasattr(client.control, "models")
+        assert hasattr(client.control, "model_results")
+
+    def test_control_models_is_same_as_models(self):
+        import warnings
+
+        client = ConductorQuantum(token=TOKEN)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            assert client.control.models is client.models
+
+    def test_control_model_results_is_same_as_model_results(self):
+        import warnings
+
+        client = ConductorQuantum(token=TOKEN)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            assert client.control.model_results is client.model_results
+
+    def test_models_emits_deprecation_warning(self):
+        client = ConductorQuantum(token=TOKEN)
+        with pytest.warns(DeprecationWarning, match="client.models is deprecated"):
+            client.models
+
+    def test_model_results_emits_deprecation_warning(self):
+        client = ConductorQuantum(token=TOKEN)
+        with pytest.warns(DeprecationWarning, match="client.model_results is deprecated"):
+            client.model_results
+
+
+class TestTopLevelShortcuts:
+    def test_has_all_coda_methods_at_top_level(self):
+        client = ConductorQuantum(token=TOKEN)
+        for method in [
+            "health",
+            "transpile",
+            "simulate",
+            "to_openqasm3",
+            "estimate_resources",
+            "split_circuit",
+            "qpu_submit",
+            "qpu_status",
+            "qpu_devices",
+            "qpu_estimate_cost",
+            "agents",
+        ]:
+            assert hasattr(client, method), f"Missing top-level method: {method}"
+
+    def test_async_has_all_coda_methods_at_top_level(self):
+        client = AsyncConductorQuantum(token=TOKEN)
+        for method in [
+            "health",
+            "transpile",
+            "simulate",
+            "to_openqasm3",
+            "estimate_resources",
+            "split_circuit",
+            "qpu_submit",
+            "qpu_status",
+            "qpu_devices",
+            "qpu_estimate_cost",
+            "agents",
+        ]:
+            assert hasattr(client, method), f"Missing top-level method: {method}"
+
+    def test_top_level_simulate_delegates_to_coda(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return _json_response({"success": True, "counts": {"00": 512}})
+
+        client = ConductorQuantum(token=TOKEN, base_url=BASE_URL)
+        client._coda._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
+        result = client.simulate(code="code")
+        assert result["success"] is True
+
+    def test_top_level_transpile_delegates_to_coda(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return _json_response({"success": True, "converted_code": "cirq"})
+
+        client = ConductorQuantum(token=TOKEN, base_url=BASE_URL)
+        client._coda._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
+        result = client.transpile(source_code="code", target="cirq")
+        assert result["success"] is True
+
+    def test_top_level_agents_delegates_to_coda(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return _sse_response([{"type": "completed"}])
+
+        client = ConductorQuantum(token=TOKEN, base_url=BASE_URL)
+        client._coda._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
+        events = list(client.agents(messages=[{"role": "user", "content": "hi"}]))
+        assert len(events) == 1
+        assert events[0]["type"] == "completed"
+
+
+# ---------------------------------------------------------------------------
 # api_base_url_from_env
 # ---------------------------------------------------------------------------
 
