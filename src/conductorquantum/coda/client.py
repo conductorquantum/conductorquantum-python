@@ -15,6 +15,8 @@ import httpx
 from conductorquantum.coda._http import (
     DEFAULT_BASE_URL,
     DEFAULT_TIMEOUT,
+    TokenAuth,
+    TokenLike,
     async_request,
     build_headers,
     parse_json,
@@ -32,14 +34,15 @@ class CodaClient:
     def __init__(
         self,
         *,
-        token: str,
+        token: TokenLike,
         base_url: str = DEFAULT_BASE_URL,
         timeout: float = DEFAULT_TIMEOUT,
         sdk_version: str = "0.0.0",
     ) -> None:
         self._client = httpx.Client(
             base_url=base_url,
-            headers=build_headers(token, sdk_version),
+            headers=build_headers(sdk_version),
+            auth=TokenAuth(token),
             timeout=timeout,
         )
 
@@ -190,14 +193,15 @@ class AsyncCodaClient:
     def __init__(
         self,
         *,
-        token: str,
+        token: TokenLike,
         base_url: str = DEFAULT_BASE_URL,
         timeout: float = DEFAULT_TIMEOUT,
         sdk_version: str = "0.0.0",
     ) -> None:
         self._client = httpx.AsyncClient(
             base_url=base_url,
-            headers=build_headers(token, sdk_version),
+            headers=build_headers(sdk_version),
+            auth=TokenAuth(token),
             timeout=timeout,
         )
 

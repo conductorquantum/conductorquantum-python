@@ -6,6 +6,7 @@ from collections.abc import AsyncIterator, Iterator
 
 import httpx
 from .base_client import AsyncBaseConductorQuantum, BaseConductorQuantum
+from .coda._http import api_base_url_from_env
 from .coda.client import AsyncCodaClient, CodaClient
 from .control import AsyncControlClient, ControlClient
 from .environment import ConductorQuantumEnvironment
@@ -16,20 +17,74 @@ from .version import __version__
 DEFAULT_TIMEOUT_SECONDS = 120
 
 
+_TokenArg = typing.Union[str, typing.Callable[[], str]]
+
+_CODA_TOKEN_PREFIX = "coda_"
+
+
+def _looks_like_coda_token(token: _TokenArg) -> bool:
+    """Return True if *token* is a string with the Coda API prefix."""
+    return isinstance(token, str) and token.startswith(_CODA_TOKEN_PREFIX)
+
+
+def _resolve_tokens(
+    token: typing.Optional[_TokenArg],
+    coda_token: typing.Optional[_TokenArg],
+    control_token: typing.Optional[_TokenArg],
+) -> tuple[_TokenArg, _TokenArg]:
+    """Return ``(control_token, coda_token)`` from the caller's arguments.
+
+    ``token`` is the shared fallback.  ``coda_token`` / ``control_token``
+    override the shared value for their respective API.  At least one of the
+    three must be provided.
+    """
+    resolved_control = control_token or token
+    resolved_coda = coda_token or token
+    if resolved_control is None and resolved_coda is None:
+        raise ValueError("Provide at least one of token, coda_token, or control_token")
+
+    if resolved_control is not None and _looks_like_coda_token(resolved_control):
+        if control_token is not None:
+            raise ValueError(
+                f"control_token starts with {_CODA_TOKEN_PREFIX!r} which is a Coda API token. "
+                "Pass it as coda_token instead, or use a Control API token."
+            )
+        raise ValueError(
+            f"token starts with {_CODA_TOKEN_PREFIX!r} which is a Coda API token. "
+            "Pass it as coda_token (not token) to use it for the Coda API, "
+            "or provide a Control API token via token or control_token."
+        )
+
+    return resolved_control, resolved_coda  # type: ignore[return-value]
+
+
 class ConductorQuantum(BaseConductorQuantum):
     """Main client for interacting with the Conductor Quantum API.
 
+    **Coda and Control use separate API tokens.** You can authenticate in
+    three ways:
+
+    * **Shared token** — ``token`` is used for both Coda and Control::
+
+          client = ConductorQuantum(token="MY_TOKEN")
+
+    * **Separate tokens** — ``coda_token`` and ``control_token`` let a
+      single client talk to both APIs with distinct credentials::
+
+          client = ConductorQuantum(
+              coda_token="CODA_TOKEN",
+              control_token="CONTROL_TOKEN",
+          )
+
+    * **Mixed** — ``token`` is the fallback; a product-specific token
+      overrides it::
+
+          client = ConductorQuantum(token="CONTROL_TOKEN", coda_token="CODA_TOKEN")
+
     Namespaced access mirrors the product structure::
 
-        client = ConductorQuantum(token="...")
-
-        # Coda — circuit tools, QPU, agents
-        client.coda.simulate(...)
-        client.coda.agents(...)
-
-        # Control — analysis models
-        client.control.models.execute(...)
-        client.control.model_results.list(...)
+        client.coda.simulate(...)               # Coda — circuit tools, QPU, agents
+        client.control.models.execute(...)       # Control — analysis models
 
     Non-conflicting methods are also available at the top level::
 
@@ -42,8 +97,7 @@ class ConductorQuantum(BaseConductorQuantum):
     Fern-generated ``BaseConductorQuantum`` and still work. They are the same
     objects as ``client.control.models`` and ``client.control.model_results``.
     New code should prefer ``client.control.*`` to match the product structure.
-    These legacy accessors will be removed in a future major version once
-    ``client.control`` is established as the canonical path.
+    These legacy accessors will be removed in a future major version.
     """
 
     def __init__(
@@ -51,30 +105,31 @@ class ConductorQuantum(BaseConductorQuantum):
         *,
         base_url: typing.Optional[str] = None,
         environment: ConductorQuantumEnvironment = ConductorQuantumEnvironment.DEFAULT,
-        token: typing.Union[str, typing.Callable[[], str]],
+        token: typing.Optional[typing.Union[str, typing.Callable[[], str]]] = None,
+        coda_token: typing.Optional[typing.Union[str, typing.Callable[[], str]]] = None,
+        control_token: typing.Optional[typing.Union[str, typing.Callable[[], str]]] = None,
         timeout: typing.Optional[float] = DEFAULT_TIMEOUT_SECONDS,
         follow_redirects: typing.Optional[bool] = True,
         httpx_client: typing.Optional[httpx.Client] = None,
     ):
+        _ctrl, _coda = _resolve_tokens(token, coda_token, control_token)
+
         super().__init__(
             base_url=base_url,
             environment=environment,
-            token=token,
+            token=_ctrl or _coda,
             timeout=timeout,
             follow_redirects=follow_redirects,
             httpx_client=httpx_client,
         )
         self._models = ExtendedModelsClient(client_wrapper=self._client_wrapper)
-        # Access the base class model_results directly to avoid triggering
-        # our own deprecation warning during init.
         _base_model_results = super(ConductorQuantum, self).model_results
         self._control = ControlClient(models=self._models, model_results=_base_model_results)
 
-        resolved_token = token if isinstance(token, str) else token()
-        resolved_base_url = base_url or environment.value
+        coda_base_url = base_url or api_base_url_from_env()
         self._coda = CodaClient(
-            token=resolved_token,
-            base_url=resolved_base_url,
+            token=_coda or _ctrl,
+            base_url=coda_base_url,
             timeout=timeout or DEFAULT_TIMEOUT_SECONDS,
             sdk_version=__version__,
         )
@@ -213,7 +268,7 @@ class AsyncConductorQuantum(AsyncBaseConductorQuantum):
     """Asynchronous client for interacting with the Conductor Quantum API.
 
     See :class:`ConductorQuantum` for the full API description, including
-    backwards compatibility notes on ``client.models`` vs ``client.control``.
+    token separation and backwards compatibility notes.
     """
 
     def __init__(
@@ -221,15 +276,19 @@ class AsyncConductorQuantum(AsyncBaseConductorQuantum):
         *,
         base_url: typing.Optional[str] = None,
         environment: ConductorQuantumEnvironment = ConductorQuantumEnvironment.DEFAULT,
-        token: typing.Union[str, typing.Callable[[], str]],
+        token: typing.Optional[typing.Union[str, typing.Callable[[], str]]] = None,
+        coda_token: typing.Optional[typing.Union[str, typing.Callable[[], str]]] = None,
+        control_token: typing.Optional[typing.Union[str, typing.Callable[[], str]]] = None,
         timeout: typing.Optional[float] = DEFAULT_TIMEOUT_SECONDS,
         follow_redirects: typing.Optional[bool] = True,
         httpx_client: typing.Optional[httpx.AsyncClient] = None,
     ):
+        _ctrl, _coda = _resolve_tokens(token, coda_token, control_token)
+
         super().__init__(
             base_url=base_url,
             environment=environment,
-            token=token,
+            token=_ctrl or _coda,
             timeout=timeout,
             follow_redirects=follow_redirects,
             httpx_client=httpx_client,
@@ -238,11 +297,10 @@ class AsyncConductorQuantum(AsyncBaseConductorQuantum):
         _base_model_results = super(AsyncConductorQuantum, self).model_results
         self._control = AsyncControlClient(models=self._models, model_results=_base_model_results)
 
-        resolved_token = token if isinstance(token, str) else token()
-        resolved_base_url = base_url or environment.value
+        coda_base_url = base_url or api_base_url_from_env()
         self._coda = AsyncCodaClient(
-            token=resolved_token,
-            base_url=resolved_base_url,
+            token=_coda or _ctrl,
+            base_url=coda_base_url,
             timeout=timeout or DEFAULT_TIMEOUT_SECONDS,
             sdk_version=__version__,
         )

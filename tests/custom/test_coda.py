@@ -62,8 +62,105 @@ class TestRootClientCoda:
         assert str(client.coda._client.base_url).rstrip("/") == BASE_URL
 
     def test_coda_uses_callable_token(self):
-        client = ConductorQuantum(token=lambda: "dynamic-token")
-        assert "dynamic-token" in client.coda._client.headers["authorization"]
+        call_count = 0
+
+        def rotating_token():
+            nonlocal call_count
+            call_count += 1
+            return f"dynamic-token-{call_count}"
+
+        client = ConductorQuantum(token=rotating_token, base_url=BASE_URL)
+        auth = client.coda._client.auth
+        from conductorquantum.coda._http import TokenAuth
+
+        assert isinstance(auth, TokenAuth)
+
+        req1 = httpx.Request("GET", f"{BASE_URL}/health")
+        flow1 = auth.auth_flow(req1)
+        next(flow1)
+        assert req1.headers["authorization"] == "Bearer dynamic-token-1"
+
+        req2 = httpx.Request("GET", f"{BASE_URL}/health")
+        flow2 = auth.auth_flow(req2)
+        next(flow2)
+        assert req2.headers["authorization"] == "Bearer dynamic-token-2"
+
+    def test_shared_token_used_for_both(self):
+        from conductorquantum.coda._http import TokenAuth
+
+        client = ConductorQuantum(token="shared-tok", base_url=BASE_URL)
+
+        # Coda gets shared token
+        auth = client.coda._client.auth
+        assert isinstance(auth, TokenAuth)
+        req = httpx.Request("GET", f"{BASE_URL}/health")
+        next(auth.auth_flow(req))
+        assert req.headers["authorization"] == "Bearer shared-tok"
+
+        # Control gets shared token via Fern wrapper
+        assert client._client_wrapper._get_token() == "shared-tok"
+
+    def test_coda_token_overrides_shared(self):
+        from conductorquantum.coda._http import TokenAuth
+
+        client = ConductorQuantum(token="shared-tok", coda_token="coda-tok", base_url=BASE_URL)
+
+        req = httpx.Request("GET", f"{BASE_URL}/health")
+        next(client.coda._client.auth.auth_flow(req))
+        assert req.headers["authorization"] == "Bearer coda-tok"
+
+        assert client._client_wrapper._get_token() == "shared-tok"
+
+    def test_control_token_overrides_shared(self):
+        from conductorquantum.coda._http import TokenAuth
+
+        client = ConductorQuantum(token="shared-tok", control_token="ctrl-tok", base_url=BASE_URL)
+
+        req = httpx.Request("GET", f"{BASE_URL}/health")
+        next(client.coda._client.auth.auth_flow(req))
+        assert req.headers["authorization"] == "Bearer shared-tok"
+
+        assert client._client_wrapper._get_token() == "ctrl-tok"
+
+    def test_separate_coda_and_control_tokens(self):
+        from conductorquantum.coda._http import TokenAuth
+
+        client = ConductorQuantum(coda_token="coda-tok", control_token="ctrl-tok", base_url=BASE_URL)
+
+        req = httpx.Request("GET", f"{BASE_URL}/health")
+        next(client.coda._client.auth.auth_flow(req))
+        assert req.headers["authorization"] == "Bearer coda-tok"
+
+        assert client._client_wrapper._get_token() == "ctrl-tok"
+
+    def test_no_token_raises(self):
+        with pytest.raises(ValueError, match="at least one"):
+            ConductorQuantum(base_url=BASE_URL)
+
+    def test_coda_token_as_shared_token_raises(self):
+        with pytest.raises(ValueError, match="coda_"):
+            ConductorQuantum(token="coda_abc123", base_url=BASE_URL)
+
+    def test_coda_token_as_control_token_raises(self):
+        with pytest.raises(ValueError, match="coda_"):
+            ConductorQuantum(control_token="coda_abc123", coda_token="coda_real", base_url=BASE_URL)
+
+    def test_coda_prefixed_token_allowed_as_coda_token(self):
+        client = ConductorQuantum(coda_token="coda_abc123", control_token="ctrl-tok", base_url=BASE_URL)
+        req = httpx.Request("GET", f"{BASE_URL}/health")
+        next(client.coda._client.auth.auth_flow(req))
+        assert req.headers["authorization"] == "Bearer coda_abc123"
+
+    def test_async_separate_tokens(self):
+        from conductorquantum.coda._http import TokenAuth
+
+        client = AsyncConductorQuantum(coda_token="coda-tok", control_token="ctrl-tok", base_url=BASE_URL)
+
+        req = httpx.Request("GET", f"{BASE_URL}/health")
+        next(client.coda._client.auth.auth_flow(req))
+        assert req.headers["authorization"] == "Bearer coda-tok"
+
+        assert client._client_wrapper._get_token() == "ctrl-tok"
 
 
 # ---------------------------------------------------------------------------
@@ -208,12 +305,12 @@ class TestApiBaseUrlFromEnv:
 
 
 class TestBuildHeaders:
-    def test_includes_bearer_token(self):
-        h = build_headers("my-token", "1.2.3")
-        assert h["Authorization"] == "Bearer my-token"
+    def test_no_authorization_header(self):
+        h = build_headers("1.2.3")
+        assert "Authorization" not in h
 
     def test_includes_user_agent_with_version(self):
-        h = build_headers("tok", "1.2.3")
+        h = build_headers("1.2.3")
         assert h["User-Agent"] == "conductorquantum-python/1.2.3"
 
 

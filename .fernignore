@@ -7,6 +7,7 @@ src/conductorquantum/coda/client.py
 src/conductorquantum/coda/_http.py
 src/conductorquantum/coda/errors.py
 README.md
+reference.md
 .github/workflows/ci.yml
 tests/conftest.py
 tests/custom/test_models_integration.py

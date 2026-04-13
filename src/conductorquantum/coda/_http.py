@@ -5,7 +5,8 @@ from __future__ import annotations
 import json
 import os
 import time
-from typing import Any
+from collections.abc import Callable, Generator
+from typing import Any, Union
 
 import httpx
 
@@ -16,6 +17,21 @@ DEFAULT_TIMEOUT = 120.0
 MAX_RETRIES = 2
 INITIAL_RETRY_DELAY = 0.5
 RETRYABLE_STATUS_CODES = {429, 408, 500, 502, 503, 504}
+
+
+TokenLike = Union[str, Callable[[], str]]
+
+
+class TokenAuth(httpx.Auth):
+    """httpx Auth that resolves a token (string or callable) per request."""
+
+    def __init__(self, token: TokenLike) -> None:
+        self._token = token
+
+    def auth_flow(self, request: httpx.Request) -> Generator[httpx.Request, httpx.Response, None]:
+        resolved = self._token() if callable(self._token) else self._token
+        request.headers["Authorization"] = f"Bearer {resolved}"
+        yield request
 
 
 def api_base_url_from_env() -> str:
@@ -44,10 +60,9 @@ def api_base_url_from_env() -> str:
     return f"{origin}/v0"
 
 
-def build_headers(token: str, sdk_version: str) -> dict[str, str]:
-    """Build default request headers."""
+def build_headers(sdk_version: str) -> dict[str, str]:
+    """Build default request headers (auth is handled by TokenAuth)."""
     return {
-        "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
         "User-Agent": f"conductorquantum-python/{sdk_version}",
     }
