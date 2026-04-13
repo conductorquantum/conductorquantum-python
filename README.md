@@ -15,31 +15,59 @@ pip install conductorquantum
 
 A full reference for this library is available [here](./reference.md).
 
-## Usage
+## Authentication
 
-Instantiate and use the client with the following:
+**Coda and Control use separate API tokens.** The client supports three
+authentication patterns:
 
 ```python
 from conductorquantum import ConductorQuantum
 
-client = ConductorQuantum(
-    token="YOUR_TOKEN",
-)
+# Shared token — used for both Coda and Control
+client = ConductorQuantum(token="MY_TOKEN")
+
+# Separate tokens — each API gets its own credential
+client = ConductorQuantum(coda_token="CODA_TOKEN", control_token="CONTROL_TOKEN")
+
+# Mixed — token is the fallback; a product-specific token overrides it
+client = ConductorQuantum(token="CONTROL_TOKEN", coda_token="CODA_TOKEN")
+```
+
+## Usage
+
+### Control: analysis models
+
+```python
+from conductorquantum import ConductorQuantum
+
+client = ConductorQuantum(control_token="CONTROL_TOKEN")
 
 # Using a file
 with open("path/to/file.npy", "rb") as f:
-    client.models.execute(
+    client.control.models.execute(
         model="coulomb-blockade-peak-detector-v1",
         data=f,
     )
 
-
 # Using a numpy array
-arr = np.array([2.643e-12, 2.164e-12 8.481e-13, ..., 2.320e-11, 2.153e-11, 1.984e-11])
-client.models.execute(
+arr = np.array([2.643e-12, 2.164e-12, 8.481e-13, ..., 2.320e-11, 2.153e-11, 1.984e-11])
+client.control.models.execute(
     model="coulomb-blockade-peak-detector-v1",
     data=arr,
 )
+```
+
+### Coda: circuit tools, QPU, agents
+
+```python
+from conductorquantum import ConductorQuantum
+
+client = ConductorQuantum(coda_token="CODA_TOKEN")
+
+result = client.coda.simulate(code="from qiskit import QuantumCircuit\nqc = QuantumCircuit(2)\nqc.h(0)\nqc.cx(0, 1)")
+
+for event in client.coda.agents(messages=[{"role": "user", "content": "Build a Bell state circuit"}]):
+    print(event)
 ```
 
 ## Async Client
@@ -52,13 +80,14 @@ import asyncio
 from conductorquantum import AsyncConductorQuantum
 
 client = AsyncConductorQuantum(
-    token="YOUR_TOKEN",
+    coda_token="CODA_TOKEN",
+    control_token="CONTROL_TOKEN",
 )
 
 
 async def main() -> None:
-    arr = np.array([2.643e-12, 2.164e-12 8.481e-13, ..., 2.320e-11, 2.153e-11, 1.984e-11])
-    await client.models.execute(
+    arr = np.array([2.643e-12, 2.164e-12, 8.481e-13, ..., 2.320e-11, 2.153e-11, 1.984e-11])
+    await client.control.models.execute(
         model="model",
         data=arr,
     )
@@ -72,14 +101,31 @@ asyncio.run(main())
 When the API returns a non-success status code (4xx or 5xx response), a subclass of the following error
 will be thrown.
 
+**Control API** (models, model results):
+
 ```python
 from conductorquantum.core.api_error import ApiError
 
 try:
-    client.models.execute(...)
+    client.control.models.execute(...)
 except ApiError as e:
     print(e.status_code)
     print(e.body)
+```
+
+**Coda API** (circuit tools, QPU, agents):
+
+```python
+from conductorquantum.coda.errors import CodaAPIError, CodaAuthError, CodaTimeoutError
+
+try:
+    client.coda.simulate(code="...")
+except CodaAuthError as e:
+    print(e.status_code, e.detail)
+except CodaTimeoutError as e:
+    print("Request timed out:", e)
+except CodaAPIError as e:
+    print(e.status_code, e.detail)
 ```
 
 ## Advanced
@@ -96,17 +142,17 @@ A request is deemed retriable when any of the following HTTP status codes is ret
 - [429](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429) (Too Many Requests)
 - [5XX](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500) (Internal Server Errors)
 
-Use the `max_retries` request option to configure this behavior.
+Use the `max_retries` request option to configure this behavior for the Control API.
 
 ```python
-client.models.execute(..., request_options={
+client.control.models.execute(..., request_options={
     "max_retries": 1
 })
 ```
 
 ### Timeouts
 
-The SDK defaults to a 60 second timeout. You can configure this with a timeout option at the client or request level.
+The SDK defaults to a 120 second timeout. You can configure this with a timeout option at the client or request level.
 
 ```python
 
@@ -118,8 +164,8 @@ client = ConductorQuantum(
 )
 
 
-# Override timeout for a specific method
-client.models.execute(..., request_options={
+# Override timeout for a specific Control API method
+client.control.models.execute(..., request_options={
     "timeout_in_seconds": 1
 })
 ```
@@ -140,6 +186,11 @@ client = ConductorQuantum(
     ),
 )
 ```
+
+### Environment Variables
+
+The Coda client respects `CODA_API_BASE_URL` and `CODA_BASE_URL` environment variables
+for overriding the API base URL when no explicit `base_url` is passed to the constructor.
 
 ## Contributing
 

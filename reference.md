@@ -1,6 +1,6 @@
 # Reference
 ## models
-<details><summary><code>client.models.<a href="src/conductorquantum/models/client.py">info</a>(...)</code></summary>
+<details><summary><code>client.control.models.<a href="src/conductorquantum/models/client.py">info</a>(...)</code></summary>
 <dl>
 <dd>
 
@@ -32,7 +32,7 @@ from conductorquantum import ConductorQuantum
 client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
-client.models.info(
+client.control.models.info(
     model="coulomb-blockade-peak-detector-v1",
 )
 
@@ -70,7 +70,7 @@ client.models.info(
 </dl>
 </details>
 
-<details><summary><code>client.models.<a href="src/conductorquantum/models/client.py">list</a>(...)</code></summary>
+<details><summary><code>client.control.models.<a href="src/conductorquantum/models/client.py">list</a>(...)</code></summary>
 <dl>
 <dd>
 
@@ -102,7 +102,7 @@ from conductorquantum import ConductorQuantum
 client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
-client.models.list(
+client.control.models.list(
     skip=1,
     limit=1,
 )
@@ -149,7 +149,7 @@ client.models.list(
 </dl>
 </details>
 
-<details><summary><code>client.models.<a href="src/conductorquantum/models/client.py">execute</a>(...)</code></summary>
+<details><summary><code>client.control.models.<a href="src/conductorquantum/models/client.py">execute</a>(...)</code></summary>
 <dl>
 <dd>
 
@@ -181,7 +181,7 @@ from conductorquantum import ConductorQuantum
 client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
-client.models.execute(
+client.control.models.execute(
     model="model",
 )
 
@@ -230,7 +230,7 @@ core.File` — See core.File for more documentation
 </details>
 
 ## ModelResults
-<details><summary><code>client.model_results.<a href="src/conductorquantum/model_results/client.py">vote_on_model_result</a>(...)</code></summary>
+<details><summary><code>client.control.model_results.<a href="src/conductorquantum/model_results/client.py">vote_on_model_result</a>(...)</code></summary>
 <dl>
 <dd>
 
@@ -262,7 +262,7 @@ from conductorquantum import ConductorQuantum
 client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
-client.model_results.vote_on_model_result(
+client.control.model_results.vote_on_model_result(
     result_id="result_id",
     vote=1,
 )
@@ -317,7 +317,7 @@ client.model_results.vote_on_model_result(
 </dl>
 </details>
 
-<details><summary><code>client.model_results.<a href="src/conductorquantum/model_results/client.py">remove_vote_on_model_result</a>(...)</code></summary>
+<details><summary><code>client.control.model_results.<a href="src/conductorquantum/model_results/client.py">remove_vote_on_model_result</a>(...)</code></summary>
 <dl>
 <dd>
 
@@ -349,7 +349,7 @@ from conductorquantum import ConductorQuantum
 client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
-client.model_results.remove_vote_on_model_result(
+client.control.model_results.remove_vote_on_model_result(
     result_id="result_id",
 )
 
@@ -387,7 +387,7 @@ client.model_results.remove_vote_on_model_result(
 </dl>
 </details>
 
-<details><summary><code>client.model_results.<a href="src/conductorquantum/model_results/client.py">info</a>(...)</code></summary>
+<details><summary><code>client.control.model_results.<a href="src/conductorquantum/model_results/client.py">info</a>(...)</code></summary>
 <dl>
 <dd>
 
@@ -419,7 +419,7 @@ from conductorquantum import ConductorQuantum
 client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
-client.model_results.info(
+client.control.model_results.info(
     id="08047949-7263-4557-9122-ab293a49cae5",
 )
 
@@ -457,7 +457,7 @@ client.model_results.info(
 </dl>
 </details>
 
-<details><summary><code>client.model_results.<a href="src/conductorquantum/model_results/client.py">delete</a>(...)</code></summary>
+<details><summary><code>client.control.model_results.<a href="src/conductorquantum/model_results/client.py">delete</a>(...)</code></summary>
 <dl>
 <dd>
 
@@ -489,7 +489,7 @@ from conductorquantum import ConductorQuantum
 client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
-client.model_results.delete(
+client.control.model_results.delete(
     id="08047949-7263-4557-9122-ab293a49cae5",
 )
 
@@ -527,7 +527,7 @@ client.model_results.delete(
 </dl>
 </details>
 
-<details><summary><code>client.model_results.<a href="src/conductorquantum/model_results/client.py">list</a>(...)</code></summary>
+<details><summary><code>client.control.model_results.<a href="src/conductorquantum/model_results/client.py">list</a>(...)</code></summary>
 <dl>
 <dd>
 
@@ -559,7 +559,7 @@ from conductorquantum import ConductorQuantum
 client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
-client.model_results.list(
+client.control.model_results.list(
     skip=1,
     limit=1,
     model_str_id="model_str_id",
@@ -633,7 +633,7 @@ client.model_results.list(
 </dl>
 </details>
 
-<details><summary><code>client.model_results.<a href="src/conductorquantum/model_results/client.py">download</a>(...)</code></summary>
+<details><summary><code>client.control.model_results.<a href="src/conductorquantum/model_results/client.py">download</a>(...)</code></summary>
 <dl>
 <dd>
 
@@ -665,7 +665,7 @@ from conductorquantum import ConductorQuantum
 client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
-client.model_results.download(
+client.control.model_results.download(
     id="id",
 )
 

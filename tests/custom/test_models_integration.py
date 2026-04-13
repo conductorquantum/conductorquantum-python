@@ -133,12 +133,12 @@ def available_model_ids() -> list[str]:
 
 class TestModelsList:
     def test_returns_non_empty_list(self, client: ConductorQuantum) -> None:
-        models = client.models.list()
+        models = client.control.models.list()
         assert isinstance(models, list)
         assert len(models) > 0
 
     def test_each_item_is_model_public(self, client: ConductorQuantum) -> None:
-        models = client.models.list(limit=5)
+        models = client.control.models.list(limit=5)
         for m in models:
             assert isinstance(m, ModelPublic)
             assert m.id
@@ -149,36 +149,36 @@ class TestModelsList:
             assert m.input_shape_requirements
 
     def test_pagination_skip_and_limit(self, client: ConductorQuantum) -> None:
-        all_models = client.models.list()
+        all_models = client.control.models.list()
         if len(all_models) < 2:
             pytest.skip("Not enough models to test pagination")
 
-        first = client.models.list(limit=1)
+        first = client.control.models.list(limit=1)
         assert len(first) == 1
 
-        second = client.models.list(skip=1, limit=1)
+        second = client.control.models.list(skip=1, limit=1)
         assert len(second) == 1
         assert first[0].id != second[0].id
 
 
 class TestModelsInfo:
     def test_returns_model_details(self, client: ConductorQuantum) -> None:
-        models = client.models.list(limit=1)
+        models = client.control.models.list(limit=1)
         model_id = models[0].id
 
-        info = client.models.info(model_id)
+        info = client.control.models.info(model_id)
         assert isinstance(info, ModelPublic)
         assert info.id == model_id
         assert info.name == models[0].name
 
     def test_known_model_ids(self, client: ConductorQuantum, available_model_ids: list[str]) -> None:
         for model_id in available_model_ids:
-            info = client.models.info(model_id)
+            info = client.control.models.info(model_id)
             assert info.id == model_id
 
     def test_not_found_raises(self, client: ConductorQuantum) -> None:
         with pytest.raises(NotFoundError):
-            client.models.info("nonexistent-model-that-does-not-exist")
+            client.control.models.info("nonexistent-model-that-does-not-exist")
 
 
 class TestModelsExecute:
@@ -195,7 +195,7 @@ class TestModelsExecute:
         data = _generate_example(model_id)
         assert isinstance(data, np.ndarray)
 
-        result = client.models.execute(model=model_id, data=data)
+        result = client.control.models.execute(model=model_id, data=data)
 
         assert isinstance(result, ModelResultPublic)
         assert result.id
@@ -221,7 +221,7 @@ class TestModelsExecute:
 
         try:
             with open(tmp_path, "rb") as f:
-                result = client.models.execute(model=model_id, data=f)
+                result = client.control.models.execute(model=model_id, data=f)
 
             assert isinstance(result, ModelResultPublic)
             assert result.model == model_id
@@ -233,7 +233,7 @@ class TestModelsExecute:
         data = _generate_example(model_id)
 
         with pytest.raises(NotFoundError):
-            client.models.execute(model="nonexistent-model-xyz", data=data)
+            client.control.models.execute(model="nonexistent-model-xyz", data=data)
 
 
 # ---------------------------------------------------------------------------
@@ -243,7 +243,7 @@ class TestModelsExecute:
 
 class TestModelResultsList:
     def test_returns_list(self, client: ConductorQuantum) -> None:
-        results = client.model_results.list(limit=5)
+        results = client.control.model_results.list(limit=5)
         assert isinstance(results, list)
         for r in results:
             assert isinstance(r, ModelResultPublicMasked)
@@ -253,11 +253,11 @@ class TestModelResultsList:
             assert isinstance(r.output, dict)
 
     def test_pagination(self, client: ConductorQuantum) -> None:
-        page1 = client.model_results.list(limit=2)
+        page1 = client.control.model_results.list(limit=2)
         if len(page1) < 2:
             pytest.skip("Not enough results to test pagination")
 
-        page2 = client.model_results.list(skip=1, limit=1)
+        page2 = client.control.model_results.list(skip=1, limit=1)
         assert len(page2) == 1
         assert page1[1].id == page2[0].id
 
@@ -273,14 +273,14 @@ class TestModelResultsLifecycle:
     ) -> ModelResultPublic:
         model_id = available_model_ids[0]
         data = _generate_example(model_id)
-        return client.models.execute(model=model_id, data=data)
+        return client.control.models.execute(model=model_id, data=data)
 
     def test_info_returns_full_result(
         self,
         client: ConductorQuantum,
         executed_result: ModelResultPublic,
     ) -> None:
-        info = client.model_results.info(executed_result.id)
+        info = client.control.model_results.info(executed_result.id)
         assert isinstance(info, ModelResultPublic)
         assert info.id == executed_result.id
         assert info.model == executed_result.model
@@ -293,7 +293,7 @@ class TestModelResultsLifecycle:
         client: ConductorQuantum,
         executed_result: ModelResultPublic,
     ) -> None:
-        chunks = list(client.model_results.download(executed_result.id))
+        chunks = list(client.control.model_results.download(executed_result.id))
         assert len(chunks) > 0
 
         content = b"".join(chunks)
@@ -312,24 +312,24 @@ class TestModelResultsLifecycle:
         client: ConductorQuantum,
         executed_result: ModelResultPublic,
     ) -> None:
-        client.model_results.delete(executed_result.id)
+        client.control.model_results.delete(executed_result.id)
 
         with pytest.raises(NotFoundError):
-            client.model_results.info(executed_result.id)
+            client.control.model_results.info(executed_result.id)
 
 
 class TestModelResultsNotFound:
     def test_info_not_found(self, client: ConductorQuantum) -> None:
         with pytest.raises(NotFoundError):
-            client.model_results.info("00000000-0000-0000-0000-000000000000")
+            client.control.model_results.info("00000000-0000-0000-0000-000000000000")
 
     def test_download_not_found(self, client: ConductorQuantum) -> None:
         with pytest.raises(NotFoundError):
-            list(client.model_results.download("00000000-0000-0000-0000-000000000000"))
+            list(client.control.model_results.download("00000000-0000-0000-0000-000000000000"))
 
     def test_delete_not_found(self, client: ConductorQuantum) -> None:
         with pytest.raises(NotFoundError):
-            client.model_results.delete("00000000-0000-0000-0000-000000000000")
+            client.control.model_results.delete("00000000-0000-0000-0000-000000000000")
 
 
 # ---------------------------------------------------------------------------
@@ -339,15 +339,15 @@ class TestModelResultsNotFound:
 
 class TestAsyncModels:
     async def test_list(self, async_client: AsyncConductorQuantum) -> None:
-        models = await async_client.models.list(limit=3)
+        models = await async_client.control.models.list(limit=3)
         assert isinstance(models, list)
         assert len(models) > 0
         for m in models:
             assert isinstance(m, ModelPublic)
 
     async def test_info(self, async_client: AsyncConductorQuantum) -> None:
-        models = await async_client.models.list(limit=1)
-        info = await async_client.models.info(models[0].id)
+        models = await async_client.control.models.list(limit=1)
+        info = await async_client.control.models.info(models[0].id)
         assert info.id == models[0].id
 
     async def test_execute(
@@ -358,7 +358,7 @@ class TestAsyncModels:
         model_id = available_model_ids[0]
         data = _generate_example(model_id)
 
-        result = await async_client.models.execute(model=model_id, data=data)
+        result = await async_client.control.models.execute(model=model_id, data=data)
         assert isinstance(result, ModelResultPublic)
         assert result.model == model_id
         assert isinstance(result.output, dict)
@@ -366,7 +366,7 @@ class TestAsyncModels:
 
 class TestAsyncModelResults:
     async def test_list(self, async_client: AsyncConductorQuantum) -> None:
-        results = await async_client.model_results.list(limit=3)
+        results = await async_client.control.model_results.list(limit=3)
         assert isinstance(results, list)
         for r in results:
             assert isinstance(r, ModelResultPublicMasked)
@@ -380,13 +380,29 @@ class TestAsyncModelResults:
         model_id = available_model_ids[0]
         data = _generate_example(model_id)
 
-        result = await async_client.models.execute(model=model_id, data=data)
+        result = await async_client.control.models.execute(model=model_id, data=data)
         assert isinstance(result, ModelResultPublic)
 
-        info = await async_client.model_results.info(result.id)
+        info = await async_client.control.model_results.info(result.id)
         assert info.id == result.id
 
-        await async_client.model_results.delete(result.id)
+        await async_client.control.model_results.delete(result.id)
 
         with pytest.raises(NotFoundError):
-            await async_client.model_results.info(result.id)
+            await async_client.control.model_results.info(result.id)
+
+
+# ---------------------------------------------------------------------------
+# Control namespace alias
+# ---------------------------------------------------------------------------
+
+
+class TestControlNamespace:
+    def test_control_models_list(self, client: ConductorQuantum) -> None:
+        models = client.control.models.list(limit=1)
+        assert isinstance(models, list)
+        assert len(models) > 0
+
+    def test_control_model_results_list(self, client: ConductorQuantum) -> None:
+        results = client.control.model_results.list(limit=1)
+        assert isinstance(results, list)

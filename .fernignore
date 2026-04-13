@@ -1,8 +1,16 @@
 # Specify files that shouldn't be modified by Fern
 src/conductorquantum/client.py
 src/conductorquantum/models/extended_client.py
+src/conductorquantum/control.py
+src/conductorquantum/coda/__init__.py
+src/conductorquantum/coda/client.py
+src/conductorquantum/coda/_http.py
+src/conductorquantum/coda/errors.py
 README.md
+reference.md
 .github/workflows/ci.yml
 tests/conftest.py
-tests/custom/test_integration.py
+tests/custom/test_models_integration.py
+tests/custom/test_coda.py
+tests/custom/test_coda_integration.py
 .gitignore

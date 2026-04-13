@@ -45,9 +45,7 @@ def _merge_request_options(
 class ExtendedModelsClient(ModelsClient):
     """Extended models client that adds support for numpy arrays."""
 
-    def _convert_to_file(
-        self, data: Union[File, np.ndarray]
-    ) -> tuple[File, typing.Optional[str]]:
+    def _convert_to_file(self, data: Union[File, np.ndarray]) -> tuple[File, typing.Optional[str]]:
         """
         Convert input data to a File object if necessary.
 
@@ -72,13 +70,9 @@ class ExtendedModelsClient(ModelsClient):
             except Exception as e:
                 logger.error(f"Failed to save numpy array to file: {e}")
                 try:
-                    os.remove(
-                        temp_path
-                    )  # Use os.remove instead of unlink for better Windows compatibility
+                    os.remove(temp_path)  # Use os.remove instead of unlink for better Windows compatibility
                 except (OSError, PermissionError) as err:
-                    logger.warning(
-                        f"Failed to remove temporary file {temp_path}: {err}"
-                    )
+                    logger.warning(f"Failed to remove temporary file {temp_path}: {err}")
                 raise
             # Open in binary read mode for upload
             file_handle = open(temp_path, "rb")
@@ -128,9 +122,7 @@ class ExtendedModelsClient(ModelsClient):
                     if attempt == DEFAULT_RETRY_ATTEMPTS:
                         raise
                     # Reset file pointer to the beginning for retry if seekable
-                    if hasattr(file_obj, "seekable") and callable(
-                        getattr(file_obj, "seekable", None)
-                    ):
+                    if hasattr(file_obj, "seekable") and callable(getattr(file_obj, "seekable", None)):
                         try:
                             if file_obj.seekable():  # type: ignore
                                 file_obj.seek(0)  # type: ignore
@@ -178,13 +170,9 @@ class ExtendedModelsClient(ModelsClient):
                 file_obj.close()
             if temp_path and os.path.exists(temp_path):
                 try:
-                    os.remove(
-                        temp_path
-                    )  # Use os.remove instead of unlink for better Windows compatibility
+                    os.remove(temp_path)  # Use os.remove instead of unlink for better Windows compatibility
                 except (OSError, PermissionError) as err:
-                    logger.warning(
-                        f"Failed to remove temporary file {temp_path}: {err}"
-                    )
+                    logger.warning(f"Failed to remove temporary file {temp_path}: {err}")
         assert response is not None
         raise ApiError(status_code=response.status_code, body=_response_json)
 
@@ -192,9 +180,7 @@ class ExtendedModelsClient(ModelsClient):
 class AsyncExtendedModelsClient(AsyncModelsClient):
     """Async version of ExtendedModelsClient with support for numpy arrays."""
 
-    def _convert_to_file(
-        self, data: Union[File, np.ndarray]
-    ) -> tuple[File, typing.Optional[str]]:
+    def _convert_to_file(self, data: Union[File, np.ndarray]) -> tuple[File, typing.Optional[str]]:
         """
         Convert input data to a File object if necessary.
 
@@ -219,13 +205,9 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
             except Exception as e:
                 logger.error(f"Failed to save numpy array to file: {e}")
                 try:
-                    os.remove(
-                        temp_path
-                    )  # Use os.remove instead of unlink for better Windows compatibility
+                    os.remove(temp_path)  # Use os.remove instead of unlink for better Windows compatibility
                 except (OSError, PermissionError) as err:
-                    logger.warning(
-                        f"Failed to remove temporary file {temp_path}: {err}"
-                    )
+                    logger.warning(f"Failed to remove temporary file {temp_path}: {err}")
                 raise
             # Open in binary read mode for upload
             file_handle = open(temp_path, "rb")
@@ -300,9 +282,7 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
                     if attempt == DEFAULT_RETRY_ATTEMPTS:
                         raise
                     # Reset file pointer to the beginning for retry if seekable
-                    if hasattr(file_obj, "seekable") and callable(
-                        getattr(file_obj, "seekable", None)
-                    ):
+                    if hasattr(file_obj, "seekable") and callable(getattr(file_obj, "seekable", None)):
                         try:
                             if file_obj.seekable():  # type: ignore
                                 file_obj.seek(0)  # type: ignore
@@ -350,12 +330,8 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
                 file_obj.close()
             if temp_path and os.path.exists(temp_path):
                 try:
-                    os.remove(
-                        temp_path
-                    )  # Use os.remove instead of unlink for better Windows compatibility
+                    os.remove(temp_path)  # Use os.remove instead of unlink for better Windows compatibility
                 except (OSError, PermissionError) as err:
-                    logger.warning(
-                        f"Failed to remove temporary file {temp_path}: {err}"
-                    )
+                    logger.warning(f"Failed to remove temporary file {temp_path}: {err}")
         assert response is not None
         raise ApiError(status_code=response.status_code, body=_response_json)
