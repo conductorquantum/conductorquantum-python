@@ -45,8 +45,8 @@ jobs:
               if version in releases and len(releases[version]) > 0:
                   print(f"Version {version} already on PyPI; skipping publish.")
                   skip = "true"
-          except Exception:
-              pass
+          except Exception as e:
+              print(f"::warning::PyPI version check failed: {e}")
           with open(output_file, "a") as f:
               f.write(f"skip={skip}\n")
           PY
@@ -77,15 +77,6 @@ jobs:
         env:
           CODA_API_TOKEN: ${{ secrets.CODA_API_TOKEN }}
 
-      - name: Publish to pypi
-        if: steps.pypi-check.outputs.skip != 'true'
-        run: |
-          poetry config repositories.remote https://upload.pypi.org/legacy/
-          poetry --no-interaction -v publish --build --repository remote --username "$PYPI_USERNAME" --password "$PYPI_PASSWORD"
-        env:
-          PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
-          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-
       - name: Commit and push version bump
         run: |
           git config user.name "github-actions[bot]"
@@ -107,3 +98,12 @@ jobs:
             git tag "v${{ inputs.version }}"
             git push origin "v${{ inputs.version }}"
           fi
+
+      - name: Publish to pypi
+        if: steps.pypi-check.outputs.skip != 'true'
+        run: |
+          poetry config repositories.remote https://upload.pypi.org/legacy/
+          poetry --no-interaction -v publish --build --repository remote --username "$PYPI_USERNAME" --password "$PYPI_PASSWORD"
+        env:
+          PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
