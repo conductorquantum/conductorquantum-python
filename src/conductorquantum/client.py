@@ -19,67 +19,13 @@ DEFAULT_TIMEOUT_SECONDS = 120
 
 _TokenArg = typing.Union[str, typing.Callable[[], str]]
 
-_CODA_TOKEN_PREFIX = "coda_"
-
-
-def _looks_like_coda_token(token: _TokenArg) -> bool:
-    """Return True if *token* is a string with the Coda API prefix."""
-    return isinstance(token, str) and token.startswith(_CODA_TOKEN_PREFIX)
-
-
-def _resolve_tokens(
-    token: typing.Optional[_TokenArg],
-    coda_token: typing.Optional[_TokenArg],
-    control_token: typing.Optional[_TokenArg],
-) -> tuple[_TokenArg, _TokenArg]:
-    """Return ``(control_token, coda_token)`` from the caller's arguments.
-
-    ``token`` is the shared fallback.  ``coda_token`` / ``control_token``
-    override the shared value for their respective API.  At least one of the
-    three must be provided.
-    """
-    resolved_control = control_token or token
-    resolved_coda = coda_token or token
-    if resolved_control is None and resolved_coda is None:
-        raise ValueError("Provide at least one of token, coda_token, or control_token")
-
-    if resolved_control is not None and _looks_like_coda_token(resolved_control):
-        if control_token is not None:
-            raise ValueError(
-                f"control_token starts with {_CODA_TOKEN_PREFIX!r} which is a Coda API token. "
-                "Pass it as coda_token instead, or use a Control API token."
-            )
-        raise ValueError(
-            f"token starts with {_CODA_TOKEN_PREFIX!r} which is a Coda API token. "
-            "Pass it as coda_token (not token) to use it for the Coda API, "
-            "or provide a Control API token via token or control_token."
-        )
-
-    return resolved_control, resolved_coda  # type: ignore[return-value]
-
 
 class ConductorQuantum(BaseConductorQuantum):
     """Main client for interacting with the Conductor Quantum API.
 
-    **Coda and Control use separate API tokens.** You can authenticate in
-    three ways:
-
-    * **Shared token** — ``token`` is used for both Coda and Control::
+    Authenticate with a single token::
 
           client = ConductorQuantum(token="MY_TOKEN")
-
-    * **Separate tokens** — ``coda_token`` and ``control_token`` let a
-      single client talk to both APIs with distinct credentials::
-
-          client = ConductorQuantum(
-              coda_token="CODA_TOKEN",
-              control_token="CONTROL_TOKEN",
-          )
-
-    * **Mixed** — ``token`` is the fallback; a product-specific token
-      overrides it::
-
-          client = ConductorQuantum(token="CONTROL_TOKEN", coda_token="CODA_TOKEN")
 
     Namespaced access mirrors the product structure::
 
@@ -90,6 +36,10 @@ class ConductorQuantum(BaseConductorQuantum):
 
         client.simulate(...)        # shortcut for client.coda.simulate(...)
         client.agents(...)          # shortcut for client.coda.agents(...)
+
+    Coda methods require a Coda API token that starts with ``coda_``. If you
+    call ``client.coda.*`` or a top-level Coda shortcut with any other token,
+    the SDK raises ``ValueError`` before sending the request.
 
     **Backwards compatibility:**
 
@@ -105,19 +55,18 @@ class ConductorQuantum(BaseConductorQuantum):
         *,
         base_url: typing.Optional[str] = None,
         environment: ConductorQuantumEnvironment = ConductorQuantumEnvironment.DEFAULT,
-        token: typing.Optional[typing.Union[str, typing.Callable[[], str]]] = None,
-        coda_token: typing.Optional[typing.Union[str, typing.Callable[[], str]]] = None,
-        control_token: typing.Optional[typing.Union[str, typing.Callable[[], str]]] = None,
+        token: typing.Optional[_TokenArg] = None,
         timeout: typing.Optional[float] = DEFAULT_TIMEOUT_SECONDS,
         follow_redirects: typing.Optional[bool] = True,
         httpx_client: typing.Optional[httpx.Client] = None,
     ):
-        _ctrl, _coda = _resolve_tokens(token, coda_token, control_token)
+        if token is None:
+            raise ValueError("Provide token")
 
         super().__init__(
             base_url=base_url,
             environment=environment,
-            token=_ctrl or _coda,
+            token=token,
             timeout=timeout,
             follow_redirects=follow_redirects,
             httpx_client=httpx_client,
@@ -128,7 +77,7 @@ class ConductorQuantum(BaseConductorQuantum):
 
         coda_base_url = base_url or api_base_url_from_env()
         self._coda = CodaClient(
-            token=_coda or _ctrl,
+            token=token,
             base_url=coda_base_url,
             timeout=timeout or DEFAULT_TIMEOUT_SECONDS,
             sdk_version=__version__,
@@ -268,7 +217,8 @@ class AsyncConductorQuantum(AsyncBaseConductorQuantum):
     """Asynchronous client for interacting with the Conductor Quantum API.
 
     See :class:`ConductorQuantum` for the full API description, including
-    token separation and backwards compatibility notes.
+    the single-token auth model, Coda token validation, and backwards
+    compatibility notes.
     """
 
     def __init__(
@@ -276,19 +226,18 @@ class AsyncConductorQuantum(AsyncBaseConductorQuantum):
         *,
         base_url: typing.Optional[str] = None,
         environment: ConductorQuantumEnvironment = ConductorQuantumEnvironment.DEFAULT,
-        token: typing.Optional[typing.Union[str, typing.Callable[[], str]]] = None,
-        coda_token: typing.Optional[typing.Union[str, typing.Callable[[], str]]] = None,
-        control_token: typing.Optional[typing.Union[str, typing.Callable[[], str]]] = None,
+        token: typing.Optional[_TokenArg] = None,
         timeout: typing.Optional[float] = DEFAULT_TIMEOUT_SECONDS,
         follow_redirects: typing.Optional[bool] = True,
         httpx_client: typing.Optional[httpx.AsyncClient] = None,
     ):
-        _ctrl, _coda = _resolve_tokens(token, coda_token, control_token)
+        if token is None:
+            raise ValueError("Provide token")
 
         super().__init__(
             base_url=base_url,
             environment=environment,
-            token=_ctrl or _coda,
+            token=token,
             timeout=timeout,
             follow_redirects=follow_redirects,
             httpx_client=httpx_client,
@@ -299,7 +248,7 @@ class AsyncConductorQuantum(AsyncBaseConductorQuantum):
 
         coda_base_url = base_url or api_base_url_from_env()
         self._coda = AsyncCodaClient(
-            token=_coda or _ctrl,
+            token=token,
             base_url=coda_base_url,
             timeout=timeout or DEFAULT_TIMEOUT_SECONDS,
             sdk_version=__version__,

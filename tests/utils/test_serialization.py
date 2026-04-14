@@ -3,7 +3,6 @@
 from typing import Any, List
 
 from .assets.models import ObjectWithOptionalFieldParams, ShapeParams
-
 from conductorquantum.core.serialization import convert_and_respect_annotation_metadata
 
 UNION_TEST: ShapeParams = {"radius_measurement": 1.0, "shape_type": "circle", "id": "1"}

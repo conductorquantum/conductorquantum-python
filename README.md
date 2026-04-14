@@ -14,24 +14,21 @@ pip install conductorquantum
 ## Reference
 
 A full reference for this library is available [here](./reference.md).
+The documentation in this repository is maintained manually and is not auto-generated.
 
 ## Authentication
 
-**Coda and Control use separate API tokens.** The client supports three
-authentication patterns:
+Authenticate with a single token:
 
 ```python
 from conductorquantum import ConductorQuantum
 
-# Shared token — used for both Coda and Control
 client = ConductorQuantum(token="MY_TOKEN")
-
-# Separate tokens — each API gets its own credential
-client = ConductorQuantum(coda_token="CODA_TOKEN", control_token="CONTROL_TOKEN")
-
-# Mixed — token is the fallback; a product-specific token overrides it
-client = ConductorQuantum(token="CONTROL_TOKEN", coda_token="CODA_TOKEN")
 ```
+
+`client.coda.*` and the top-level Coda shortcuts require a Coda API token that
+starts with `coda_`. If you call a Coda method with any other token, the SDK
+raises `ValueError` before sending the request.
 
 ## Usage
 
@@ -40,7 +37,7 @@ client = ConductorQuantum(token="CONTROL_TOKEN", coda_token="CODA_TOKEN")
 ```python
 from conductorquantum import ConductorQuantum
 
-client = ConductorQuantum(control_token="CONTROL_TOKEN")
+client = ConductorQuantum(token="CONTROL_TOKEN")
 
 # Using a file
 with open("path/to/file.npy", "rb") as f:
@@ -62,7 +59,7 @@ client.control.models.execute(
 ```python
 from conductorquantum import ConductorQuantum
 
-client = ConductorQuantum(coda_token="CODA_TOKEN")
+client = ConductorQuantum(token="coda_YOUR_TOKEN")
 
 result = client.coda.simulate(code="from qiskit import QuantumCircuit\nqc = QuantumCircuit(2)\nqc.h(0)\nqc.cx(0, 1)")
 
@@ -79,10 +76,7 @@ import asyncio
 
 from conductorquantum import AsyncConductorQuantum
 
-client = AsyncConductorQuantum(
-    coda_token="CODA_TOKEN",
-    control_token="CONTROL_TOKEN",
-)
+client = AsyncConductorQuantum(token="YOUR_TOKEN")
 
 
 async def main() -> None:
@@ -200,4 +194,5 @@ otherwise they would be overwritten upon the next generated release. Feel free t
 a proof of concept, but know that we will not be able to merge it as-is. We suggest opening
 an issue first to discuss with us!
 
-On the other hand, contributions to the README are always very welcome!
+The generated-code restriction does not apply to the docs in this repository: `README.md` and
+`reference.md` are maintained manually and can be updated directly.

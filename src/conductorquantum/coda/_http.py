@@ -17,6 +17,7 @@ DEFAULT_TIMEOUT = 120.0
 MAX_RETRIES = 2
 INITIAL_RETRY_DELAY = 0.5
 RETRYABLE_STATUS_CODES = {429, 408, 500, 502, 503, 504}
+CODA_TOKEN_PREFIX = "coda_"
 
 
 TokenLike = Union[str, Callable[[], str]]
@@ -28,10 +29,25 @@ class TokenAuth(httpx.Auth):
     def __init__(self, token: TokenLike) -> None:
         self._token = token
 
+    def _resolve_token(self) -> str:
+        return self._token() if callable(self._token) else self._token
+
     def auth_flow(self, request: httpx.Request) -> Generator[httpx.Request, httpx.Response, None]:
-        resolved = self._token() if callable(self._token) else self._token
-        request.headers["Authorization"] = f"Bearer {resolved}"
+        request.headers["Authorization"] = f"Bearer {self._resolve_token()}"
         yield request
+
+
+class CodaTokenAuth(TokenAuth):
+    """httpx Auth that only accepts Coda API tokens."""
+
+    def _resolve_token(self) -> str:
+        resolved = super()._resolve_token()
+        if not resolved.startswith(CODA_TOKEN_PREFIX):
+            raise ValueError(
+                f"Coda methods require a token that starts with {CODA_TOKEN_PREFIX!r}. "
+                "Use a Coda API token when calling Coda endpoints."
+            )
+        return resolved
 
 
 def api_base_url_from_env() -> str:
