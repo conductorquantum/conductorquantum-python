@@ -9,6 +9,7 @@ Usage:
 
 from __future__ import annotations
 
+import contextlib
 import os
 
 import pytest
@@ -16,6 +17,28 @@ from conductorquantum import AsyncConductorQuantum, ConductorQuantum
 from conductorquantum.coda.errors import CodaAPIError
 
 _AGENTS_TERMINAL_TYPES = frozenset({"completed", "error", "cancelled"})
+
+
+@contextlib.contextmanager
+def skip_if_service_unavailable():
+    """Skip the test when the backend returns 503 (service not configured)."""
+    try:
+        yield
+    except CodaAPIError as exc:
+        if exc.status_code == 503:
+            pytest.skip(f"Agents service unavailable: {exc}")
+        raise
+
+
+@contextlib.asynccontextmanager
+async def async_skip_if_service_unavailable():
+    """Async variant — skip the test when the backend returns 503."""
+    try:
+        yield
+    except CodaAPIError as exc:
+        if exc.status_code == 503:
+            pytest.skip(f"Agents service unavailable: {exc}")
+        raise
 
 BELL_STATE_CODE = """\
 from qiskit import QuantumCircuit
@@ -136,38 +159,41 @@ class TestCodaQPU:
 
 class TestCodaAgents:
     def test_agents_build_mode(self, coda_client: ConductorQuantum):
-        events = list(
-            coda_client.coda.agents(
-                messages=[{"role": "user", "content": "What is a qubit?"}],
-                mode="build",
-                fast=True,
+        with skip_if_service_unavailable():
+            events = list(
+                coda_client.coda.agents(
+                    messages=[{"role": "user", "content": "What is a qubit?"}],
+                    mode="build",
+                    fast=True,
+                )
             )
-        )
         _assert_agents_sse_invariants(events)
         assert len(events) >= 2
         assert events[-1]["type"] == "completed"
 
     def test_agents_learn_mode(self, coda_client: ConductorQuantum):
-        events = list(
-            coda_client.coda.agents(
-                messages=[{"role": "user", "content": "Explain superposition briefly"}],
-                mode="learn",
-                fast=True,
+        with skip_if_service_unavailable():
+            events = list(
+                coda_client.coda.agents(
+                    messages=[{"role": "user", "content": "Explain superposition briefly"}],
+                    mode="learn",
+                    fast=True,
+                )
             )
-        )
         _assert_agents_sse_invariants(events)
         assert len(events) >= 2
         assert events[-1]["type"] == "completed"
 
     def test_agents_with_thread_id(self, coda_client: ConductorQuantum):
-        events = list(
-            coda_client.coda.agents(
-                messages=[{"role": "user", "content": "Hi"}],
-                thread_id="integration-test-thread",
-                mode="build",
-                fast=True,
+        with skip_if_service_unavailable():
+            events = list(
+                coda_client.coda.agents(
+                    messages=[{"role": "user", "content": "Hi"}],
+                    thread_id="integration-test-thread",
+                    mode="build",
+                    fast=True,
+                )
             )
-        )
         _assert_agents_sse_invariants(events)
         assert events[-1]["type"] == "completed"
 
@@ -192,23 +218,25 @@ class TestAsyncCodaTranspile:
 class TestAsyncCodaAgents:
     async def test_agents_build_mode(self, async_coda_client: AsyncConductorQuantum):
         events = []
-        async for event in async_coda_client.coda.agents(
-            messages=[{"role": "user", "content": "What is a qubit?"}],
-            mode="build",
-            fast=True,
-        ):
-            events.append(event)
+        async with async_skip_if_service_unavailable():
+            async for event in async_coda_client.coda.agents(
+                messages=[{"role": "user", "content": "What is a qubit?"}],
+                mode="build",
+                fast=True,
+            ):
+                events.append(event)
         _assert_agents_sse_invariants(events)
         assert len(events) >= 2
         assert events[-1]["type"] == "completed"
 
     async def test_agents_learn_mode(self, async_coda_client: AsyncConductorQuantum):
         events = []
-        async for event in async_coda_client.coda.agents(
-            messages=[{"role": "user", "content": "Define quantum superposition in one line."}],
-            mode="learn",
-            fast=True,
-        ):
-            events.append(event)
+        async with async_skip_if_service_unavailable():
+            async for event in async_coda_client.coda.agents(
+                messages=[{"role": "user", "content": "Define quantum superposition in one line."}],
+                mode="learn",
+                fast=True,
+            ):
+                events.append(event)
         _assert_agents_sse_invariants(events)
         assert events[-1]["type"] == "completed"

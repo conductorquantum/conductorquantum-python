@@ -1,4 +1,5 @@
 name: Release
+run-name: Release conductorquantum-python v${{ inputs.version }}
 
 on:
   workflow_dispatch:
@@ -23,35 +24,31 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Ensure tag does not already exist
-        run: |
-          git fetch --tags
-          if git rev-parse -q --verify "refs/tags/v${{ inputs.version }}" >/dev/null; then
-            echo "::error::Tag v${{ inputs.version }} already exists"
-            exit 1
-          fi
+          token: ${{ secrets.RELEASE_TOKEN }}
 
       - name: Set up python
         uses: actions/setup-python@v4
         with:
           python-version: 3.11.13
 
-      - name: Ensure version is not already published
+      - name: Check if already published
+        id: pypi-check
         run: |
-          python - "${{ inputs.version }}" <<'PY'
-          import json
-          import sys
-          import urllib.request
-
-          package = "conductorquantum"
+          python - "${{ inputs.version }}" "$GITHUB_OUTPUT" <<'PY'
+          import json, sys, urllib.request
           version = sys.argv[1]
-
-          with urllib.request.urlopen(f"https://pypi.org/pypi/{package}/json") as response:
-              releases = json.load(response).get("releases", {})
-
-          if version in releases and len(releases[version]) > 0:
-              raise SystemExit(f"::error::Version {version} is already available on PyPI")
+          output_file = sys.argv[2]
+          skip = "false"
+          try:
+              with urllib.request.urlopen("https://pypi.org/pypi/conductorquantum/json") as r:
+                  releases = json.load(r).get("releases", {})
+              if version in releases and len(releases[version]) > 0:
+                  print(f"Version {version} already on PyPI; skipping publish.")
+                  skip = "true"
+          except Exception as e:
+              print(f"::warning::PyPI version check failed: {e}")
+          with open(output_file, "a") as f:
+              f.write(f"skip={skip}\n")
           PY
 
       - name: Bootstrap poetry
@@ -80,15 +77,33 @@ jobs:
         env:
           CODA_API_TOKEN: ${{ secrets.CODA_API_TOKEN }}
 
+      - name: Commit and push version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pyproject.toml
+          if git diff --staged --quiet; then
+            echo "Version already matches ${{ inputs.version }} on this branch; skipping commit."
+          else
+            git commit -m "chore: release v${{ inputs.version }}"
+            git push origin "HEAD:${{ github.ref_name }}"
+          fi
+
+      - name: Create and push git tag
+        run: |
+          git fetch --tags
+          if git rev-parse -q --verify "refs/tags/v${{ inputs.version }}" >/dev/null; then
+            echo "Tag v${{ inputs.version }} already exists; skipping."
+          else
+            git tag "v${{ inputs.version }}"
+            git push origin "v${{ inputs.version }}"
+          fi
+
       - name: Publish to pypi
+        if: steps.pypi-check.outputs.skip != 'true'
         run: |
           poetry config repositories.remote https://upload.pypi.org/legacy/
           poetry --no-interaction -v publish --build --repository remote --username "$PYPI_USERNAME" --password "$PYPI_PASSWORD"
         env:
           PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
           PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-
-      - name: Create and push git tag
-        run: |
-          git tag "v${{ inputs.version }}"
-          git push origin "v${{ inputs.version }}"
