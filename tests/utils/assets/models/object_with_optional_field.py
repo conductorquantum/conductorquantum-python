@@ -10,7 +10,6 @@ import typing_extensions
 from .color import Color
 from .shape import ShapeParams
 from .undiscriminated_shape import UndiscriminatedShapeParams
-
 from conductorquantum.core.serialization import FieldMetadata
 
 

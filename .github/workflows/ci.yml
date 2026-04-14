@@ -54,11 +54,11 @@ jobs:
       - name: Models integration tests
         run: poetry run pytest tests/custom/test_models_integration.py -v
         env:
-          CONDUCTOR_QUANTUM_API_KEY: ${{ secrets.MODELS_API_TOKEN }}
+          CONTROL_API_TOKEN: ${{ secrets.MODELS_API_TOKEN }}
       - name: Coda integration tests
         run: poetry run pytest tests/custom/test_coda_integration.py -v
         env:
-          CONDUCTOR_QUANTUM_API_KEY: ${{ secrets.CODA_API_TOKEN }}
+          CODA_API_TOKEN: ${{ secrets.CODA_API_TOKEN }}
 
   publish:
     needs: [compile, test, integration-test]
@@ -76,10 +76,33 @@ jobs:
           curl -sSL https://install.python-poetry.org | python - -y --version 1.5.1
       - name: Install dependencies
         run: poetry install
+      - name: Check if version is already published
+        id: pypi
+        run: |
+          VERSION=$(poetry version -s)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          python - "$VERSION" <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          import sys
+          import urllib.request
+
+          package = "conductorquantum"
+          version = sys.argv[1]
+
+          with urllib.request.urlopen(f"https://pypi.org/pypi/{package}/json") as response:
+              releases = json.load(response).get("releases", {})
+
+          already_published = version in releases and len(releases[version]) > 0
+          print(f"already_published={'true' if already_published else 'false'}")
+          PY
       - name: Publish to pypi
+        if: steps.pypi.outputs.already_published != 'true'
         run: |
           poetry config repositories.remote https://upload.pypi.org/legacy/
           poetry --no-interaction -v publish --build --repository remote --username "$PYPI_USERNAME" --password "$PYPI_PASSWORD"
         env:
           PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
           PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      - name: Skip publish for existing version
+        if: steps.pypi.outputs.already_published == 'true'
+        run: echo "Version ${{ steps.pypi.outputs.version }} is already available on PyPI; skipping publish."

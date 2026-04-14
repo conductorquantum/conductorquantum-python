@@ -7,7 +7,6 @@ from __future__ import annotations
 import typing
 
 import typing_extensions
-
 from conductorquantum.core.serialization import FieldMetadata
 
 

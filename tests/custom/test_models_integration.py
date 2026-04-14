@@ -21,7 +21,6 @@ import zipfile
 
 import numpy as np
 import pytest
-
 from conductorquantum import (
     AsyncConductorQuantum,
     ConductorQuantum,
@@ -108,8 +107,8 @@ MODEL_EXPECTED_OUTPUT_KEYS: dict[str, set[str]] = {
 }
 
 _skip_no_key = pytest.mark.skipif(
-    os.environ.get("CONDUCTOR_QUANTUM_API_KEY") is None,
-    reason="CONDUCTOR_QUANTUM_API_KEY environment variable not set",
+    not (os.environ.get("CONTROL_API_TOKEN") or os.environ.get("CONDUCTOR_QUANTUM_API_KEY")),
+    reason="Set CONTROL_API_TOKEN or CONDUCTOR_QUANTUM_API_KEY",
 )
 
 pytestmark = [_skip_no_key, pytest.mark.integration]
@@ -206,9 +205,9 @@ class TestModelsExecute:
         assert isinstance(result.output, dict)
 
         expected_keys = MODEL_EXPECTED_OUTPUT_KEYS[model_id]
-        assert expected_keys.issubset(result.output.keys()), (
-            f"Missing keys for {model_id}: expected {expected_keys}, got {set(result.output.keys())}"
-        )
+        assert expected_keys.issubset(
+            result.output.keys()
+        ), f"Missing keys for {model_id}: expected {expected_keys}, got {set(result.output.keys())}"
 
     def test_execute_with_file_object(self, client: ConductorQuantum) -> None:
         """Verify execute works when passing a file object instead of np.ndarray."""

@@ -3,6 +3,7 @@
 import typing
 
 import httpx
+from ..version import __version__
 from .http_client import AsyncHttpClient, HttpClient
 
 
@@ -22,10 +23,10 @@ class BaseClientWrapper:
 
     def get_headers(self) -> typing.Dict[str, str]:
         headers: typing.Dict[str, str] = {
-            "User-Agent": "conductorquantum/0.1.4",
+            "User-Agent": f"conductorquantum/{__version__}",
             "X-Fern-Language": "Python",
             "X-Fern-SDK-Name": "conductorquantum",
-            "X-Fern-SDK-Version": "0.1.4",
+            "X-Fern-SDK-Version": __version__,
             **(self.get_custom_headers() or {}),
         }
         headers["Authorization"] = f"Bearer {self._get_token()}"

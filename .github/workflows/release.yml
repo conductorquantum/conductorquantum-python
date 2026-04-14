@@ -1,0 +1,94 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g. 0.1.5)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: conductorquantum-pypi-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure tag does not already exist
+        run: |
+          git fetch --tags
+          if git rev-parse -q --verify "refs/tags/v${{ inputs.version }}" >/dev/null; then
+            echo "::error::Tag v${{ inputs.version }} already exists"
+            exit 1
+          fi
+
+      - name: Set up python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11.13
+
+      - name: Ensure version is not already published
+        run: |
+          python - "${{ inputs.version }}" <<'PY'
+          import json
+          import sys
+          import urllib.request
+
+          package = "conductorquantum"
+          version = sys.argv[1]
+
+          with urllib.request.urlopen(f"https://pypi.org/pypi/{package}/json") as response:
+              releases = json.load(response).get("releases", {})
+
+          if version in releases and len(releases[version]) > 0:
+              raise SystemExit(f"::error::Version {version} is already available on PyPI")
+          PY
+
+      - name: Bootstrap poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python - -y --version 1.5.1
+
+      - name: Update version in pyproject.toml
+        run: poetry version "${{ inputs.version }}"
+
+      - name: Install dependencies
+        run: poetry install --with dev
+
+      - name: Compile
+        run: poetry run mypy .
+
+      - name: Test
+        run: poetry run pytest -rP .
+
+      - name: Models integration tests
+        run: poetry run pytest tests/custom/test_models_integration.py -v
+        env:
+          CONTROL_API_TOKEN: ${{ secrets.MODELS_API_TOKEN }}
+
+      - name: Coda integration tests
+        run: poetry run pytest tests/custom/test_coda_integration.py -v
+        env:
+          CODA_API_TOKEN: ${{ secrets.CODA_API_TOKEN }}
+
+      - name: Publish to pypi
+        run: |
+          poetry config repositories.remote https://upload.pypi.org/legacy/
+          poetry --no-interaction -v publish --build --repository remote --username "$PYPI_USERNAME" --password "$PYPI_PASSWORD"
+        env:
+          PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+
+      - name: Create and push git tag
+        run: |
+          git tag "v${{ inputs.version }}"
+          git push origin "v${{ inputs.version }}"

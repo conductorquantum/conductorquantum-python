@@ -1,10 +1,10 @@
 """Integration tests for the Coda surface on ConductorQuantum.
 
-These tests run against the live API at https://api.conductorquantum.com/v0
-and require a valid API key set via the CONDUCTOR_QUANTUM_API_KEY environment variable.
+These tests run against the live Coda API (Vercel-backed) at
+https://api.conductorquantum.com/v0 and require a valid Coda API token.
 
 Usage:
-    CONDUCTOR_QUANTUM_API_KEY=<key> pytest tests/custom/test_coda_integration.py -v
+    CODA_API_TOKEN=<key> pytest tests/custom/test_coda_integration.py -v
 """
 
 from __future__ import annotations
@@ -12,11 +12,8 @@ from __future__ import annotations
 import os
 
 import pytest
-
 from conductorquantum import AsyncConductorQuantum, ConductorQuantum
 from conductorquantum.coda.errors import CodaAPIError
-
-API_BASE_URL = "https://api.conductorquantum.com/v0"
 
 _AGENTS_TERMINAL_TYPES = frozenset({"completed", "error", "cancelled"})
 
@@ -30,8 +27,8 @@ qc.measure([0, 1], [0, 1])
 """
 
 _skip_no_key = pytest.mark.skipif(
-    os.environ.get("CONDUCTOR_QUANTUM_API_KEY") is None,
-    reason="CONDUCTOR_QUANTUM_API_KEY environment variable not set",
+    not (os.environ.get("CODA_API_TOKEN") or os.environ.get("CONDUCTOR_QUANTUM_API_KEY")),
+    reason="Set CODA_API_TOKEN or CONDUCTOR_QUANTUM_API_KEY",
 )
 
 pytestmark = [_skip_no_key, pytest.mark.integration]
@@ -47,9 +44,9 @@ def _assert_agents_sse_invariants(events: list[dict]) -> None:
         assert isinstance(t, str) and len(t) > 0, f"Each event needs non-empty str type, got {ev!r}"
         types.append(t)
     terminal_positions = [i for i, t in enumerate(types) if t in _AGENTS_TERMINAL_TYPES]
-    assert len(terminal_positions) == 1, (
-        f"Expected exactly one terminal event ({_AGENTS_TERMINAL_TYPES}), types={types}"
-    )
+    assert (
+        len(terminal_positions) == 1
+    ), f"Expected exactly one terminal event ({_AGENTS_TERMINAL_TYPES}), types={types}"
     assert terminal_positions[0] == len(events) - 1, f"Terminal event must be last, types={types}"
 
 
@@ -59,14 +56,14 @@ def _assert_agents_sse_invariants(events: list[dict]) -> None:
 
 
 class TestCodaHealth:
-    def test_health(self, client: ConductorQuantum):
-        result = client.coda.health()
+    def test_health(self, coda_client: ConductorQuantum):
+        result = coda_client.coda.health()
         assert result.get("status") == "ok"
 
 
 class TestCodaTranspile:
-    def test_transpile_bell_state(self, client: ConductorQuantum):
-        result = client.coda.transpile(source_code=BELL_STATE_CODE, target="cirq")
+    def test_transpile_bell_state(self, coda_client: ConductorQuantum):
+        result = coda_client.coda.transpile(source_code=BELL_STATE_CODE, target="cirq")
         assert result.get("success") is True
         assert result.get("source_framework") == "qiskit"
         assert result.get("target_framework") == "cirq"
@@ -75,8 +72,8 @@ class TestCodaTranspile:
 
 
 class TestCodaSimulate:
-    def test_simulate_bell_state(self, client: ConductorQuantum):
-        result = client.coda.simulate(code=BELL_STATE_CODE, shots=100)
+    def test_simulate_bell_state(self, coda_client: ConductorQuantum):
+        result = coda_client.coda.simulate(code=BELL_STATE_CODE, shots=100)
         assert result.get("success") is True
         counts = result.get("counts")
         assert isinstance(counts, dict) and len(counts) > 0
@@ -84,22 +81,22 @@ class TestCodaSimulate:
 
 
 class TestCodaOpenQASM3:
-    def test_to_openqasm3(self, client: ConductorQuantum):
-        result = client.coda.to_openqasm3(code=BELL_STATE_CODE)
+    def test_to_openqasm3(self, coda_client: ConductorQuantum):
+        result = coda_client.coda.to_openqasm3(code=BELL_STATE_CODE)
         assert result.get("success") is True
         assert "OPENQASM" in result.get("openqasm3", "")
 
 
 class TestCodaEstimateResources:
-    def test_estimate_resources(self, client: ConductorQuantum):
-        result = client.coda.estimate_resources(code=BELL_STATE_CODE)
+    def test_estimate_resources(self, coda_client: ConductorQuantum):
+        result = coda_client.coda.estimate_resources(code=BELL_STATE_CODE)
         assert result.get("success") is True
         assert result.get("qubit_count") == 2
 
 
 class TestCodaSplitCircuit:
-    def test_split_circuit(self, client: ConductorQuantum):
-        result = client.coda.split_circuit(code=BELL_STATE_CODE)
+    def test_split_circuit(self, coda_client: ConductorQuantum):
+        result = coda_client.coda.split_circuit(code=BELL_STATE_CODE)
         if result.get("success") is True:
             assert result.get("original_qubit_count") == 2
         else:
@@ -107,19 +104,19 @@ class TestCodaSplitCircuit:
 
 
 class TestCodaQPU:
-    def test_qpu_devices(self, client: ConductorQuantum):
-        result = client.coda.qpu_devices()
+    def test_qpu_devices(self, coda_client: ConductorQuantum):
+        result = coda_client.coda.qpu_devices()
         assert result.get("success") is True
         devices = result.get("devices", [])
         assert isinstance(devices, list) and len(devices) > 0
 
-    def test_qpu_estimate_cost(self, client: ConductorQuantum):
-        devices_resp = client.coda.qpu_devices()
+    def test_qpu_estimate_cost(self, coda_client: ConductorQuantum):
+        devices_resp = coda_client.coda.qpu_devices()
         devices = devices_resp.get("devices", [])
         assert len(devices) > 0
         backend = devices[0].get("id") or devices[0]["name"]
 
-        result = client.coda.qpu_estimate_cost(
+        result = coda_client.coda.qpu_estimate_cost(
             code=BELL_STATE_CODE,
             source_framework="qiskit",
             backend=backend,
@@ -129,18 +126,18 @@ class TestCodaQPU:
         cost = result.get("estimated_cost_cents")
         assert isinstance(cost, (int, float)) and cost >= 0
 
-    def test_qpu_status_unknown_job(self, client: ConductorQuantum):
+    def test_qpu_status_unknown_job(self, coda_client: ConductorQuantum):
         try:
-            result = client.coda.qpu_status(job_id="nonexistent-job-id")
+            result = coda_client.coda.qpu_status(job_id="nonexistent-job-id")
         except CodaAPIError:
             return
         assert result.get("success") is False
 
 
 class TestCodaAgents:
-    def test_agents_build_mode(self, client: ConductorQuantum):
+    def test_agents_build_mode(self, coda_client: ConductorQuantum):
         events = list(
-            client.coda.agents(
+            coda_client.coda.agents(
                 messages=[{"role": "user", "content": "What is a qubit?"}],
                 mode="build",
                 fast=True,
@@ -150,9 +147,9 @@ class TestCodaAgents:
         assert len(events) >= 2
         assert events[-1]["type"] == "completed"
 
-    def test_agents_learn_mode(self, client: ConductorQuantum):
+    def test_agents_learn_mode(self, coda_client: ConductorQuantum):
         events = list(
-            client.coda.agents(
+            coda_client.coda.agents(
                 messages=[{"role": "user", "content": "Explain superposition briefly"}],
                 mode="learn",
                 fast=True,
@@ -162,9 +159,9 @@ class TestCodaAgents:
         assert len(events) >= 2
         assert events[-1]["type"] == "completed"
 
-    def test_agents_with_thread_id(self, client: ConductorQuantum):
+    def test_agents_with_thread_id(self, coda_client: ConductorQuantum):
         events = list(
-            client.coda.agents(
+            coda_client.coda.agents(
                 messages=[{"role": "user", "content": "Hi"}],
                 thread_id="integration-test-thread",
                 mode="build",
@@ -181,21 +178,21 @@ class TestCodaAgents:
 
 
 class TestAsyncCodaHealth:
-    async def test_health(self, async_client: AsyncConductorQuantum):
-        result = await async_client.coda.health()
+    async def test_health(self, async_coda_client: AsyncConductorQuantum):
+        result = await async_coda_client.coda.health()
         assert result.get("status") == "ok"
 
 
 class TestAsyncCodaTranspile:
-    async def test_transpile(self, async_client: AsyncConductorQuantum):
-        result = await async_client.coda.transpile(source_code=BELL_STATE_CODE, target="cirq")
+    async def test_transpile(self, async_coda_client: AsyncConductorQuantum):
+        result = await async_coda_client.coda.transpile(source_code=BELL_STATE_CODE, target="cirq")
         assert result.get("success") is True
 
 
 class TestAsyncCodaAgents:
-    async def test_agents_build_mode(self, async_client: AsyncConductorQuantum):
+    async def test_agents_build_mode(self, async_coda_client: AsyncConductorQuantum):
         events = []
-        async for event in async_client.coda.agents(
+        async for event in async_coda_client.coda.agents(
             messages=[{"role": "user", "content": "What is a qubit?"}],
             mode="build",
             fast=True,
@@ -205,9 +202,9 @@ class TestAsyncCodaAgents:
         assert len(events) >= 2
         assert events[-1]["type"] == "completed"
 
-    async def test_agents_learn_mode(self, async_client: AsyncConductorQuantum):
+    async def test_agents_learn_mode(self, async_coda_client: AsyncConductorQuantum):
         events = []
-        async for event in async_client.coda.agents(
+        async for event in async_coda_client.coda.agents(
             messages=[{"role": "user", "content": "Define quantum superposition in one line."}],
             mode="learn",
             fast=True,
