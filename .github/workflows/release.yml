@@ -70,7 +70,7 @@ jobs:
       - name: Models integration tests
         run: poetry run pytest tests/custom/test_models_integration.py -v
         env:
-          CONTROL_API_TOKEN: ${{ secrets.MODELS_API_TOKEN }}
+          CONTROL_API_TOKEN: ${{ secrets.CONTROL_API_TOKEN }}
 
       - name: Coda integration tests
         run: poetry run pytest tests/custom/test_coda_integration.py -v
