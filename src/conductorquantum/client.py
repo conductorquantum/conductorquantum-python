@@ -5,6 +5,7 @@ import warnings
 from collections.abc import AsyncIterator, Iterator
 
 import httpx
+from .agents.client import AgentsClient, AsyncAgentsClient
 from .base_client import AsyncBaseConductorQuantum, BaseConductorQuantum
 from .coda._http import api_base_url_from_env
 from .coda.client import AsyncCodaClient, CodaClient
@@ -69,8 +70,13 @@ class ConductorQuantum(BaseConductorQuantum):
             httpx_client=httpx_client,
         )
         self._models = ExtendedModelsClient(client_wrapper=self._client_wrapper)
+        self._agents = AgentsClient(client_wrapper=self._client_wrapper)
         _base_model_results = super(ConductorQuantum, self).model_results
-        self._control = ControlClient(models=self._models, model_results=_base_model_results)
+        self._control = ControlClient(
+            models=self._models,
+            model_results=_base_model_results,
+            agents=self._agents,
+        )
 
         coda_base_url = base_url or api_base_url_from_env()
         self._coda = CodaClient(
@@ -302,8 +308,13 @@ class AsyncConductorQuantum(AsyncBaseConductorQuantum):
             httpx_client=httpx_client,
         )
         self._models = AsyncExtendedModelsClient(client_wrapper=self._client_wrapper)
+        self._agents = AsyncAgentsClient(client_wrapper=self._client_wrapper)
         _base_model_results = super(AsyncConductorQuantum, self).model_results
-        self._control = AsyncControlClient(models=self._models, model_results=_base_model_results)
+        self._control = AsyncControlClient(
+            models=self._models,
+            model_results=_base_model_results,
+            agents=self._agents,
+        )
 
         coda_base_url = base_url or api_base_url_from_env()
         self._coda = AsyncCodaClient(

@@ -16,12 +16,13 @@ from __future__ import annotations
 import typing
 
 if typing.TYPE_CHECKING:
+    from conductorquantum.agents.client import AgentsClient, AsyncAgentsClient
     from conductorquantum.model_results.client import AsyncModelResultsClient, ModelResultsClient
     from conductorquantum.models.extended_client import AsyncExtendedModelsClient, ExtendedModelsClient
 
 
 class ControlClient:
-    """Namespace for the Control product line (models + model results).
+    """Namespace for the Control product line (models, model results, agents).
 
     Accessed via ``ConductorQuantum(...).control``. This is the preferred path;
     ``client.models`` and ``client.model_results`` still work but emit
@@ -33,9 +34,11 @@ class ControlClient:
         *,
         models: ExtendedModelsClient,
         model_results: ModelResultsClient,
+        agents: AgentsClient,
     ) -> None:
         self._models = models
         self._model_results = model_results
+        self._agents = agents
 
     @property
     def models(self) -> ExtendedModelsClient:
@@ -45,9 +48,13 @@ class ControlClient:
     def model_results(self) -> ModelResultsClient:
         return self._model_results
 
+    @property
+    def agents(self) -> AgentsClient:
+        return self._agents
+
 
 class AsyncControlClient:
-    """Async namespace for the Control product line (models + model results).
+    """Async namespace for the Control product line (models, model results, agents).
 
     Accessed via ``AsyncConductorQuantum(...).control``. This is the preferred
     path; ``client.models`` and ``client.model_results`` still work but emit
@@ -59,9 +66,11 @@ class AsyncControlClient:
         *,
         models: AsyncExtendedModelsClient,
         model_results: AsyncModelResultsClient,
+        agents: AsyncAgentsClient,
     ) -> None:
         self._models = models
         self._model_results = model_results
+        self._agents = agents
 
     @property
     def models(self) -> AsyncExtendedModelsClient:
@@ -70,3 +79,7 @@ class AsyncControlClient:
     @property
     def model_results(self) -> AsyncModelResultsClient:
         return self._model_results
+
+    @property
+    def agents(self) -> AsyncAgentsClient:
+        return self._agents

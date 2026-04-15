@@ -6,6 +6,7 @@ import typing
 from importlib import import_module
 
 if typing.TYPE_CHECKING:
+    from .agent_public import AgentPublic
     from .http_validation_error import HttpValidationError
     from .model_public import ModelPublic
     from .model_result_public import ModelResultPublic
@@ -14,6 +15,7 @@ if typing.TYPE_CHECKING:
     from .validation_error_loc_item import ValidationErrorLocItem
     from .vote_response import VoteResponse
 _dynamic_imports: typing.Dict[str, str] = {
+    "AgentPublic": ".agent_public",
     "HttpValidationError": ".http_validation_error",
     "ModelPublic": ".model_public",
     "ModelResultPublic": ".model_result_public",
@@ -46,6 +48,7 @@ def __dir__():
 
 
 __all__ = [
+    "AgentPublic",
     "HttpValidationError",
     "ModelPublic",
     "ModelResultPublic",

@@ -7,6 +7,7 @@ from importlib import import_module
 
 if typing.TYPE_CHECKING:
     from .types import (
+        AgentPublic,
         HttpValidationError,
         ModelPublic,
         ModelResultPublic,
@@ -21,6 +22,7 @@ if typing.TYPE_CHECKING:
     from .environment import ConductorQuantumEnvironment
     from .version import __version__
 _dynamic_imports: typing.Dict[str, str] = {
+    "AgentPublic": ".types",
     "AsyncConductorQuantum": ".client",
     "ConductorQuantum": ".client",
     "ConductorQuantumEnvironment": ".environment",
@@ -62,6 +64,7 @@ def __dir__():
 
 
 __all__ = [
+    "AgentPublic",
     "AsyncConductorQuantum",
     "ConductorQuantum",
     "ConductorQuantumEnvironment",

@@ -32,11 +32,6 @@ class ModelPublic(UniversalBaseModel):
     The UTC time the model was released
     """
 
-    number_of_runs: int = pydantic.Field()
-    """
-    The number of times the model has been run
-    """
-
     input_shape_requirements: str = pydantic.Field()
     """
     The input shape requirements for the model
