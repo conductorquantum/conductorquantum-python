@@ -7,6 +7,7 @@ httpx and pytest-asyncio (already in dev deps).
 from __future__ import annotations
 
 import json
+import warnings
 
 import httpx
 import pytest
@@ -19,10 +20,19 @@ from conductorquantum.coda._http import (
     parse_json,
     retry_delay,
 )
-from conductorquantum.coda.client import AsyncCodaClient, CodaClient
+from conductorquantum.coda.client import (
+    AsyncCodaAgentsClient,
+    AsyncCodaClient,
+    AsyncCodaQPUsClient,
+    AsyncCodaToolsClient,
+    CodaAgentsClient,
+    CodaClient,
+    CodaQPUsClient,
+    CodaToolsClient,
+)
 from conductorquantum.coda.errors import CodaAPIError, CodaAuthError, CodaTimeoutError
 
-BASE_URL = "http://test:9999/v0"
+BASE_URL = "http://test:9999/v0/coda"
 TOKEN = "coda_test-token"
 NON_CODA_TOKEN = "test-token"
 
@@ -40,6 +50,26 @@ def _sse_response(events: list[dict]) -> httpx.Response:
     lines = [f"data: {json.dumps(ev)}\n\n" for ev in events]
     body = "".join(lines)
     return httpx.Response(200, content=body, headers={"content-type": "text/event-stream"})
+
+
+def _patch_client(client, handler):
+    """Patch a sync CodaClient and all its sub-clients with a mock transport."""
+    mock = httpx.Client(base_url=str(client._client.base_url), transport=_mock_transport(handler))
+    client._client = mock
+    client._tools._client = mock
+    client._qpus._client = mock
+    client._agents._client = mock
+
+
+def _patch_async_client(client, handler):
+    """Patch an async CodaClient and all its sub-clients with a mock transport."""
+    mock = httpx.AsyncClient(
+        base_url=str(client._client.base_url), transport=httpx.MockTransport(handler)
+    )
+    client._client = mock
+    client._tools._client = mock
+    client._qpus._client = mock
+    client._agents._client = mock
 
 
 # ---------------------------------------------------------------------------
@@ -108,11 +138,15 @@ class TestRootClientCoda:
             return _json_response({"status": "ok"})
 
         client = ConductorQuantum(token=NON_CODA_TOKEN, base_url=BASE_URL)
-        client._coda._client = httpx.Client(
+        mock = httpx.Client(
             base_url=BASE_URL,
             transport=_mock_transport(handler),
             auth=CodaTokenAuth(NON_CODA_TOKEN),
         )
+        client._coda._client = mock
+        client._coda._tools._client = mock
+        client._coda._qpus._client = mock
+        client._coda._agents._client = mock
 
         with pytest.raises(ValueError, match="coda_"):
             client.coda.health()
@@ -128,11 +162,15 @@ class TestRootClientCoda:
             return _json_response({"status": "ok"})
 
         client = ConductorQuantum(token=NON_CODA_TOKEN, base_url=BASE_URL)
-        client._coda._client = httpx.Client(
+        mock = httpx.Client(
             base_url=BASE_URL,
             transport=_mock_transport(handler),
             auth=CodaTokenAuth(NON_CODA_TOKEN),
         )
+        client._coda._client = mock
+        client._coda._tools._client = mock
+        client._coda._qpus._client = mock
+        client._coda._agents._client = mock
 
         with pytest.raises(ValueError, match="coda_"):
             client.health()
@@ -148,11 +186,15 @@ class TestRootClientCoda:
             return _json_response({"status": "ok"})
 
         client = AsyncConductorQuantum(token=NON_CODA_TOKEN, base_url=BASE_URL)
-        client._coda._client = httpx.AsyncClient(
+        mock = httpx.AsyncClient(
             base_url=BASE_URL,
             transport=httpx.MockTransport(handler),
             auth=CodaTokenAuth(NON_CODA_TOKEN),
         )
+        client._coda._client = mock
+        client._coda._tools._client = mock
+        client._coda._qpus._client = mock
+        client._coda._agents._client = mock
 
         with pytest.raises(ValueError, match="coda_"):
             await client.coda.health()
@@ -179,16 +221,12 @@ class TestRootClientControl:
         assert hasattr(client.control, "model_results")
 
     def test_control_models_is_same_as_models(self):
-        import warnings
-
         client = ConductorQuantum(token=TOKEN)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
             assert client.control.models is client.models
 
     def test_control_model_results_is_same_as_model_results(self):
-        import warnings
-
         client = ConductorQuantum(token=TOKEN)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
@@ -220,6 +258,7 @@ class TestTopLevelShortcuts:
             "qpu_devices",
             "qpu_estimate_cost",
             "agents",
+            "agents_list",
         ]:
             assert hasattr(client, method), f"Missing top-level method: {method}"
 
@@ -237,6 +276,7 @@ class TestTopLevelShortcuts:
             "qpu_devices",
             "qpu_estimate_cost",
             "agents",
+            "agents_list",
         ]:
             assert hasattr(client, method), f"Missing top-level method: {method}"
 
@@ -245,8 +285,10 @@ class TestTopLevelShortcuts:
             return _json_response({"success": True, "counts": {"00": 512}})
 
         client = ConductorQuantum(token=TOKEN, base_url=BASE_URL)
-        client._coda._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
-        result = client.simulate(code="code")
+        _patch_client(client._coda, handler)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            result = client.simulate(code="code")
         assert result["success"] is True
 
     def test_top_level_transpile_delegates_to_coda(self):
@@ -254,8 +296,10 @@ class TestTopLevelShortcuts:
             return _json_response({"success": True, "converted_code": "cirq"})
 
         client = ConductorQuantum(token=TOKEN, base_url=BASE_URL)
-        client._coda._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
-        result = client.transpile(source_code="code", target="cirq")
+        _patch_client(client._coda, handler)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            result = client.transpile(source_code="code", target="cirq")
         assert result["success"] is True
 
     def test_top_level_agents_delegates_to_coda(self):
@@ -263,8 +307,10 @@ class TestTopLevelShortcuts:
             return _sse_response([{"type": "completed"}])
 
         client = ConductorQuantum(token=TOKEN, base_url=BASE_URL)
-        client._coda._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
-        events = list(client.agents(messages=[{"role": "user", "content": "hi"}]))
+        _patch_client(client._coda, handler)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            events = list(client.agents(messages=[{"role": "user", "content": "hi"}]))
         assert len(events) == 1
         assert events[0]["type"] == "completed"
 
@@ -275,25 +321,31 @@ class TestTopLevelShortcuts:
 
 
 class TestApiBaseUrlFromEnv:
-    def test_defaults_to_production(self, monkeypatch: pytest.MonkeyPatch):
+    def test_defaults_to_v0_coda_production(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.delenv("CODA_API_BASE_URL", raising=False)
         monkeypatch.delenv("CODA_BASE_URL", raising=False)
         assert api_base_url_from_env() == DEFAULT_BASE_URL
+        assert api_base_url_from_env() == "https://api.conductorquantum.com/v0/coda"
 
     def test_coda_api_base_url_wins(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("CODA_API_BASE_URL", "https://custom.example.com/v0")
         monkeypatch.setenv("CODA_BASE_URL", "http://ignored")
         assert api_base_url_from_env() == "https://custom.example.com/v0"
 
-    def test_coda_base_url_appends_v0(self, monkeypatch: pytest.MonkeyPatch):
+    def test_coda_base_url_appends_v0_coda(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.delenv("CODA_API_BASE_URL", raising=False)
         monkeypatch.setenv("CODA_BASE_URL", "http://localhost:9999")
-        assert api_base_url_from_env() == "http://localhost:9999/v0"
+        assert api_base_url_from_env() == "http://localhost:9999/v0/coda"
 
-    def test_coda_base_url_with_v0_unchanged(self, monkeypatch: pytest.MonkeyPatch):
+    def test_coda_base_url_with_v0_appends_coda(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.delenv("CODA_API_BASE_URL", raising=False)
         monkeypatch.setenv("CODA_BASE_URL", "http://localhost:9999/v0")
-        assert api_base_url_from_env() == "http://localhost:9999/v0"
+        assert api_base_url_from_env() == "http://localhost:9999/v0/coda"
+
+    def test_coda_base_url_with_v0_coda_unchanged(self, monkeypatch: pytest.MonkeyPatch):
+        monkeypatch.delenv("CODA_API_BASE_URL", raising=False)
+        monkeypatch.setenv("CODA_BASE_URL", "http://localhost:9999/v0/coda")
+        assert api_base_url_from_env() == "http://localhost:9999/v0/coda"
 
 
 # ---------------------------------------------------------------------------
@@ -402,11 +454,11 @@ class TestRetryDelay:
 class TestCodaClientHealth:
     def test_health(self):
         def handler(request: httpx.Request) -> httpx.Response:
-            assert request.url.path == "/v0/health"
+            assert request.url.path == "/v0/coda/health"
             return _json_response({"status": "ok"})
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
+        _patch_client(client, handler)
         assert client.health() == {"status": "ok"}
 
 
@@ -418,8 +470,8 @@ class TestCodaClientTranspile:
             return _json_response({"success": True, "converted_code": "cirq_code"})
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
-        result = client.transpile(source_code="qc = QuantumCircuit(2)", target="cirq")
+        _patch_client(client, handler)
+        result = client.tools.transpile(source_code="qc = QuantumCircuit(2)", target="cirq")
         assert result["success"] is True
 
 
@@ -434,8 +486,8 @@ class TestCodaClientSimulate:
             return _json_response({"success": True, "counts": {"00": 512, "11": 512}})
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
-        result = client.simulate(code="code")
+        _patch_client(client, handler)
+        result = client.tools.simulate(code="code")
         assert result["success"] is True
 
     def test_simulate_with_seed(self):
@@ -445,8 +497,8 @@ class TestCodaClientSimulate:
             return _json_response({"success": True})
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
-        client.simulate(code="code", seed_simulator=42)
+        _patch_client(client, handler)
+        client.tools.simulate(code="code", seed_simulator=42)
 
 
 class TestCodaClientCircuitTools:
@@ -455,8 +507,8 @@ class TestCodaClientCircuitTools:
             return _json_response({"success": True, "openqasm3": "OPENQASM 3.0;"})
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
-        result = client.to_openqasm3(code="code")
+        _patch_client(client, handler)
+        result = client.tools.to_openqasm3(code="code")
         assert result["success"] is True
 
     def test_estimate_resources(self):
@@ -464,8 +516,8 @@ class TestCodaClientCircuitTools:
             return _json_response({"success": True, "qubit_count": 2})
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
-        result = client.estimate_resources(code="code")
+        _patch_client(client, handler)
+        result = client.tools.estimate_resources(code="code")
         assert result["qubit_count"] == 2
 
     def test_split_circuit(self):
@@ -473,13 +525,13 @@ class TestCodaClientCircuitTools:
             return _json_response({"success": True})
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
-        result = client.split_circuit(code="code")
+        _patch_client(client, handler)
+        result = client.tools.split_circuit(code="code")
         assert result["success"] is True
 
 
 class TestCodaClientQPU:
-    def test_qpu_submit(self):
+    def test_qpu_run(self):
         def handler(request: httpx.Request) -> httpx.Response:
             body = json.loads(request.content)
             assert body["code"] == "code"
@@ -488,8 +540,8 @@ class TestCodaClientQPU:
             return _json_response({"success": True, "job_id": "j-1"})
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
-        result = client.qpu_submit(code="code", source_framework="qiskit", backend="iqm")
+        _patch_client(client, handler)
+        result = client.qpus.run(code="code", source_framework="qiskit", backend="iqm")
         assert result["job_id"] == "j-1"
 
     def test_qpu_status(self):
@@ -499,17 +551,17 @@ class TestCodaClientQPU:
             return _json_response({"success": True, "status": "completed"})
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
-        result = client.qpu_status(job_id="j-1")
+        _patch_client(client, handler)
+        result = client.qpus.status(job_id="j-1")
         assert result["status"] == "completed"
 
-    def test_qpu_devices(self):
+    def test_qpu_list(self):
         def handler(request: httpx.Request) -> httpx.Response:
             return _json_response({"success": True, "devices": [{"name": "iqm"}]})
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
-        result = client.qpu_devices()
+        _patch_client(client, handler)
+        result = client.qpus.list()
         assert len(result["devices"]) == 1
 
     def test_qpu_estimate_cost(self):
@@ -517,8 +569,8 @@ class TestCodaClientQPU:
             return _json_response({"success": True, "estimated_cost_cents": 50})
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
-        result = client.qpu_estimate_cost(code="code", source_framework="qiskit", backend="iqm")
+        _patch_client(client, handler)
+        result = client.qpus.estimate_cost(code="code", source_framework="qiskit", backend="iqm")
         assert result["estimated_cost_cents"] == 50
 
 
@@ -534,8 +586,8 @@ class TestCodaClientAgents:
             return _sse_response(events)
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
-        collected = list(client.agents(messages=[{"role": "user", "content": "hi"}]))
+        _patch_client(client, handler)
+        collected = list(client.agents.run(messages=[{"role": "user", "content": "hi"}]))
 
         assert len(collected) == 2
         assert collected[0]["type"] == "token"
@@ -550,9 +602,9 @@ class TestCodaClientAgents:
             return _sse_response([{"type": "completed"}])
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
+        _patch_client(client, handler)
         list(
-            client.agents(
+            client.agents.run(
                 messages=[{"role": "user", "content": "test"}],
                 thread_id="t-1",
                 fast=True,
@@ -567,8 +619,8 @@ class TestCodaClientAgents:
             return _sse_response([{"type": "completed"}])
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
-        list(client.agents(messages=[{"role": "user", "content": "hi"}]))
+        _patch_client(client, handler)
+        list(client.agents.run(messages=[{"role": "user", "content": "hi"}]))
 
     def test_agents_skips_non_data_lines(self):
         def handler(request: httpx.Request) -> httpx.Response:
@@ -576,8 +628,8 @@ class TestCodaClientAgents:
             return httpx.Response(200, content=body, headers={"content-type": "text/event-stream"})
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
-        collected = list(client.agents(messages=[{"role": "user", "content": "hi"}]))
+        _patch_client(client, handler)
+        collected = list(client.agents.run(messages=[{"role": "user", "content": "hi"}]))
         assert len(collected) == 1
         assert collected[0]["type"] == "completed"
 
@@ -586,18 +638,18 @@ class TestCodaClientAgents:
             return httpx.Response(401, json={"detail": "Invalid token"})
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
+        _patch_client(client, handler)
         with pytest.raises(CodaAuthError):
-            list(client.agents(messages=[{"role": "user", "content": "hi"}]))
+            list(client.agents.run(messages=[{"role": "user", "content": "hi"}]))
 
     def test_agents_307_raises_api_error(self):
         def handler(request: httpx.Request) -> httpx.Response:
             return httpx.Response(307, headers={"location": "/login"}, content=b"/login")
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
+        _patch_client(client, handler)
         with pytest.raises(CodaAPIError) as exc_info:
-            list(client.agents(messages=[{"role": "user", "content": "hi"}]))
+            list(client.agents.run(messages=[{"role": "user", "content": "hi"}]))
         assert exc_info.value.status_code == 307
         assert "CODA_API_BASE_URL" in exc_info.value.detail
 
@@ -608,7 +660,7 @@ class TestCodaClientAgents:
 
 
 class TestCodaClientQpuOptionalFields:
-    def test_qpu_submit_sends_optional_fields(self):
+    def test_qpu_run_sends_optional_fields(self):
         def handler(request: httpx.Request) -> httpx.Response:
             body = json.loads(request.content)
             assert body["accept_overage"] is True
@@ -617,8 +669,8 @@ class TestCodaClientQpuOptionalFields:
             return _json_response({"success": True, "job_id": "j-1"})
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
-        client.qpu_submit(
+        _patch_client(client, handler)
+        client.qpus.run(
             code="code",
             source_framework="qiskit",
             backend="ionq",
@@ -635,8 +687,8 @@ class TestCodaClientQpuOptionalFields:
             return _json_response({"success": True, "estimated_cost_cents": 100})
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
-        client.qpu_estimate_cost(
+        _patch_client(client, handler)
+        client.qpus.estimate_cost(
             code="code",
             source_framework="qiskit",
             backend="ionq",
@@ -651,8 +703,8 @@ class TestCodaClientQpuOptionalFields:
             return _json_response({"success": True, "status": "running"})
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
-        client.qpu_status(job_id="j-abc")
+        _patch_client(client, handler)
+        client.qpus.status(job_id="j-abc")
 
 
 # ---------------------------------------------------------------------------
@@ -672,7 +724,7 @@ class TestCodaClientRetry:
             return _json_response({"status": "ok"})
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
+        _patch_client(client, handler)
         result = client.health()
         assert result == {"status": "ok"}
         assert call_count == 2
@@ -688,7 +740,7 @@ class TestCodaClientRetry:
             return _json_response({"status": "ok"})
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
+        _patch_client(client, handler)
         result = client.health()
         assert result == {"status": "ok"}
         assert call_count == 3
@@ -700,7 +752,7 @@ class TestCodaClientTimeout:
             raise httpx.ReadTimeout("timed out")
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
+        _patch_client(client, handler)
         with pytest.raises(CodaTimeoutError, match="timed out"):
             client.health()
 
@@ -716,7 +768,7 @@ class TestAsyncCodaClientHealth:
             return _json_response({"status": "ok"})
 
         client = AsyncCodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.AsyncClient(base_url=BASE_URL, transport=httpx.MockTransport(handler))
+        _patch_async_client(client, handler)
         result = await client.health()
         assert result == {"status": "ok"}
 
@@ -727,8 +779,8 @@ class TestAsyncCodaClientTranspile:
             return _json_response({"success": True, "converted_code": "cirq_code"})
 
         client = AsyncCodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.AsyncClient(base_url=BASE_URL, transport=httpx.MockTransport(handler))
-        result = await client.transpile(source_code="code", target="cirq")
+        _patch_async_client(client, handler)
+        result = await client.tools.transpile(source_code="code", target="cirq")
         assert result["success"] is True
 
 
@@ -740,8 +792,8 @@ class TestAsyncCodaClientAgents:
             return _sse_response(events)
 
         client = AsyncCodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.AsyncClient(base_url=BASE_URL, transport=httpx.MockTransport(handler))
-        collected = [ev async for ev in client.agents(messages=[{"role": "user", "content": "hi"}])]
+        _patch_async_client(client, handler)
+        collected = [ev async for ev in client.agents.run(messages=[{"role": "user", "content": "hi"}])]
 
         assert len(collected) == 2
         assert collected[0]["type"] == "token"
@@ -756,10 +808,10 @@ class TestAsyncCodaClientAgents:
             return _sse_response([{"type": "completed"}])
 
         client = AsyncCodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.AsyncClient(base_url=BASE_URL, transport=httpx.MockTransport(handler))
+        _patch_async_client(client, handler)
         _ = [
             ev
-            async for ev in client.agents(
+            async for ev in client.agents.run(
                 messages=[{"role": "user", "content": "test"}],
                 thread_id="t-2",
                 fast=True,
@@ -773,8 +825,8 @@ class TestAsyncCodaClientAgents:
             return httpx.Response(200, content=body, headers={"content-type": "text/event-stream"})
 
         client = AsyncCodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.AsyncClient(base_url=BASE_URL, transport=httpx.MockTransport(handler))
-        collected = [ev async for ev in client.agents(messages=[{"role": "user", "content": "hi"}])]
+        _patch_async_client(client, handler)
+        collected = [ev async for ev in client.agents.run(messages=[{"role": "user", "content": "hi"}])]
         assert len(collected) == 1
 
     async def test_agents_401_raises_auth_error(self):
@@ -782,18 +834,18 @@ class TestAsyncCodaClientAgents:
             return httpx.Response(401, json={"detail": "Invalid token"})
 
         client = AsyncCodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.AsyncClient(base_url=BASE_URL, transport=httpx.MockTransport(handler))
+        _patch_async_client(client, handler)
         with pytest.raises(CodaAuthError):
-            _ = [ev async for ev in client.agents(messages=[{"role": "user", "content": "hi"}])]
+            _ = [ev async for ev in client.agents.run(messages=[{"role": "user", "content": "hi"}])]
 
     async def test_agents_307_raises_api_error(self):
         async def handler(request: httpx.Request) -> httpx.Response:
             return httpx.Response(307, headers={"location": "/login"}, content=b"/login")
 
         client = AsyncCodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.AsyncClient(base_url=BASE_URL, transport=httpx.MockTransport(handler))
+        _patch_async_client(client, handler)
         with pytest.raises(CodaAPIError) as exc_info:
-            _ = [ev async for ev in client.agents(messages=[{"role": "user", "content": "hi"}])]
+            _ = [ev async for ev in client.agents.run(messages=[{"role": "user", "content": "hi"}])]
         assert exc_info.value.status_code == 307
         assert "CODA_API_BASE_URL" in exc_info.value.detail
 
@@ -810,7 +862,7 @@ class TestAsyncCodaClientRetry:
             return _json_response({"status": "ok"})
 
         client = AsyncCodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.AsyncClient(base_url=BASE_URL, transport=httpx.MockTransport(handler))
+        _patch_async_client(client, handler)
         result = await client.health()
         assert result == {"status": "ok"}
         assert call_count == 2
@@ -822,7 +874,7 @@ class TestAsyncCodaClientTimeout:
             raise httpx.ReadTimeout("timed out")
 
         client = AsyncCodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.AsyncClient(base_url=BASE_URL, transport=httpx.MockTransport(handler))
+        _patch_async_client(client, handler)
         with pytest.raises(CodaTimeoutError, match="timed out"):
             await client.health()
 
@@ -838,7 +890,7 @@ class TestCodaClientErrors:
             return httpx.Response(401, json={"detail": "Invalid token"})
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
+        _patch_client(client, handler)
         with pytest.raises(CodaAuthError) as exc_info:
             client.health()
         assert exc_info.value.status_code == 401
@@ -848,7 +900,320 @@ class TestCodaClientErrors:
             return httpx.Response(500, json={"detail": "Internal error"})
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
-        client._client = httpx.Client(base_url=BASE_URL, transport=_mock_transport(handler))
+        _patch_client(client, handler)
         with pytest.raises(CodaAPIError) as exc_info:
             client.health()
         assert exc_info.value.status_code == 500
+
+
+# ---------------------------------------------------------------------------
+# Agents /agents path and GET /agents
+# ---------------------------------------------------------------------------
+
+
+class TestCodaClientAgentsRunPath:
+    def test_agents_calls_agents_path(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            assert request.url.path == "/v0/coda/agents"
+            assert request.method == "POST"
+            return _sse_response([{"type": "completed"}])
+
+        client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
+        _patch_client(client, handler)
+        collected = list(client.agents.run(messages=[{"role": "user", "content": "hi"}]))
+        assert len(collected) == 1
+        assert collected[0]["type"] == "completed"
+
+    def test_agents_sends_correct_body(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            body = json.loads(request.content)
+            assert body["messages"] == [{"role": "user", "content": "hi"}]
+            assert body["mode"] == "build"
+            assert body["fast"] is False
+            return _sse_response([{"type": "completed"}])
+
+        client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
+        _patch_client(client, handler)
+        list(client.agents.run(messages=[{"role": "user", "content": "hi"}]))
+
+
+class TestCodaClientAgentsList:
+    def test_agents_list_calls_correct_path(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            assert request.url.path == "/v0/coda/agents"
+            assert request.method == "GET"
+            return _json_response({"agents": [{"name": "build"}, {"name": "learn"}]})
+
+        client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
+        _patch_client(client, handler)
+        result = client.agents.list()
+        assert len(result["agents"]) == 2
+
+    def test_agents_list_returns_modes(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return _json_response({
+                "agents": [
+                    {"name": "build", "description": "Write circuits"},
+                    {"name": "learn", "description": "Learn QC"},
+                ]
+            })
+
+        client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
+        _patch_client(client, handler)
+        result = client.agents.list()
+        names = [a["name"] for a in result["agents"]]
+        assert "build" in names
+        assert "learn" in names
+
+
+class TestAsyncCodaClientAgentsRunPath:
+    async def test_agents_calls_agents_path(self):
+        async def handler(request: httpx.Request) -> httpx.Response:
+            assert request.url.path == "/v0/coda/agents"
+            assert request.method == "POST"
+            return _sse_response([{"type": "completed"}])
+
+        client = AsyncCodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
+        _patch_async_client(client, handler)
+        collected = [ev async for ev in client.agents.run(messages=[{"role": "user", "content": "hi"}])]
+        assert len(collected) == 1
+
+    async def test_agents_list_calls_correct_path(self):
+        async def handler(request: httpx.Request) -> httpx.Response:
+            assert request.url.path == "/v0/coda/agents"
+            assert request.method == "GET"
+            return _json_response({"agents": [{"name": "build"}, {"name": "learn"}]})
+
+        client = AsyncCodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
+        _patch_async_client(client, handler)
+        result = await client.agents.list()
+        assert len(result["agents"]) == 2
+
+
+# ---------------------------------------------------------------------------
+# Backwards compatibility with old /v0 base URL
+# ---------------------------------------------------------------------------
+
+
+OLD_BASE_URL = "http://test:9999/v0"
+
+
+class TestCodaClientBackwardsCompat:
+    def test_old_v0_base_url_still_reaches_health(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            assert request.url.path == "/v0/health"
+            return _json_response({"status": "ok"})
+
+        client = CodaClient(token=TOKEN, base_url=OLD_BASE_URL, sdk_version="0.0.0")
+        _patch_client(client, handler)
+        assert client.health() == {"status": "ok"}
+
+    def test_old_v0_base_url_agents_still_works(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            assert request.url.path == "/v0/agents"
+            return _sse_response([{"type": "completed"}])
+
+        client = CodaClient(token=TOKEN, base_url=OLD_BASE_URL, sdk_version="0.0.0")
+        _patch_client(client, handler)
+        events = list(client.agents.run(messages=[{"role": "user", "content": "hi"}]))
+        assert len(events) == 1
+
+    def test_old_v0_base_url_agents_list_works(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            assert request.url.path == "/v0/agents"
+            return _json_response({"agents": [{"name": "build"}]})
+
+        client = CodaClient(token=TOKEN, base_url=OLD_BASE_URL, sdk_version="0.0.0")
+        _patch_client(client, handler)
+        result = client.agents.list()
+        assert "agents" in result
+
+
+# ---------------------------------------------------------------------------
+# Top-level shortcuts for new methods
+# ---------------------------------------------------------------------------
+
+
+class TestTopLevelAgentsListShortcut:
+    def test_has_agents_list_at_top_level(self):
+        client = ConductorQuantum(token=TOKEN)
+        assert hasattr(client, "agents_list")
+
+    def test_async_has_agents_list_at_top_level(self):
+        client = AsyncConductorQuantum(token=TOKEN)
+        assert hasattr(client, "agents_list")
+
+    def test_top_level_agents_list_delegates_to_coda(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return _json_response({"agents": [{"name": "build"}, {"name": "learn"}]})
+
+        client = ConductorQuantum(token=TOKEN, base_url=BASE_URL)
+        _patch_client(client._coda, handler)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            result = client.agents_list()
+        assert len(result["agents"]) == 2
+
+
+# ---------------------------------------------------------------------------
+# Sub-client type checks
+# ---------------------------------------------------------------------------
+
+
+class TestCodaSubClients:
+    def test_tools_returns_coda_tools_client(self):
+        client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
+        assert isinstance(client.tools, CodaToolsClient)
+
+    def test_qpus_returns_coda_qpus_client(self):
+        client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
+        assert isinstance(client.qpus, CodaQPUsClient)
+
+    def test_agents_returns_coda_agents_client(self):
+        client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
+        assert isinstance(client.agents, CodaAgentsClient)
+
+    def test_async_tools_returns_async_coda_tools_client(self):
+        client = AsyncCodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
+        assert isinstance(client.tools, AsyncCodaToolsClient)
+
+    def test_async_qpus_returns_async_coda_qpus_client(self):
+        client = AsyncCodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
+        assert isinstance(client.qpus, AsyncCodaQPUsClient)
+
+    def test_async_agents_returns_async_coda_agents_client(self):
+        client = AsyncCodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
+        assert isinstance(client.agents, AsyncCodaAgentsClient)
+
+    def test_top_level_client_exposes_sub_clients(self):
+        client = ConductorQuantum(token=TOKEN, base_url=BASE_URL)
+        assert isinstance(client.coda.tools, CodaToolsClient)
+        assert isinstance(client.coda.qpus, CodaQPUsClient)
+        assert isinstance(client.coda.agents, CodaAgentsClient)
+
+
+# ---------------------------------------------------------------------------
+# Deprecation warnings on old CodaClient methods
+# ---------------------------------------------------------------------------
+
+
+class TestCodaDeprecationWarnings:
+    def test_transpile_emits_deprecation(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return _json_response({"success": True, "converted_code": "cirq"})
+
+        client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
+        _patch_client(client, handler)
+        with pytest.warns(DeprecationWarning, match="tools.transpile"):
+            client.transpile(source_code="code", target="cirq")
+
+    def test_simulate_emits_deprecation(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return _json_response({"success": True})
+
+        client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
+        _patch_client(client, handler)
+        with pytest.warns(DeprecationWarning, match="tools.simulate"):
+            client.simulate(code="code")
+
+    def test_to_openqasm3_emits_deprecation(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return _json_response({"success": True})
+
+        client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
+        _patch_client(client, handler)
+        with pytest.warns(DeprecationWarning, match="tools.to_openqasm3"):
+            client.to_openqasm3(code="code")
+
+    def test_estimate_resources_emits_deprecation(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return _json_response({"success": True})
+
+        client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
+        _patch_client(client, handler)
+        with pytest.warns(DeprecationWarning, match="tools.estimate_resources"):
+            client.estimate_resources(code="code")
+
+    def test_split_circuit_emits_deprecation(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return _json_response({"success": True})
+
+        client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
+        _patch_client(client, handler)
+        with pytest.warns(DeprecationWarning, match="tools.split_circuit"):
+            client.split_circuit(code="code")
+
+    def test_qpu_submit_emits_deprecation(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return _json_response({"success": True, "job_id": "j-1"})
+
+        client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
+        _patch_client(client, handler)
+        with pytest.warns(DeprecationWarning, match="qpus.run"):
+            client.qpu_submit(code="code", source_framework="qiskit", backend="iqm")
+
+    def test_qpu_status_emits_deprecation(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return _json_response({"success": True, "status": "completed"})
+
+        client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
+        _patch_client(client, handler)
+        with pytest.warns(DeprecationWarning, match="qpus.status"):
+            client.qpu_status(job_id="j-1")
+
+    def test_qpu_devices_emits_deprecation(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return _json_response({"success": True, "devices": []})
+
+        client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
+        _patch_client(client, handler)
+        with pytest.warns(DeprecationWarning, match="qpus.list"):
+            client.qpu_devices()
+
+    def test_qpu_estimate_cost_emits_deprecation(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return _json_response({"success": True, "estimated_cost_cents": 50})
+
+        client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
+        _patch_client(client, handler)
+        with pytest.warns(DeprecationWarning, match="qpus.estimate_cost"):
+            client.qpu_estimate_cost(code="code", source_framework="qiskit", backend="iqm")
+
+    def test_agents_list_emits_deprecation(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return _json_response({"agents": []})
+
+        client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
+        _patch_client(client, handler)
+        with pytest.warns(DeprecationWarning, match="agents.list"):
+            client.agents_list()
+
+
+# ---------------------------------------------------------------------------
+# CodaAgentsClient __call__ backwards compat
+# ---------------------------------------------------------------------------
+
+
+class TestCodaAgentsCallable:
+    def test_agents_callable_still_works(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return _sse_response([{"type": "completed"}])
+
+        client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
+        _patch_client(client, handler)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            events = list(
+                client.agents(messages=[{"role": "user", "content": "hi"}])
+            )
+        assert len(events) == 1
+        assert events[0]["type"] == "completed"
+
+    def test_agents_callable_emits_deprecation(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return _sse_response([{"type": "completed"}])
+
+        client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
+        _patch_client(client, handler)
+        with pytest.warns(DeprecationWarning, match="agents.run"):
+            list(client.agents(messages=[{"role": "user", "content": "hi"}]))

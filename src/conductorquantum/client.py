@@ -29,13 +29,10 @@ class ConductorQuantum(BaseConductorQuantum):
 
     Namespaced access mirrors the product structure::
 
-        client.coda.simulate(...)               # Coda — circuit tools, QPU, agents
-        client.control.models.execute(...)       # Control — analysis models
-
-    Non-conflicting methods are also available at the top level::
-
-        client.simulate(...)        # shortcut for client.coda.simulate(...)
-        client.agents(...)          # shortcut for client.coda.agents(...)
+        client.coda.tools.simulate(...)         # Coda — circuit tools
+        client.coda.qpus.run(...)               # Coda — QPU submission
+        client.coda.agents.run(...)             # Coda — AI agents
+        client.control.models.run(...)          # Control — analysis models
 
     Coda methods require a Coda API token that starts with ``coda_``. If you
     call ``client.coda.*`` or a top-level Coda shortcut with any other token,
@@ -102,6 +99,7 @@ class ConductorQuantum(BaseConductorQuantum):
     @property
     def models(self) -> ExtendedModelsClient:  # type: ignore[override]
         """**Deprecated.** Use ``client.control.models`` instead."""
+        # TODO(v2): Remove deprecated client.models accessor
         warnings.warn(
             "client.models is deprecated; use client.control.models instead.",
             DeprecationWarning,
@@ -112,6 +110,7 @@ class ConductorQuantum(BaseConductorQuantum):
     @property
     def model_results(self) -> ModelResultsClient:  # type: ignore[override]
         """**Deprecated.** Use ``client.control.model_results`` instead."""
+        # TODO(v2): Remove deprecated client.model_results accessor
         warnings.warn(
             "client.model_results is deprecated; use client.control.model_results instead.",
             DeprecationWarning,
@@ -119,15 +118,21 @@ class ConductorQuantum(BaseConductorQuantum):
         )
         return self._control.model_results
 
-    # -- Top-level Coda shortcuts (no name conflicts) --
+    # -- Top-level Coda shortcuts (deprecated) --
+    # TODO(v2): Remove all top-level Coda shortcuts below; use client.coda.tools.*, client.coda.qpus.*, client.coda.agents.*
 
     def health(self) -> dict[str, typing.Any]:
         """Shortcut for ``self.coda.health()``."""
         return self._coda.health()
 
     def transpile(self, *, source_code: str, target: str) -> dict[str, typing.Any]:
-        """Shortcut for ``self.coda.transpile(...)``."""
-        return self._coda.transpile(source_code=source_code, target=target)
+        # TODO(v2): Remove top-level shortcut client.transpile(); use client.coda.tools.transpile()
+        warnings.warn(
+            "client.transpile() is deprecated; use client.coda.tools.transpile() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self._coda.tools.transpile(source_code=source_code, target=target)
 
     def simulate(
         self,
@@ -138,22 +143,42 @@ class ConductorQuantum(BaseConductorQuantum):
         seed_simulator: typing.Optional[int] = None,
         backend: str = "auto",
     ) -> dict[str, typing.Any]:
-        """Shortcut for ``self.coda.simulate(...)``."""
-        return self._coda.simulate(
+        # TODO(v2): Remove top-level shortcut client.simulate(); use client.coda.tools.simulate()
+        warnings.warn(
+            "client.simulate() is deprecated; use client.coda.tools.simulate() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self._coda.tools.simulate(
             code=code, method=method, shots=shots, seed_simulator=seed_simulator, backend=backend
         )
 
     def to_openqasm3(self, *, code: str) -> dict[str, typing.Any]:
-        """Shortcut for ``self.coda.to_openqasm3(...)``."""
-        return self._coda.to_openqasm3(code=code)
+        # TODO(v2): Remove top-level shortcut client.to_openqasm3(); use client.coda.tools.to_openqasm3()
+        warnings.warn(
+            "client.to_openqasm3() is deprecated; use client.coda.tools.to_openqasm3() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self._coda.tools.to_openqasm3(code=code)
 
     def estimate_resources(self, *, code: str) -> dict[str, typing.Any]:
-        """Shortcut for ``self.coda.estimate_resources(...)``."""
-        return self._coda.estimate_resources(code=code)
+        # TODO(v2): Remove top-level shortcut client.estimate_resources(); use client.coda.tools.estimate_resources()
+        warnings.warn(
+            "client.estimate_resources() is deprecated; use client.coda.tools.estimate_resources() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self._coda.tools.estimate_resources(code=code)
 
     def split_circuit(self, *, code: str) -> dict[str, typing.Any]:
-        """Shortcut for ``self.coda.split_circuit(...)``."""
-        return self._coda.split_circuit(code=code)
+        # TODO(v2): Remove top-level shortcut client.split_circuit(); use client.coda.tools.split_circuit()
+        warnings.warn(
+            "client.split_circuit() is deprecated; use client.coda.tools.split_circuit() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self._coda.tools.split_circuit(code=code)
 
     def qpu_submit(
         self,
@@ -165,8 +190,13 @@ class ConductorQuantum(BaseConductorQuantum):
         accept_overage: bool = False,
         braket_execution_mode_hint: typing.Optional[str] = None,
     ) -> dict[str, typing.Any]:
-        """Shortcut for ``self.coda.qpu_submit(...)``."""
-        return self._coda.qpu_submit(
+        # TODO(v2): Remove top-level shortcut client.qpu_submit(); use client.coda.qpus.run()
+        warnings.warn(
+            "client.qpu_submit() is deprecated; use client.coda.qpus.run() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self._coda.qpus.run(
             code=code,
             source_framework=source_framework,
             backend=backend,
@@ -176,12 +206,22 @@ class ConductorQuantum(BaseConductorQuantum):
         )
 
     def qpu_status(self, *, job_id: str) -> dict[str, typing.Any]:
-        """Shortcut for ``self.coda.qpu_status(...)``."""
-        return self._coda.qpu_status(job_id=job_id)
+        # TODO(v2): Remove top-level shortcut client.qpu_status(); use client.coda.qpus.status()
+        warnings.warn(
+            "client.qpu_status() is deprecated; use client.coda.qpus.status() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self._coda.qpus.status(job_id=job_id)
 
     def qpu_devices(self) -> dict[str, typing.Any]:
-        """Shortcut for ``self.coda.qpu_devices()``."""
-        return self._coda.qpu_devices()
+        # TODO(v2): Remove top-level shortcut client.qpu_devices(); use client.coda.qpus.list()
+        warnings.warn(
+            "client.qpu_devices() is deprecated; use client.coda.qpus.list() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self._coda.qpus.list()
 
     def qpu_estimate_cost(
         self,
@@ -192,8 +232,13 @@ class ConductorQuantum(BaseConductorQuantum):
         shots: int = 100,
         braket_execution_mode_hint: typing.Optional[str] = None,
     ) -> dict[str, typing.Any]:
-        """Shortcut for ``self.coda.qpu_estimate_cost(...)``."""
-        return self._coda.qpu_estimate_cost(
+        # TODO(v2): Remove top-level shortcut client.qpu_estimate_cost(); use client.coda.qpus.estimate_cost()
+        warnings.warn(
+            "client.qpu_estimate_cost() is deprecated; use client.coda.qpus.estimate_cost() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self._coda.qpus.estimate_cost(
             code=code,
             source_framework=source_framework,
             backend=backend,
@@ -209,8 +254,22 @@ class ConductorQuantum(BaseConductorQuantum):
         fast: bool = False,
         mode: str = "build",
     ) -> Iterator[dict[str, typing.Any]]:
-        """Shortcut for ``self.coda.agents(...)``."""
-        return self._coda.agents(messages=messages, thread_id=thread_id, fast=fast, mode=mode)
+        # TODO(v2): Remove top-level shortcut client.agents(); use client.coda.agents.run()
+        warnings.warn(
+            "client.agents() is deprecated; use client.coda.agents.run() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self._coda.agents.run(messages=messages, thread_id=thread_id, fast=fast, mode=mode)
+
+    def agents_list(self) -> dict[str, typing.Any]:
+        # TODO(v2): Remove top-level shortcut client.agents_list(); use client.coda.agents.list()
+        warnings.warn(
+            "client.agents_list() is deprecated; use client.coda.agents.list() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self._coda.agents.list()
 
 
 class AsyncConductorQuantum(AsyncBaseConductorQuantum):
@@ -269,6 +328,7 @@ class AsyncConductorQuantum(AsyncBaseConductorQuantum):
     @property
     def models(self) -> AsyncExtendedModelsClient:  # type: ignore[override]
         """**Deprecated.** Use ``client.control.models`` instead."""
+        # TODO(v2): Remove deprecated client.models accessor
         warnings.warn(
             "client.models is deprecated; use client.control.models instead.",
             DeprecationWarning,
@@ -279,6 +339,7 @@ class AsyncConductorQuantum(AsyncBaseConductorQuantum):
     @property
     def model_results(self) -> AsyncModelResultsClient:  # type: ignore[override]
         """**Deprecated.** Use ``client.control.model_results`` instead."""
+        # TODO(v2): Remove deprecated client.model_results accessor
         warnings.warn(
             "client.model_results is deprecated; use client.control.model_results instead.",
             DeprecationWarning,
@@ -286,15 +347,21 @@ class AsyncConductorQuantum(AsyncBaseConductorQuantum):
         )
         return self._control.model_results
 
-    # -- Top-level Coda shortcuts (no name conflicts) --
+    # -- Top-level Coda shortcuts (deprecated) --
+    # TODO(v2): Remove all top-level async Coda shortcuts below
 
     async def health(self) -> dict[str, typing.Any]:
         """Shortcut for ``self.coda.health()``."""
         return await self._coda.health()
 
     async def transpile(self, *, source_code: str, target: str) -> dict[str, typing.Any]:
-        """Shortcut for ``self.coda.transpile(...)``."""
-        return await self._coda.transpile(source_code=source_code, target=target)
+        # TODO(v2): Remove top-level shortcut
+        warnings.warn(
+            "client.transpile() is deprecated; use client.coda.tools.transpile() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return await self._coda.tools.transpile(source_code=source_code, target=target)
 
     async def simulate(
         self,
@@ -305,22 +372,42 @@ class AsyncConductorQuantum(AsyncBaseConductorQuantum):
         seed_simulator: typing.Optional[int] = None,
         backend: str = "auto",
     ) -> dict[str, typing.Any]:
-        """Shortcut for ``self.coda.simulate(...)``."""
-        return await self._coda.simulate(
+        # TODO(v2): Remove top-level shortcut
+        warnings.warn(
+            "client.simulate() is deprecated; use client.coda.tools.simulate() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return await self._coda.tools.simulate(
             code=code, method=method, shots=shots, seed_simulator=seed_simulator, backend=backend
         )
 
     async def to_openqasm3(self, *, code: str) -> dict[str, typing.Any]:
-        """Shortcut for ``self.coda.to_openqasm3(...)``."""
-        return await self._coda.to_openqasm3(code=code)
+        # TODO(v2): Remove top-level shortcut
+        warnings.warn(
+            "client.to_openqasm3() is deprecated; use client.coda.tools.to_openqasm3() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return await self._coda.tools.to_openqasm3(code=code)
 
     async def estimate_resources(self, *, code: str) -> dict[str, typing.Any]:
-        """Shortcut for ``self.coda.estimate_resources(...)``."""
-        return await self._coda.estimate_resources(code=code)
+        # TODO(v2): Remove top-level shortcut
+        warnings.warn(
+            "client.estimate_resources() is deprecated; use client.coda.tools.estimate_resources() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return await self._coda.tools.estimate_resources(code=code)
 
     async def split_circuit(self, *, code: str) -> dict[str, typing.Any]:
-        """Shortcut for ``self.coda.split_circuit(...)``."""
-        return await self._coda.split_circuit(code=code)
+        # TODO(v2): Remove top-level shortcut
+        warnings.warn(
+            "client.split_circuit() is deprecated; use client.coda.tools.split_circuit() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return await self._coda.tools.split_circuit(code=code)
 
     async def qpu_submit(
         self,
@@ -332,8 +419,13 @@ class AsyncConductorQuantum(AsyncBaseConductorQuantum):
         accept_overage: bool = False,
         braket_execution_mode_hint: typing.Optional[str] = None,
     ) -> dict[str, typing.Any]:
-        """Shortcut for ``self.coda.qpu_submit(...)``."""
-        return await self._coda.qpu_submit(
+        # TODO(v2): Remove top-level shortcut
+        warnings.warn(
+            "client.qpu_submit() is deprecated; use client.coda.qpus.run() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return await self._coda.qpus.run(
             code=code,
             source_framework=source_framework,
             backend=backend,
@@ -343,12 +435,22 @@ class AsyncConductorQuantum(AsyncBaseConductorQuantum):
         )
 
     async def qpu_status(self, *, job_id: str) -> dict[str, typing.Any]:
-        """Shortcut for ``self.coda.qpu_status(...)``."""
-        return await self._coda.qpu_status(job_id=job_id)
+        # TODO(v2): Remove top-level shortcut
+        warnings.warn(
+            "client.qpu_status() is deprecated; use client.coda.qpus.status() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return await self._coda.qpus.status(job_id=job_id)
 
     async def qpu_devices(self) -> dict[str, typing.Any]:
-        """Shortcut for ``self.coda.qpu_devices()``."""
-        return await self._coda.qpu_devices()
+        # TODO(v2): Remove top-level shortcut
+        warnings.warn(
+            "client.qpu_devices() is deprecated; use client.coda.qpus.list() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return await self._coda.qpus.list()
 
     async def qpu_estimate_cost(
         self,
@@ -359,8 +461,13 @@ class AsyncConductorQuantum(AsyncBaseConductorQuantum):
         shots: int = 100,
         braket_execution_mode_hint: typing.Optional[str] = None,
     ) -> dict[str, typing.Any]:
-        """Shortcut for ``self.coda.qpu_estimate_cost(...)``."""
-        return await self._coda.qpu_estimate_cost(
+        # TODO(v2): Remove top-level shortcut
+        warnings.warn(
+            "client.qpu_estimate_cost() is deprecated; use client.coda.qpus.estimate_cost() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return await self._coda.qpus.estimate_cost(
             code=code,
             source_framework=source_framework,
             backend=backend,
@@ -376,6 +483,20 @@ class AsyncConductorQuantum(AsyncBaseConductorQuantum):
         fast: bool = False,
         mode: str = "build",
     ) -> AsyncIterator[dict[str, typing.Any]]:
-        """Shortcut for ``self.coda.agents(...)``."""
-        async for event in self._coda.agents(messages=messages, thread_id=thread_id, fast=fast, mode=mode):
+        # TODO(v2): Remove top-level shortcut
+        warnings.warn(
+            "client.agents() is deprecated; use client.coda.agents.run() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        async for event in self._coda.agents.run(messages=messages, thread_id=thread_id, fast=fast, mode=mode):
             yield event
+
+    async def agents_list(self) -> dict[str, typing.Any]:
+        # TODO(v2): Remove top-level shortcut
+        warnings.warn(
+            "client.agents_list() is deprecated; use client.coda.agents.list() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return await self._coda.agents.list()

@@ -1,9 +1,18 @@
 import os
 
 import pytest
+
 from conductorquantum import AsyncConductorQuantum, ConductorQuantum
 
-API_BASE_URL = os.environ.get("API_BASE_URL", "https://api.conductorquantum.com/v0")
+SHARED_API_BASE_URL = os.environ.get("API_BASE_URL")
+CONTROL_API_BASE_URL = os.environ.get(
+    "CONTROL_API_BASE_URL",
+    SHARED_API_BASE_URL or "https://api.conductorquantum.com/v0/control",
+)
+CODA_API_BASE_URL = os.environ.get(
+    "CODA_API_BASE_URL",
+    SHARED_API_BASE_URL or "https://api.conductorquantum.com/v0/coda",
+)
 
 
 def _env(name: str) -> str | None:
@@ -37,7 +46,7 @@ def api_key(control_api_key: str | None, coda_api_key: str | None) -> str:
 
 @pytest.fixture(scope="session")
 def client(api_key: str) -> ConductorQuantum:
-    return ConductorQuantum(token=api_key, base_url=API_BASE_URL)
+    return ConductorQuantum(token=api_key, base_url=CONTROL_API_BASE_URL)
 
 
 @pytest.fixture(scope="session")
@@ -45,12 +54,12 @@ def coda_client(coda_api_key: str | None) -> ConductorQuantum:
     """Session-scoped sync client wired for **Coda** only."""
     if coda_api_key is None:
         pytest.skip("Set CODA_API_TOKEN or CONDUCTOR_QUANTUM_API_KEY")
-    return ConductorQuantum(token=coda_api_key, base_url=API_BASE_URL)
+    return ConductorQuantum(token=coda_api_key, base_url=CODA_API_BASE_URL)
 
 
 @pytest.fixture()
 def async_client(api_key: str) -> AsyncConductorQuantum:
-    return AsyncConductorQuantum(token=api_key, base_url=API_BASE_URL)
+    return AsyncConductorQuantum(token=api_key, base_url=CONTROL_API_BASE_URL)
 
 
 @pytest.fixture()
@@ -58,4 +67,4 @@ def async_coda_client(coda_api_key: str | None) -> AsyncConductorQuantum:
     """Function-scoped async client wired for **Coda** only."""
     if coda_api_key is None:
         pytest.skip("Set CODA_API_TOKEN or CONDUCTOR_QUANTUM_API_KEY")
-    return AsyncConductorQuantum(token=coda_api_key, base_url=API_BASE_URL)
+    return AsyncConductorQuantum(token=coda_api_key, base_url=CODA_API_BASE_URL)
