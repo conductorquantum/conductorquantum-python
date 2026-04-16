@@ -13,7 +13,9 @@ from __future__ import annotations
 import base64
 import os
 from pathlib import Path
+from typing import NoReturn
 
+import httpx
 import numpy as np
 import pytest
 
@@ -28,7 +30,9 @@ from conductorquantum.core.request_options import RequestOptions
 
 _FIXTURES_DIR = Path(__file__).parent / "fixtures"
 _QCALEVAL_IMG = _FIXTURES_DIR / "qcaleval_drag.png"
-_QCALEVAL_B64 = base64.b64encode(_QCALEVAL_IMG.read_bytes()).decode()
+# Read lazily so pytest collection doesn't fail if the fixture is missing
+# (e.g. shallow clone, future refactor). Tests that need the image skip below.
+_QCALEVAL_B64 = base64.b64encode(_QCALEVAL_IMG.read_bytes()).decode() if _QCALEVAL_IMG.exists() else ""
 
 ISING_CALIBRATION_BODY = {
     "image_base64": _QCALEVAL_B64,
@@ -45,6 +49,11 @@ ISING_DECODING_SYNDROME = np.zeros((1, 4, 3, 3, 3), dtype=np.float32)
 _skip_no_key = pytest.mark.skipif(
     not (os.environ.get("CONTROL_API_TOKEN") or os.environ.get("CONDUCTOR_QUANTUM_API_KEY")),
     reason="Set CONTROL_API_TOKEN or CONDUCTOR_QUANTUM_API_KEY",
+)
+
+_skip_no_qcaleval_fixture = pytest.mark.skipif(
+    not _QCALEVAL_IMG.exists(),
+    reason=f"Calibration fixture missing: {_QCALEVAL_IMG}",
 )
 
 pytestmark = [_skip_no_key, pytest.mark.integration]
@@ -116,10 +125,27 @@ def _calibration_skip_msg(exc: BaseException) -> str:
     return f"ising-calibration-v1 unavailable (cold/transient): {type(exc).__name__}"
 
 
-_CALIBRATION_SKIP_SYNC = (Exception,)
-_CALIBRATION_SKIP_ASYNC = (Exception,)
+# Narrow set of exceptions that indicate transient VLM cold-start or
+# infrastructure unavailability. Anything else (AttributeError, 4xx ApiError,
+# pydantic validation) is a real bug and must fail the test, not skip.
+_CALIBRATION_TRANSIENT_EXCEPTIONS: tuple[type[BaseException], ...] = (
+    httpx.TimeoutException,
+    httpx.ConnectError,
+    httpx.ReadError,
+)
+_CALIBRATION_TRANSIENT_STATUS_CODES = frozenset({500, 502, 503, 504})
 
 
+def _skip_if_transient_calibration_error(exc: BaseException) -> NoReturn:
+    """Skip the test if ``exc`` looks like cold-start / upstream 5xx; otherwise re-raise."""
+    if isinstance(exc, _CALIBRATION_TRANSIENT_EXCEPTIONS):
+        pytest.skip(_calibration_skip_msg(exc))
+    if isinstance(exc, ApiError) and exc.status_code in _CALIBRATION_TRANSIENT_STATUS_CODES:
+        pytest.skip(_calibration_skip_msg(exc))
+    raise exc
+
+
+@_skip_no_qcaleval_fixture
 class TestIsingCalibrationAgent:
     """Ising-Calibration VLM agent tests with a short timeout.
 
@@ -139,8 +165,8 @@ class TestIsingCalibrationAgent:
                 body=ISING_CALIBRATION_BODY,
                 request_options=RequestOptions(timeout_in_seconds=CALIBRATION_TIMEOUT_SECONDS),
             )
-        except _CALIBRATION_SKIP_SYNC as exc:
-            pytest.skip(_calibration_skip_msg(exc))
+        except Exception as exc:
+            _skip_if_transient_calibration_error(exc)
         assert isinstance(result, dict)
 
     def test_response_shape(self, client: ConductorQuantum) -> None:
@@ -154,13 +180,14 @@ class TestIsingCalibrationAgent:
                 body=ISING_CALIBRATION_BODY,
                 request_options=RequestOptions(timeout_in_seconds=CALIBRATION_TIMEOUT_SECONDS),
             )
-        except _CALIBRATION_SKIP_SYNC as exc:
-            pytest.skip(_calibration_skip_msg(exc))
+        except Exception as exc:
+            _skip_if_transient_calibration_error(exc)
         assert "content" in result
         assert "model" in result
         assert "usage" in result
 
 
+@_skip_no_qcaleval_fixture
 class TestAsyncIsingCalibrationAgent:
     async def test_run_returns_dict(self, async_client: AsyncConductorQuantum) -> None:
         agents = await async_client.control.agents.list()
@@ -173,8 +200,8 @@ class TestAsyncIsingCalibrationAgent:
                 body=ISING_CALIBRATION_BODY,
                 request_options=RequestOptions(timeout_in_seconds=CALIBRATION_TIMEOUT_SECONDS),
             )
-        except _CALIBRATION_SKIP_ASYNC as exc:
-            pytest.skip(_calibration_skip_msg(exc))
+        except Exception as exc:
+            _skip_if_transient_calibration_error(exc)
         assert isinstance(result, dict)
 
     async def test_response_shape(self, async_client: AsyncConductorQuantum) -> None:
@@ -188,8 +215,8 @@ class TestAsyncIsingCalibrationAgent:
                 body=ISING_CALIBRATION_BODY,
                 request_options=RequestOptions(timeout_in_seconds=CALIBRATION_TIMEOUT_SECONDS),
             )
-        except _CALIBRATION_SKIP_ASYNC as exc:
-            pytest.skip(_calibration_skip_msg(exc))
+        except Exception as exc:
+            _skip_if_transient_calibration_error(exc)
         assert "content" in result
         assert "model" in result
         assert "usage" in result
