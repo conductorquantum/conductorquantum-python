@@ -18,6 +18,7 @@ from conductorquantum import (
     AsyncConductorQuantum,
     ConductorQuantum,
 )
+from conductorquantum.core.api_error import ApiError
 
 _skip_no_key = pytest.mark.skipif(
     not (os.environ.get("CONTROL_API_TOKEN") or os.environ.get("CONDUCTOR_QUANTUM_API_KEY")),
@@ -82,3 +83,38 @@ class TestControlAgentsNamespace:
     def test_control_agents_list(self, client: ConductorQuantum) -> None:
         agents = client.control.agents.list()
         assert isinstance(agents, list)
+
+
+# ---------------------------------------------------------------------------
+# Agents Run
+# ---------------------------------------------------------------------------
+
+
+class TestAgentsRun:
+    def test_run_returns_dict(self, client: ConductorQuantum) -> None:
+        agents = client.control.agents.list()
+        if not agents:
+            pytest.skip("No agents available for this token")
+        agent = agents[0]
+        try:
+            result = client.control.agents.run(agent.id, body={"message": "test"})
+        except ApiError as exc:
+            if exc.status_code in (400, 422):
+                pytest.skip(f"Agent {agent.id} requires specific body schema: {exc}")
+            raise
+        assert isinstance(result, dict)
+
+
+class TestAsyncAgentsRun:
+    async def test_run_returns_dict(self, async_client: AsyncConductorQuantum) -> None:
+        agents = await async_client.control.agents.list()
+        if not agents:
+            pytest.skip("No agents available for this token")
+        agent = agents[0]
+        try:
+            result = await async_client.control.agents.run(agent.id, body={"message": "test"})
+        except ApiError as exc:
+            if exc.status_code in (400, 422):
+                pytest.skip(f"Agent {agent.id} requires specific body schema: {exc}")
+            raise
+        assert isinstance(result, dict)
