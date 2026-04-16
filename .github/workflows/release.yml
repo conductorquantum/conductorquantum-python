@@ -116,11 +116,21 @@ jobs:
           GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         run: |
           TAG="v${{ inputs.version }}"
-          if gh release view "$TAG" >/dev/null 2>&1; then
+          set +e
+          view_stderr=$(gh release view "$TAG" 2>&1 >/dev/null)
+          view_rc=$?
+          set -e
+          if [ "$view_rc" -eq 0 ]; then
             echo "Release $TAG already exists; skipping."
             exit 0
           fi
+          if ! printf '%s' "$view_stderr" | grep -qi "release not found\|not found"; then
+            echo "gh release view failed unexpectedly: $view_stderr" >&2
+            exit "$view_rc"
+          fi
 
+          TARGET_SHA=$(git rev-list -n 1 "refs/tags/$TAG")
           gh release create "$TAG" \
+            --target "$TARGET_SHA" \
             --title "$TAG" \
             --generate-notes

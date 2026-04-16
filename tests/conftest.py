@@ -46,7 +46,11 @@ def api_key(control_api_key: str | None, coda_api_key: str | None) -> str:
 
 @pytest.fixture(scope="session")
 def client(api_key: str) -> ConductorQuantum:
-    return ConductorQuantum(token=api_key, base_url=CONTROL_API_BASE_URL)
+    return ConductorQuantum(
+        token=api_key,
+        base_url=CONTROL_API_BASE_URL,
+        coda_base_url=CODA_API_BASE_URL,
+    )
 
 
 @pytest.fixture(scope="session")
@@ -54,12 +58,20 @@ def coda_client(coda_api_key: str | None) -> ConductorQuantum:
     """Session-scoped sync client wired for **Coda** only."""
     if coda_api_key is None:
         pytest.skip("Set CODA_API_TOKEN or CONDUCTOR_QUANTUM_API_KEY")
-    return ConductorQuantum(token=coda_api_key, base_url=CODA_API_BASE_URL)
+    return ConductorQuantum(
+        token=coda_api_key,
+        base_url=CONTROL_API_BASE_URL,
+        coda_base_url=CODA_API_BASE_URL,
+    )
 
 
 @pytest.fixture()
 def async_client(api_key: str) -> AsyncConductorQuantum:
-    return AsyncConductorQuantum(token=api_key, base_url=CONTROL_API_BASE_URL)
+    return AsyncConductorQuantum(
+        token=api_key,
+        base_url=CONTROL_API_BASE_URL,
+        coda_base_url=CODA_API_BASE_URL,
+    )
 
 
 @pytest.fixture()
@@ -67,4 +79,8 @@ def async_coda_client(coda_api_key: str | None) -> AsyncConductorQuantum:
     """Function-scoped async client wired for **Coda** only."""
     if coda_api_key is None:
         pytest.skip("Set CODA_API_TOKEN or CONDUCTOR_QUANTUM_API_KEY")
-    return AsyncConductorQuantum(token=coda_api_key, base_url=CODA_API_BASE_URL)
+    return AsyncConductorQuantum(
+        token=coda_api_key,
+        base_url=CONTROL_API_BASE_URL,
+        coda_base_url=CODA_API_BASE_URL,
+    )

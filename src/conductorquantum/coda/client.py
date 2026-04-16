@@ -33,14 +33,9 @@ class CodaToolsClient:
     def __init__(self, client: httpx.Client) -> None:
         self._client = client
 
-    def list(self) -> dict[str, Any]:
-        """List available quantum circuit tools."""
-        resp = sync_request(self._client, "GET", "/tools")
-        return parse_json(resp)
-
     def transpile(self, *, source_code: str, target: str) -> dict[str, Any]:
         """Transpile quantum code to a target framework."""
-        resp = sync_request(self._client, "POST", "/tools/transpile", json={"source_code": source_code, "target": target})
+        resp = sync_request(self._client, "POST", "/transpile", json={"source_code": source_code, "target": target})
         return parse_json(resp)
 
     def simulate(
@@ -56,22 +51,22 @@ class CodaToolsClient:
         body: dict[str, Any] = {"code": code, "method": method, "shots": shots, "backend": backend}
         if seed_simulator is not None:
             body["seed_simulator"] = seed_simulator
-        resp = sync_request(self._client, "POST", "/tools/simulate", json=body)
+        resp = sync_request(self._client, "POST", "/simulate", json=body)
         return parse_json(resp)
 
     def to_openqasm3(self, *, code: str) -> dict[str, Any]:
         """Convert a quantum circuit to OpenQASM 3.0."""
-        resp = sync_request(self._client, "POST", "/tools/to-openqasm3", json={"code": code})
+        resp = sync_request(self._client, "POST", "/to-openqasm3", json={"code": code})
         return parse_json(resp)
 
     def estimate_resources(self, *, code: str) -> dict[str, Any]:
         """Estimate resource requirements for a quantum circuit."""
-        resp = sync_request(self._client, "POST", "/tools/estimate-resources", json={"code": code})
+        resp = sync_request(self._client, "POST", "/estimate-resources", json={"code": code})
         return parse_json(resp)
 
     def split_circuit(self, *, code: str) -> dict[str, Any]:
         """Split a circuit using circuit cutting."""
-        resp = sync_request(self._client, "POST", "/tools/split-circuit", json={"code": code})
+        resp = sync_request(self._client, "POST", "/split-circuit", json={"code": code})
         return parse_json(resp)
 
 
@@ -101,17 +96,17 @@ class CodaQPUsClient:
         }
         if braket_execution_mode_hint is not None:
             body["braket_execution_mode_hint"] = braket_execution_mode_hint
-        resp = sync_request(self._client, "POST", "/qpus", json=body)
+        resp = sync_request(self._client, "POST", "/qpu/submit", json=body)
         return parse_json(resp)
 
     def status(self, *, job_id: str) -> dict[str, Any]:
         """Check status of a submitted QPU job."""
-        resp = sync_request(self._client, "POST", "/qpus/status", json={"job_id": job_id})
+        resp = sync_request(self._client, "POST", "/qpu/status", json={"job_id": job_id})
         return parse_json(resp)
 
     def list(self) -> dict[str, Any]:
         """List available QPU devices."""
-        resp = sync_request(self._client, "GET", "/qpus")
+        resp = sync_request(self._client, "GET", "/qpu/devices")
         return parse_json(resp)
 
     def estimate_cost(
@@ -132,7 +127,7 @@ class CodaQPUsClient:
         }
         if braket_execution_mode_hint is not None:
             body["braket_execution_mode_hint"] = braket_execution_mode_hint
-        resp = sync_request(self._client, "POST", "/qpus/estimate-cost", json=body)
+        resp = sync_request(self._client, "POST", "/qpu/estimate-cost", json=body)
         return parse_json(resp)
 
 
@@ -195,15 +190,10 @@ class AsyncCodaToolsClient:
     def __init__(self, client: httpx.AsyncClient) -> None:
         self._client = client
 
-    async def list(self) -> dict[str, Any]:
-        """List available quantum circuit tools."""
-        resp = await async_request(self._client, "GET", "/tools")
-        return parse_json(resp)
-
     async def transpile(self, *, source_code: str, target: str) -> dict[str, Any]:
         """Transpile quantum code to a target framework."""
         resp = await async_request(
-            self._client, "POST", "/tools/transpile", json={"source_code": source_code, "target": target}
+            self._client, "POST", "/transpile", json={"source_code": source_code, "target": target}
         )
         return parse_json(resp)
 
@@ -220,22 +210,22 @@ class AsyncCodaToolsClient:
         body: dict[str, Any] = {"code": code, "method": method, "shots": shots, "backend": backend}
         if seed_simulator is not None:
             body["seed_simulator"] = seed_simulator
-        resp = await async_request(self._client, "POST", "/tools/simulate", json=body)
+        resp = await async_request(self._client, "POST", "/simulate", json=body)
         return parse_json(resp)
 
     async def to_openqasm3(self, *, code: str) -> dict[str, Any]:
         """Convert a quantum circuit to OpenQASM 3.0."""
-        resp = await async_request(self._client, "POST", "/tools/to-openqasm3", json={"code": code})
+        resp = await async_request(self._client, "POST", "/to-openqasm3", json={"code": code})
         return parse_json(resp)
 
     async def estimate_resources(self, *, code: str) -> dict[str, Any]:
         """Estimate resource requirements for a quantum circuit."""
-        resp = await async_request(self._client, "POST", "/tools/estimate-resources", json={"code": code})
+        resp = await async_request(self._client, "POST", "/estimate-resources", json={"code": code})
         return parse_json(resp)
 
     async def split_circuit(self, *, code: str) -> dict[str, Any]:
         """Split a circuit using circuit cutting."""
-        resp = await async_request(self._client, "POST", "/tools/split-circuit", json={"code": code})
+        resp = await async_request(self._client, "POST", "/split-circuit", json={"code": code})
         return parse_json(resp)
 
 
@@ -265,17 +255,17 @@ class AsyncCodaQPUsClient:
         }
         if braket_execution_mode_hint is not None:
             body["braket_execution_mode_hint"] = braket_execution_mode_hint
-        resp = await async_request(self._client, "POST", "/qpus", json=body)
+        resp = await async_request(self._client, "POST", "/qpu/submit", json=body)
         return parse_json(resp)
 
     async def status(self, *, job_id: str) -> dict[str, Any]:
         """Check status of a submitted QPU job."""
-        resp = await async_request(self._client, "POST", "/qpus/status", json={"job_id": job_id})
+        resp = await async_request(self._client, "POST", "/qpu/status", json={"job_id": job_id})
         return parse_json(resp)
 
     async def list(self) -> dict[str, Any]:
         """List available QPU devices."""
-        resp = await async_request(self._client, "GET", "/qpus")
+        resp = await async_request(self._client, "GET", "/qpu/devices")
         return parse_json(resp)
 
     async def estimate_cost(
@@ -296,7 +286,7 @@ class AsyncCodaQPUsClient:
         }
         if braket_execution_mode_hint is not None:
             body["braket_execution_mode_hint"] = braket_execution_mode_hint
-        resp = await async_request(self._client, "POST", "/qpus/estimate-cost", json=body)
+        resp = await async_request(self._client, "POST", "/qpu/estimate-cost", json=body)
         return parse_json(resp)
 
 

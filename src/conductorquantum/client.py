@@ -52,6 +52,7 @@ class ConductorQuantum(BaseConductorQuantum):
         self,
         *,
         base_url: typing.Optional[str] = None,
+        coda_base_url: typing.Optional[str] = None,
         environment: ConductorQuantumEnvironment = ConductorQuantumEnvironment.DEFAULT,
         token: typing.Optional[_TokenArg] = None,
         timeout: typing.Optional[float] = DEFAULT_TIMEOUT_SECONDS,
@@ -78,10 +79,10 @@ class ConductorQuantum(BaseConductorQuantum):
             agents=self._agents,
         )
 
-        coda_base_url = base_url or api_base_url_from_env()
+        resolved_coda_base_url = coda_base_url or base_url or api_base_url_from_env()
         self._coda = CodaClient(
             token=token,
-            base_url=coda_base_url,
+            base_url=resolved_coda_base_url,
             timeout=timeout or DEFAULT_TIMEOUT_SECONDS,
             sdk_version=__version__,
         )
@@ -290,6 +291,7 @@ class AsyncConductorQuantum(AsyncBaseConductorQuantum):
         self,
         *,
         base_url: typing.Optional[str] = None,
+        coda_base_url: typing.Optional[str] = None,
         environment: ConductorQuantumEnvironment = ConductorQuantumEnvironment.DEFAULT,
         token: typing.Optional[_TokenArg] = None,
         timeout: typing.Optional[float] = DEFAULT_TIMEOUT_SECONDS,
@@ -316,10 +318,10 @@ class AsyncConductorQuantum(AsyncBaseConductorQuantum):
             agents=self._agents,
         )
 
-        coda_base_url = base_url or api_base_url_from_env()
+        resolved_coda_base_url = coda_base_url or base_url or api_base_url_from_env()
         self._coda = AsyncCodaClient(
             token=token,
-            base_url=coda_base_url,
+            base_url=resolved_coda_base_url,
             timeout=timeout or DEFAULT_TIMEOUT_SECONDS,
             sdk_version=__version__,
         )
