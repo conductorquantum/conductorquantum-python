@@ -10,10 +10,8 @@ Usage:
 
 from __future__ import annotations
 
-import asyncio
 import base64
 import os
-from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import numpy as np
@@ -26,6 +24,7 @@ from conductorquantum import (
     ModelResultPublic,
 )
 from conductorquantum.core.api_error import ApiError
+from conductorquantum.core.request_options import RequestOptions
 
 _FIXTURES_DIR = Path(__file__).parent / "fixtures"
 _QCALEVAL_IMG = _FIXTURES_DIR / "qcaleval_drag.png"
@@ -49,18 +48,6 @@ _skip_no_key = pytest.mark.skipif(
 )
 
 pytestmark = [_skip_no_key, pytest.mark.integration]
-
-
-def _run_with_timeout(fn, timeout: float):
-    """Run *fn* in a thread with a timeout; return result or raise TimeoutError."""
-    with ThreadPoolExecutor(max_workers=1) as pool:
-        future = pool.submit(fn)
-        return future.result(timeout=timeout)
-
-
-async def _async_run_with_timeout(coro, timeout: float):
-    """Await *coro* with a timeout; raise asyncio.TimeoutError on expiry."""
-    return await asyncio.wait_for(coro, timeout=timeout)
 
 
 # ---------------------------------------------------------------------------
@@ -129,8 +116,8 @@ def _calibration_skip_msg(exc: BaseException) -> str:
     return f"ising-calibration-v1 unavailable (cold/transient): {type(exc).__name__}"
 
 
-_CALIBRATION_SKIP_SYNC = (TimeoutError, ApiError, Exception)
-_CALIBRATION_SKIP_ASYNC = (asyncio.TimeoutError, TimeoutError, ApiError, Exception)
+_CALIBRATION_SKIP_SYNC = (Exception,)
+_CALIBRATION_SKIP_ASYNC = (Exception,)
 
 
 class TestIsingCalibrationAgent:
@@ -147,9 +134,10 @@ class TestIsingCalibrationAgent:
         if not match:
             pytest.skip("ising-calibration-v1 not available")
         try:
-            result = _run_with_timeout(
-                lambda: client.control.agents.run("ising-calibration-v1", body=ISING_CALIBRATION_BODY),
-                timeout=CALIBRATION_TIMEOUT_SECONDS,
+            result = client.control.agents.run(
+                "ising-calibration-v1",
+                body=ISING_CALIBRATION_BODY,
+                request_options=RequestOptions(timeout_in_seconds=CALIBRATION_TIMEOUT_SECONDS),
             )
         except _CALIBRATION_SKIP_SYNC as exc:
             pytest.skip(_calibration_skip_msg(exc))
@@ -161,9 +149,10 @@ class TestIsingCalibrationAgent:
         if not match:
             pytest.skip("ising-calibration-v1 not available")
         try:
-            result = _run_with_timeout(
-                lambda: client.control.agents.run("ising-calibration-v1", body=ISING_CALIBRATION_BODY),
-                timeout=CALIBRATION_TIMEOUT_SECONDS,
+            result = client.control.agents.run(
+                "ising-calibration-v1",
+                body=ISING_CALIBRATION_BODY,
+                request_options=RequestOptions(timeout_in_seconds=CALIBRATION_TIMEOUT_SECONDS),
             )
         except _CALIBRATION_SKIP_SYNC as exc:
             pytest.skip(_calibration_skip_msg(exc))
@@ -179,9 +168,10 @@ class TestAsyncIsingCalibrationAgent:
         if not match:
             pytest.skip("ising-calibration-v1 not available")
         try:
-            result = await _async_run_with_timeout(
-                async_client.control.agents.run("ising-calibration-v1", body=ISING_CALIBRATION_BODY),
-                timeout=CALIBRATION_TIMEOUT_SECONDS,
+            result = await async_client.control.agents.run(
+                "ising-calibration-v1",
+                body=ISING_CALIBRATION_BODY,
+                request_options=RequestOptions(timeout_in_seconds=CALIBRATION_TIMEOUT_SECONDS),
             )
         except _CALIBRATION_SKIP_ASYNC as exc:
             pytest.skip(_calibration_skip_msg(exc))
@@ -193,9 +183,10 @@ class TestAsyncIsingCalibrationAgent:
         if not match:
             pytest.skip("ising-calibration-v1 not available")
         try:
-            result = await _async_run_with_timeout(
-                async_client.control.agents.run("ising-calibration-v1", body=ISING_CALIBRATION_BODY),
-                timeout=CALIBRATION_TIMEOUT_SECONDS,
+            result = await async_client.control.agents.run(
+                "ising-calibration-v1",
+                body=ISING_CALIBRATION_BODY,
+                request_options=RequestOptions(timeout_in_seconds=CALIBRATION_TIMEOUT_SECONDS),
             )
         except _CALIBRATION_SKIP_ASYNC as exc:
             pytest.skip(_calibration_skip_msg(exc))
