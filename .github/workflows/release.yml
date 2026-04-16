@@ -58,6 +58,9 @@ jobs:
       - name: Update version in pyproject.toml
         run: poetry version "${{ inputs.version }}"
 
+      - name: Update lockfile
+        run: poetry lock --no-update
+
       - name: Install dependencies
         run: poetry install --with dev
 
@@ -81,7 +84,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add pyproject.toml
+          git add pyproject.toml poetry.lock
           if git diff --staged --quiet; then
             echo "Version already matches ${{ inputs.version }} on this branch; skipping commit."
           else
@@ -107,3 +110,27 @@ jobs:
         env:
           PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
           PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          TAG="v${{ inputs.version }}"
+          set +e
+          view_stderr=$(gh release view "$TAG" 2>&1 >/dev/null)
+          view_rc=$?
+          set -e
+          if [ "$view_rc" -eq 0 ]; then
+            echo "Release $TAG already exists; skipping."
+            exit 0
+          fi
+          if ! printf '%s' "$view_stderr" | grep -qi "release not found\|not found"; then
+            echo "gh release view failed unexpectedly: $view_stderr" >&2
+            exit "$view_rc"
+          fi
+
+          TARGET_SHA=$(git rev-list -n 1 "refs/tags/$TAG")
+          gh release create "$TAG" \
+            --target "$TARGET_SHA" \
+            --title "$TAG" \
+            --generate-notes

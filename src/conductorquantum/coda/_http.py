@@ -12,7 +12,7 @@ import httpx
 
 from conductorquantum.coda.errors import CodaAPIError, CodaAuthError, CodaTimeoutError
 
-DEFAULT_BASE_URL = "https://api.conductorquantum.com/v0"
+DEFAULT_BASE_URL = "https://api.conductorquantum.com/v0/coda"
 DEFAULT_TIMEOUT = 120.0
 MAX_RETRIES = 2
 INITIAL_RETRY_DELAY = 0.5
@@ -56,13 +56,13 @@ def api_base_url_from_env() -> str:
     Precedence:
 
     1. ``CODA_API_BASE_URL`` — full base URL, used as given (trailing ``/`` stripped),
-       e.g. ``https://api.conductorquantum.com/v0``.
-    2. ``CODA_BASE_URL`` — origin; ``/v0`` is appended unless the path already ends with
-       ``/v0``.
+       e.g. ``https://api.conductorquantum.com/v0/coda``.
+    2. ``CODA_BASE_URL`` — origin; ``/v0/coda`` is appended unless the path already
+       ends with ``/v0/coda`` (or legacy ``/v0`` for backwards compat).
     3. :data:`DEFAULT_BASE_URL` if neither is set.
 
     The Next.js app on ``http://localhost:3000`` is the web UI and does **not** serve
-    the public ``/v0`` HTTP API; use ``CODA_API_BASE_URL`` to target a real API host.
+    the public ``/v0/coda`` HTTP API; use ``CODA_API_BASE_URL`` to target a real API host.
     """
     api_base = os.environ.get("CODA_API_BASE_URL", "").strip()
     if api_base:
@@ -71,9 +71,11 @@ def api_base_url_from_env() -> str:
     if not origin:
         return DEFAULT_BASE_URL
     origin = origin.rstrip("/")
-    if origin.endswith("/v0"):
+    if origin.endswith("/v0/coda"):
         return origin
-    return f"{origin}/v0"
+    if origin.endswith("/v0"):
+        return f"{origin}/coda"
+    return f"{origin}/v0/coda"
 
 
 def build_headers(sdk_version: str) -> dict[str, str]:

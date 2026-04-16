@@ -5,6 +5,7 @@ import logging
 import os
 import tempfile
 import typing
+import warnings
 from json.decoder import JSONDecodeError
 from typing import Any, Union
 
@@ -79,7 +80,7 @@ class ExtendedModelsClient(ModelsClient):
             return file_handle, temp_path
         return data, None
 
-    def execute(
+    def run(
         self,
         *,
         model: str,
@@ -88,8 +89,8 @@ class ExtendedModelsClient(ModelsClient):
         dark_mode: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ModelResultPublic:
-        """Execute a model with the provided data."""
-        logger.info(f"Executing model {model} in ExtendedModelsClient")
+        """Run a model with the provided data."""
+        logger.info(f"Running model {model} in ExtendedModelsClient")
         file_obj, temp_path = self._convert_to_file(data)
         effective_request_options = _merge_request_options(request_options)
         response: typing.Optional[httpx.Response] = None
@@ -176,6 +177,23 @@ class ExtendedModelsClient(ModelsClient):
         assert response is not None
         raise ApiError(status_code=response.status_code, body=_response_json)
 
+    def execute(
+        self,
+        *,
+        model: str,
+        data: typing.Union[File, np.ndarray],
+        plot: typing.Optional[bool] = OMIT,
+        dark_mode: typing.Optional[bool] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> ModelResultPublic:
+        # TODO(v2): Remove deprecated .execute() alias; use .run()
+        warnings.warn(
+            "client.control.models.execute() is deprecated; use client.control.models.run() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.run(model=model, data=data, plot=plot, dark_mode=dark_mode, request_options=request_options)
+
 
 class AsyncExtendedModelsClient(AsyncModelsClient):
     """Async version of ExtendedModelsClient with support for numpy arrays."""
@@ -214,15 +232,14 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
             return file_handle, temp_path
         return data, None
 
-    async def execute(
+    async def run(
         self,
         *,
         model: str,
         data: typing.Union[File, np.ndarray],
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ModelResultPublic:
-        """
-        Executes a model with the provided data.
+        """Run a model with the provided data.
 
         Parameters
         ----------
@@ -251,7 +268,7 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
         ApiError
             If there is an error processing the request.
         """
-        logger.info(f"Executing model {model} in ExtendedModelsClient")
+        logger.info(f"Running model {model} in AsyncExtendedModelsClient")
         file_obj, temp_path = self._convert_to_file(data)
         effective_request_options = _merge_request_options(request_options)
         response: typing.Optional[httpx.Response] = None
@@ -335,3 +352,18 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
                     logger.warning(f"Failed to remove temporary file {temp_path}: {err}")
         assert response is not None
         raise ApiError(status_code=response.status_code, body=_response_json)
+
+    async def execute(
+        self,
+        *,
+        model: str,
+        data: typing.Union[File, np.ndarray],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> ModelResultPublic:
+        # TODO(v2): Remove deprecated .execute() alias; use .run()
+        warnings.warn(
+            "client.control.models.execute() is deprecated; use client.control.models.run() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return await self.run(model=model, data=data, request_options=request_options)

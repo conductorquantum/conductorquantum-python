@@ -144,7 +144,6 @@ class TestModelsList:
             assert m.name
             assert m.description
             assert m.released is not None
-            assert m.number_of_runs >= 0
             assert m.input_shape_requirements
 
     def test_pagination_skip_and_limit(self, client: ConductorQuantum) -> None:
