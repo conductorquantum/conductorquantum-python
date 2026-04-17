@@ -181,7 +181,7 @@ from conductorquantum import ConductorQuantum
 client = ConductorQuantum(
     token="YOUR_TOKEN",
 )
-client.control.models.execute(
+client.control.models.run(
     model="model",
 )
 

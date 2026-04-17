@@ -256,12 +256,14 @@ class HttpClient:
                     base_url=base_url,
                     params=params,
                     json=json,
+                    data=data,
                     content=content,
                     files=files,
                     headers=headers,
                     request_options=request_options,
                     retries=retries + 1,
                     omit=omit,
+                    force_multipart=force_multipart,
                 )
 
         return response
@@ -455,12 +457,14 @@ class AsyncHttpClient:
                     base_url=base_url,
                     params=params,
                     json=json,
+                    data=data,
                     content=content,
                     files=files,
                     headers=headers,
                     request_options=request_options,
                     retries=retries + 1,
                     omit=omit,
+                    force_multipart=force_multipart,
                 )
         return response
 

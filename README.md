@@ -40,14 +40,14 @@ client = ConductorQuantum(token="CONTROL_TOKEN")
 
 # Using a file
 with open("path/to/file.npy", "rb") as f:
-    client.control.models.execute(
+    client.control.models.run(
         model="coulomb-blockade-peak-detector-v1",
         data=f,
     )
 
 # Using a numpy array
 arr = np.array([2.643e-12, 2.164e-12, 8.481e-13, ..., 2.320e-11, 2.153e-11, 1.984e-11])
-client.control.models.execute(
+client.control.models.run(
     model="coulomb-blockade-peak-detector-v1",
     data=arr,
 )
@@ -80,7 +80,7 @@ client = AsyncConductorQuantum(token="YOUR_TOKEN")
 
 async def main() -> None:
     arr = np.array([2.643e-12, 2.164e-12, 8.481e-13, ..., 2.320e-11, 2.153e-11, 1.984e-11])
-    await client.control.models.execute(
+    await client.control.models.run(
         model="model",
         data=arr,
     )
@@ -100,7 +100,7 @@ will be thrown.
 from conductorquantum.core.api_error import ApiError
 
 try:
-    client.control.models.execute(...)
+    client.control.models.run(...)
 except ApiError as e:
     print(e.status_code)
     print(e.body)
@@ -138,7 +138,7 @@ A request is deemed retriable when any of the following HTTP status codes is ret
 Use the `max_retries` request option to configure this behavior for the Control API.
 
 ```python
-client.control.models.execute(..., request_options={
+client.control.models.run(..., request_options={
     "max_retries": 1
 })
 ```
@@ -158,7 +158,7 @@ client = ConductorQuantum(
 
 
 # Override timeout for a specific Control API method
-client.control.models.execute(..., request_options={
+client.control.models.run(..., request_options={
     "timeout_in_seconds": 1
 })
 ```

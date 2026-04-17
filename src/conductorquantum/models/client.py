@@ -129,7 +129,7 @@ class ModelsClient:
         client = ConductorQuantum(
             token="YOUR_TOKEN",
         )
-        client.models.execute(
+        client.models.run(
             model="model",
         )
         """
