@@ -9,6 +9,7 @@ if typing.TYPE_CHECKING:
     from .agent_public import AgentPublic
     from .http_validation_error import HttpValidationError
     from .model_public import ModelPublic
+    from .model_batch_result_public import ModelBatchResultPublic
     from .model_result_public import ModelResultPublic
     from .model_result_public_masked import ModelResultPublicMasked
     from .validation_error import ValidationError
@@ -17,6 +18,7 @@ if typing.TYPE_CHECKING:
 _dynamic_imports: typing.Dict[str, str] = {
     "AgentPublic": ".agent_public",
     "HttpValidationError": ".http_validation_error",
+    "ModelBatchResultPublic": ".model_batch_result_public",
     "ModelPublic": ".model_public",
     "ModelResultPublic": ".model_result_public",
     "ModelResultPublicMasked": ".model_result_public_masked",
@@ -50,6 +52,7 @@ def __dir__():
 __all__ = [
     "AgentPublic",
     "HttpValidationError",
+    "ModelBatchResultPublic",
     "ModelPublic",
     "ModelResultPublic",
     "ModelResultPublicMasked",

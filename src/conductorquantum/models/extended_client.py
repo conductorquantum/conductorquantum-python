@@ -18,6 +18,7 @@ from ..core.request_options import RequestOptions
 from ..errors.not_found_error import NotFoundError
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.http_validation_error import HttpValidationError
+from ..types.model_batch_result_public import ModelBatchResultPublic
 from ..types.model_result_public import ModelResultPublic
 from .client import AsyncModelsClient, ModelsClient
 
@@ -43,8 +44,80 @@ def _merge_request_options(
     return options
 
 
+def _reset_file_pointer(file_obj: File) -> None:
+    """Reset a file-like upload before a retry when possible."""
+    if hasattr(file_obj, "seekable") and callable(getattr(file_obj, "seekable", None)):
+        try:
+            if file_obj.seekable():  # type: ignore
+                file_obj.seek(0)  # type: ignore
+        except (AttributeError, OSError):
+            pass
+
+
+def _close_and_cleanup_upload(file_obj: File, temp_path: typing.Optional[str]) -> None:
+    """Close file handles and remove temporary numpy uploads."""
+    if isinstance(file_obj, (io.IOBase, typing.BinaryIO)):
+        file_obj.close()
+    if temp_path and os.path.exists(temp_path):
+        try:
+            os.remove(temp_path)
+        except (OSError, PermissionError) as err:
+            logger.warning(f"Failed to remove temporary file {temp_path}: {err}")
+
+
+def _parse_model_batch_response(response: httpx.Response) -> ModelBatchResultPublic:
+    """Parse the batch model response or raise the generated SDK errors."""
+    try:
+        response_json: typing.Any = response.json()
+    except JSONDecodeError as err:
+        # Preserve typed errors for known status codes even when the body is not JSON,
+        # so callers catching NotFoundError / UnprocessableEntityError are not bypassed.
+        if response.status_code == 404:
+            raise NotFoundError(None) from err
+        raise ApiError(status_code=response.status_code, body=response.text) from err
+
+    if 200 <= response.status_code < 300:
+        return typing.cast(
+            ModelBatchResultPublic,
+            parse_obj_as(
+                type_=ModelBatchResultPublic,  # type: ignore
+                object_=response_json,
+            ),
+        )
+    if response.status_code == 404:
+        raise NotFoundError(
+            typing.cast(
+                typing.Optional[typing.Any],
+                parse_obj_as(
+                    type_=typing.Optional[typing.Any],  # type: ignore
+                    object_=response_json,
+                ),
+            )
+        )
+    if response.status_code == 422:
+        raise UnprocessableEntityError(
+            typing.cast(
+                HttpValidationError,
+                parse_obj_as(
+                    type_=HttpValidationError,  # type: ignore
+                    object_=response_json,
+                ),
+            )
+        )
+    raise ApiError(status_code=response.status_code, body=response_json)
+
+
 class ExtendedModelsClient(ModelsClient):
     """Extended models client that adds support for numpy arrays."""
+
+    def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
+        super().__init__(*args, **kwargs)
+        self._batch = ModelsBatchClient(self)
+
+    @property
+    def batch(self) -> "ModelsBatchClient":
+        """Batch model execution APIs."""
+        return self._batch
 
     def _convert_to_file(self, data: Union[File, np.ndarray]) -> tuple[File, typing.Optional[str]]:
         """
@@ -166,14 +239,7 @@ class ExtendedModelsClient(ModelsClient):
                 body=response.text if response is not None else "Unable to decode response.",
             ) from err
         finally:
-            # Clean up resources
-            if isinstance(file_obj, (io.IOBase, typing.BinaryIO)):
-                file_obj.close()
-            if temp_path and os.path.exists(temp_path):
-                try:
-                    os.remove(temp_path)  # Use os.remove instead of unlink for better Windows compatibility
-                except (OSError, PermissionError) as err:
-                    logger.warning(f"Failed to remove temporary file {temp_path}: {err}")
+            _close_and_cleanup_upload(file_obj, temp_path)
         assert response is not None
         raise ApiError(status_code=response.status_code, body=_response_json)
 
@@ -195,8 +261,70 @@ class ExtendedModelsClient(ModelsClient):
         return self.run(model=model, data=data, plot=plot, dark_mode=dark_mode, request_options=request_options)
 
 
+class ModelsBatchClient:
+    """Client for model batch execution."""
+
+    def __init__(self, models_client: ExtendedModelsClient) -> None:
+        self._models_client = models_client
+
+    def run(
+        self,
+        *,
+        model: str,
+        data: typing.Union[File, np.ndarray],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> ModelBatchResultPublic:
+        """
+        Run a model batch with a single uploaded file.
+
+        The batch endpoint currently expects a 2D numpy array or file where axis 0 is
+        the batch dimension, for example ``(batch_size, trace_length)``.
+        """
+        logger.info(f"Running model batch {model} in ModelsBatchClient")
+        file_obj, temp_path = self._models_client._convert_to_file(data)  # pylint: disable=protected-access
+        effective_request_options = _merge_request_options(request_options)
+        response: typing.Optional[httpx.Response] = None
+        try:
+            for attempt in range(DEFAULT_RETRY_ATTEMPTS + 1):
+                try:
+                    response = self._models_client._raw_client._client_wrapper.httpx_client.request(  # pylint: disable=protected-access
+                        "models/batch",
+                        method="POST",
+                        data={"model": model},
+                        files={"data": file_obj},
+                        request_options=effective_request_options,
+                        omit=OMIT,
+                    )
+                    break
+                except httpx.TimeoutException as exc:
+                    logger.warning(
+                        "Model batch execution timed out for %s (attempt %d/%d): %s",
+                        model,
+                        attempt + 1,
+                        DEFAULT_RETRY_ATTEMPTS + 1,
+                        exc,
+                    )
+                    if attempt == DEFAULT_RETRY_ATTEMPTS:
+                        raise
+                    _reset_file_pointer(file_obj)
+            if response is None:
+                raise ApiError(status_code=0, body="Request failed without response.")
+            return _parse_model_batch_response(response)
+        finally:
+            _close_and_cleanup_upload(file_obj, temp_path)
+
+
 class AsyncExtendedModelsClient(AsyncModelsClient):
     """Async version of ExtendedModelsClient with support for numpy arrays."""
+
+    def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
+        super().__init__(*args, **kwargs)
+        self._batch = AsyncModelsBatchClient(self)
+
+    @property
+    def batch(self) -> "AsyncModelsBatchClient":
+        """Batch model execution APIs."""
+        return self._batch
 
     def _convert_to_file(self, data: Union[File, np.ndarray]) -> tuple[File, typing.Optional[str]]:
         """
@@ -342,14 +470,7 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
                 body=response.text if response is not None else "Unable to decode response.",
             ) from err
         finally:
-            # Clean up resources
-            if isinstance(file_obj, (io.IOBase, typing.BinaryIO)):
-                file_obj.close()
-            if temp_path and os.path.exists(temp_path):
-                try:
-                    os.remove(temp_path)  # Use os.remove instead of unlink for better Windows compatibility
-                except (OSError, PermissionError) as err:
-                    logger.warning(f"Failed to remove temporary file {temp_path}: {err}")
+            _close_and_cleanup_upload(file_obj, temp_path)
         assert response is not None
         raise ApiError(status_code=response.status_code, body=_response_json)
 
@@ -367,3 +488,56 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
             stacklevel=2,
         )
         return await self.run(model=model, data=data, request_options=request_options)
+
+
+class AsyncModelsBatchClient:
+    """Async client for model batch execution."""
+
+    def __init__(self, models_client: AsyncExtendedModelsClient) -> None:
+        self._models_client = models_client
+
+    async def run(
+        self,
+        *,
+        model: str,
+        data: typing.Union[File, np.ndarray],
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> ModelBatchResultPublic:
+        """
+        Run a model batch with a single uploaded file.
+
+        The batch endpoint currently expects a 2D numpy array or file where axis 0 is
+        the batch dimension, for example ``(batch_size, trace_length)``.
+        """
+        logger.info(f"Running model batch {model} in AsyncModelsBatchClient")
+        file_obj, temp_path = self._models_client._convert_to_file(data)  # pylint: disable=protected-access
+        effective_request_options = _merge_request_options(request_options)
+        response: typing.Optional[httpx.Response] = None
+        try:
+            for attempt in range(DEFAULT_RETRY_ATTEMPTS + 1):
+                try:
+                    response = await self._models_client._raw_client._client_wrapper.httpx_client.request(  # pylint: disable=protected-access
+                        "models/batch",
+                        method="POST",
+                        data={"model": model},
+                        files={"data": file_obj},
+                        request_options=effective_request_options,
+                        omit=OMIT,
+                    )
+                    break
+                except httpx.TimeoutException as exc:
+                    logger.warning(
+                        "Model batch execution timed out for %s (attempt %d/%d): %s",
+                        model,
+                        attempt + 1,
+                        DEFAULT_RETRY_ATTEMPTS + 1,
+                        exc,
+                    )
+                    if attempt == DEFAULT_RETRY_ATTEMPTS:
+                        raise
+                    _reset_file_pointer(file_obj)
+            if response is None:
+                raise ApiError(status_code=0, body="Request failed without response.")
+            return _parse_model_batch_response(response)
+        finally:
+            _close_and_cleanup_upload(file_obj, temp_path)

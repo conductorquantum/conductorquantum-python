@@ -34,6 +34,8 @@ raises `ValueError` before sending the request.
 ### Control: analysis models
 
 ```python
+import numpy as np
+
 from conductorquantum import ConductorQuantum
 
 client = ConductorQuantum(token="CONTROL_TOKEN")
@@ -51,6 +53,14 @@ client.control.models.run(
     model="coulomb-blockade-peak-detector-v1",
     data=arr,
 )
+
+# Batch peak-detector-v2 traces in one request.
+batch = np.stack([arr, arr])
+result = client.control.models.batch.run(
+    model="coulomb-blockade-peak-detector-v2",
+    data=batch,
+)
+print(result.output["outputs"])
 ```
 
 ### Coda: circuit tools, QPU, agents
