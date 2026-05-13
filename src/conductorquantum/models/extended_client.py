@@ -68,37 +68,42 @@ def _close_and_cleanup_upload(file_obj: File, temp_path: typing.Optional[str]) -
 def _parse_model_batch_response(response: httpx.Response) -> ModelBatchResultPublic:
     """Parse the batch model response or raise the generated SDK errors."""
     try:
-        if 200 <= response.status_code < 300:
-            return typing.cast(
-                ModelBatchResultPublic,
+        response_json: typing.Any = response.json()
+    except JSONDecodeError as err:
+        # Preserve typed errors for known status codes even when the body is not JSON,
+        # so callers catching NotFoundError / UnprocessableEntityError are not bypassed.
+        if response.status_code == 404:
+            raise NotFoundError(None) from err
+        raise ApiError(status_code=response.status_code, body=response.text) from err
+
+    if 200 <= response.status_code < 300:
+        return typing.cast(
+            ModelBatchResultPublic,
+            parse_obj_as(
+                type_=ModelBatchResultPublic,  # type: ignore
+                object_=response_json,
+            ),
+        )
+    if response.status_code == 404:
+        raise NotFoundError(
+            typing.cast(
+                typing.Optional[typing.Any],
                 parse_obj_as(
-                    type_=ModelBatchResultPublic,  # type: ignore
-                    object_=response.json(),
+                    type_=typing.Optional[typing.Any],  # type: ignore
+                    object_=response_json,
                 ),
             )
-        if response.status_code == 404:
-            raise NotFoundError(
-                typing.cast(
-                    typing.Optional[typing.Any],
-                    parse_obj_as(
-                        type_=typing.Optional[typing.Any],  # type: ignore
-                        object_=response.json(),
-                    ),
-                )
+        )
+    if response.status_code == 422:
+        raise UnprocessableEntityError(
+            typing.cast(
+                HttpValidationError,
+                parse_obj_as(
+                    type_=HttpValidationError,  # type: ignore
+                    object_=response_json,
+                ),
             )
-        if response.status_code == 422:
-            raise UnprocessableEntityError(
-                typing.cast(
-                    HttpValidationError,
-                    parse_obj_as(
-                        type_=HttpValidationError,  # type: ignore
-                        object_=response.json(),
-                    ),
-                )
-            )
-        response_json = response.json()
-    except JSONDecodeError as err:
-        raise ApiError(status_code=response.status_code, body=response.text) from err
+        )
     raise ApiError(status_code=response.status_code, body=response_json)
 
 
@@ -234,14 +239,7 @@ class ExtendedModelsClient(ModelsClient):
                 body=response.text if response is not None else "Unable to decode response.",
             ) from err
         finally:
-            # Clean up resources
-            if isinstance(file_obj, (io.IOBase, typing.BinaryIO)):
-                file_obj.close()
-            if temp_path and os.path.exists(temp_path):
-                try:
-                    os.remove(temp_path)  # Use os.remove instead of unlink for better Windows compatibility
-                except (OSError, PermissionError) as err:
-                    logger.warning(f"Failed to remove temporary file {temp_path}: {err}")
+            _close_and_cleanup_upload(file_obj, temp_path)
         assert response is not None
         raise ApiError(status_code=response.status_code, body=_response_json)
 
@@ -472,14 +470,7 @@ class AsyncExtendedModelsClient(AsyncModelsClient):
                 body=response.text if response is not None else "Unable to decode response.",
             ) from err
         finally:
-            # Clean up resources
-            if isinstance(file_obj, (io.IOBase, typing.BinaryIO)):
-                file_obj.close()
-            if temp_path and os.path.exists(temp_path):
-                try:
-                    os.remove(temp_path)  # Use os.remove instead of unlink for better Windows compatibility
-                except (OSError, PermissionError) as err:
-                    logger.warning(f"Failed to remove temporary file {temp_path}: {err}")
+            _close_and_cleanup_upload(file_obj, temp_path)
         assert response is not None
         raise ApiError(status_code=response.status_code, body=_response_json)
 

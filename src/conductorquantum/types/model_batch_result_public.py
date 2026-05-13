@@ -12,7 +12,7 @@ class ModelBatchResultPublic(UniversalBaseModel):
     Public API model for batched ModelResult execution.
     """
 
-    output: typing.Dict[str, typing.Optional[typing.Any]] = pydantic.Field()
+    output: typing.Dict[str, typing.Any] = pydantic.Field()
     """
     The model output, containing an 'outputs' list ordered by batch index.
     """
