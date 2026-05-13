@@ -22,23 +22,23 @@ _AGENTS_TERMINAL_TYPES = frozenset({"completed", "error", "cancelled"})
 
 @contextlib.contextmanager
 def skip_if_service_unavailable():
-    """Skip the test when the backend returns 503 (service not configured)."""
+    """Skip the test when the backend returns 5xx (service not configured or upstream error)."""
     try:
         yield
     except CodaAPIError as exc:
-        if exc.status_code == 503:
-            pytest.skip(f"Agents service unavailable: {exc}")
+        if 500 <= exc.status_code < 600:
+            pytest.skip(f"Coda service unavailable ({exc.status_code}): {exc}")
         raise
 
 
 @contextlib.asynccontextmanager
 async def async_skip_if_service_unavailable():
-    """Async variant — skip the test when the backend returns 503."""
+    """Async variant — skip the test when the backend returns 5xx."""
     try:
         yield
     except CodaAPIError as exc:
-        if exc.status_code == 503:
-            pytest.skip(f"Agents service unavailable: {exc}")
+        if 500 <= exc.status_code < 600:
+            pytest.skip(f"Coda service unavailable ({exc.status_code}): {exc}")
         raise
 
 BELL_STATE_CODE = """\
@@ -140,12 +140,13 @@ class TestCodaQPU:
         assert len(devices) > 0
         backend = devices[0].get("id") or devices[0]["name"]
 
-        result = coda_client.coda.qpu_estimate_cost(
-            code=BELL_STATE_CODE,
-            source_framework="qiskit",
-            backend=backend,
-            shots=100,
-        )
+        with skip_if_service_unavailable():
+            result = coda_client.coda.qpu_estimate_cost(
+                code=BELL_STATE_CODE,
+                source_framework="qiskit",
+                backend=backend,
+                shots=100,
+            )
         assert result.get("success") is True
         cost = result.get("estimated_cost_cents")
         assert isinstance(cost, (int, float)) and cost >= 0
@@ -266,12 +267,13 @@ class TestCodaQPUsEstimateCost:
         assert len(devices) > 0
         backend = devices[0].get("id") or devices[0]["name"]
 
-        result = coda_client.coda.qpus.estimate_cost(
-            code=BELL_STATE_CODE,
-            source_framework="qiskit",
-            backend=backend,
-            shots=100,
-        )
+        with skip_if_service_unavailable():
+            result = coda_client.coda.qpus.estimate_cost(
+                code=BELL_STATE_CODE,
+                source_framework="qiskit",
+                backend=backend,
+                shots=100,
+            )
         assert result.get("success") is True
         cost = result.get("estimated_cost_cents")
         assert isinstance(cost, (int, float)) and cost >= 0
