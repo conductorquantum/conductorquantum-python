@@ -9,6 +9,7 @@ if typing.TYPE_CHECKING:
     from .types import (
         AgentPublic,
         HttpValidationError,
+        ModelBatchResultPublic,
         ModelPublic,
         ModelResultPublic,
         ModelResultPublicMasked,
@@ -28,6 +29,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "ConductorQuantumEnvironment": ".environment",
     "ForbiddenError": ".errors",
     "HttpValidationError": ".types",
+    "ModelBatchResultPublic": ".types",
     "ModelPublic": ".types",
     "ModelResultPublic": ".types",
     "ModelResultPublicMasked": ".types",
@@ -70,6 +72,7 @@ __all__ = [
     "ConductorQuantumEnvironment",
     "ForbiddenError",
     "HttpValidationError",
+    "ModelBatchResultPublic",
     "ModelPublic",
     "ModelResultPublic",
     "ModelResultPublicMasked",

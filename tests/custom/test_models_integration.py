@@ -21,9 +21,11 @@ import zipfile
 
 import numpy as np
 import pytest
+
 from conductorquantum import (
     AsyncConductorQuantum,
     ConductorQuantum,
+    ModelBatchResultPublic,
     ModelPublic,
     ModelResultPublic,
     ModelResultPublicMasked,
@@ -232,6 +234,43 @@ class TestModelsExecute:
 
         with pytest.raises(NotFoundError):
             client.control.models.execute(model="nonexistent-model-xyz", data=data)
+
+
+class TestModelsBatchExecute:
+    MODEL = "coulomb-blockade-peak-detector-v2"
+
+    def _traces(self) -> tuple[np.ndarray, np.ndarray]:
+        trace = _generate_example(self.MODEL)
+        return trace, np.roll(trace, 1)
+
+    def test_batch_run_returns_result(self, client: ConductorQuantum) -> None:
+        model_id = self.MODEL
+        batch = np.stack(self._traces())
+
+        result = client.control.models.batch.run(model=model_id, data=batch)
+
+        assert isinstance(result, ModelBatchResultPublic)
+        assert result.model == model_id
+        assert result.batch_size == 2
+        outputs = result.output["outputs"]
+        assert isinstance(outputs, list)
+        assert len(outputs) == 2
+
+        expected_keys = MODEL_EXPECTED_OUTPUT_KEYS[model_id]
+        for output in outputs:
+            assert expected_keys.issubset(output.keys())
+        assert not hasattr(result, "input_file_size")
+
+    def test_batch_run_matches_single_runs(self, client: ConductorQuantum) -> None:
+        model_id = self.MODEL
+        traces = self._traces()
+        batch_outputs = client.control.models.batch.run(
+            model=model_id,
+            data=np.stack(traces),
+        ).output["outputs"]
+        single_outputs = [client.control.models.run(model=model_id, data=trace).output for trace in traces]
+
+        assert batch_outputs == single_outputs
 
 
 # ---------------------------------------------------------------------------
