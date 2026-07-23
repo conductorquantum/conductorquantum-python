@@ -35,7 +35,9 @@ class CodaToolsClient:
 
     def transpile(self, *, source_code: str, target: str) -> dict[str, Any]:
         """Transpile quantum code to a target framework."""
-        resp = sync_request(self._client, "POST", "/transpile", json={"source_code": source_code, "target": target})
+        resp = sync_request(
+            self._client, "POST", "/tools/transpile", json={"source_code": source_code, "target": target}
+        )
         return parse_json(resp)
 
     def simulate(
@@ -51,22 +53,22 @@ class CodaToolsClient:
         body: dict[str, Any] = {"code": code, "method": method, "shots": shots, "backend": backend}
         if seed_simulator is not None:
             body["seed_simulator"] = seed_simulator
-        resp = sync_request(self._client, "POST", "/simulate", json=body)
+        resp = sync_request(self._client, "POST", "/tools/simulate", json=body)
         return parse_json(resp)
 
     def to_openqasm3(self, *, code: str) -> dict[str, Any]:
         """Convert a quantum circuit to OpenQASM 3.0."""
-        resp = sync_request(self._client, "POST", "/to-openqasm3", json={"code": code})
+        resp = sync_request(self._client, "POST", "/tools/to-openqasm3", json={"code": code})
         return parse_json(resp)
 
     def estimate_resources(self, *, code: str) -> dict[str, Any]:
         """Estimate resource requirements for a quantum circuit."""
-        resp = sync_request(self._client, "POST", "/estimate-resources", json={"code": code})
+        resp = sync_request(self._client, "POST", "/tools/estimate-resources", json={"code": code})
         return parse_json(resp)
 
     def split_circuit(self, *, code: str) -> dict[str, Any]:
         """Split a circuit using circuit cutting."""
-        resp = sync_request(self._client, "POST", "/split-circuit", json={"code": code})
+        resp = sync_request(self._client, "POST", "/tools/split-circuit", json={"code": code})
         return parse_json(resp)
 
 
@@ -96,17 +98,17 @@ class CodaQPUsClient:
         }
         if braket_execution_mode_hint is not None:
             body["braket_execution_mode_hint"] = braket_execution_mode_hint
-        resp = sync_request(self._client, "POST", "/qpu/submit", json=body)
+        resp = sync_request(self._client, "POST", "/qpus", json=body)
         return parse_json(resp)
 
     def status(self, *, job_id: str) -> dict[str, Any]:
         """Check status of a submitted QPU job."""
-        resp = sync_request(self._client, "POST", "/qpu/status", json={"job_id": job_id})
+        resp = sync_request(self._client, "POST", "/qpus/status", json={"job_id": job_id})
         return parse_json(resp)
 
     def list(self) -> dict[str, Any]:
         """List available QPU devices."""
-        resp = sync_request(self._client, "GET", "/qpu/devices")
+        resp = sync_request(self._client, "GET", "/qpus")
         return parse_json(resp)
 
     def estimate_cost(
@@ -127,12 +129,12 @@ class CodaQPUsClient:
         }
         if braket_execution_mode_hint is not None:
             body["braket_execution_mode_hint"] = braket_execution_mode_hint
-        resp = sync_request(self._client, "POST", "/qpu/estimate-cost", json=body)
+        resp = sync_request(self._client, "POST", "/qpus/estimate-cost", json=body)
         return parse_json(resp)
 
 
 class CodaAgentsClient:
-    """Agent operations: chat (SSE) and list available modes."""
+    """Agent operations: chat (SSE) and list available agents."""
 
     def __init__(self, client: httpx.Client) -> None:
         self._client = client
@@ -142,18 +144,36 @@ class CodaAgentsClient:
         *,
         messages: list[dict[str, str]],
         thread_id: str | None = None,
-        fast: bool = False,
-        mode: str = "build",
+        code_mode: str = "inline",
+        budget: str = "high",
+        fast: bool | None = None,
+        mode: str | None = None,
     ) -> Iterator[dict[str, Any]]:
-        """Chat with a Coda agent. Returns an iterator of SSE events.
+        """Chat with the unified Coda agent. Returns an iterator of SSE events.
 
         Each event is a dict with at least a ``type`` field. Terminal events
-        have ``type`` of ``completed``, ``error``, or ``cancelled``.
-        """
-        body: dict[str, Any] = {"messages": messages, "fast": fast, "mode": mode}
-        if thread_id is not None:
-            body["thread_id"] = thread_id
+        have ``type`` of ``completed``, ``files``, ``error``, or ``cancelled``.
 
+        Args:
+            messages: Conversation messages.
+            thread_id: Thread ID for conversation continuity.
+            code_mode: ``"inline"`` (default) streams final code as a fenced
+                markdown block in token events; ``"file"`` has the agent write
+                code to a virtual filesystem instead, returned in a terminal
+                ``files`` event mapping file paths to contents.
+            budget: Agent effort budget: ``"low"``, ``"medium"``, or ``"high"``
+                (default). Scales the model's thinking effort, max output
+                tokens, step limit, and parallel research-subagent pool.
+            fast: Deprecated. Ignored by the unified agent; use ``budget``.
+            mode: Deprecated. ``"agent"``, ``"build"``, and ``"learn"`` all
+                route to the same unified agent; omit this parameter.
+        """
+        body = self._build_run_body(
+            messages=messages, thread_id=thread_id, code_mode=code_mode, budget=budget, fast=fast, mode=mode
+        )
+        return self._stream_events(body)
+
+    def _stream_events(self, body: dict[str, Any]) -> Iterator[dict[str, Any]]:
         with self._client.stream("POST", "/agents", json=body) as response:
             if not response.is_success:
                 response.read()
@@ -166,8 +186,34 @@ class CodaAgentsClient:
                     except json.JSONDecodeError:
                         continue
 
+    @staticmethod
+    def _build_run_body(
+        *,
+        messages: list[dict[str, str]],
+        thread_id: str | None,
+        code_mode: str,
+        budget: str,
+        fast: bool | None,
+        mode: str | None,
+    ) -> dict[str, Any]:
+        """Build the request body for an agents run, warning on deprecated fields."""
+        body: dict[str, Any] = {"messages": messages, "code_mode": code_mode, "budget": budget}
+        if thread_id is not None:
+            body["thread_id"] = thread_id
+        if mode is not None:
+            warnings.warn(
+                "the 'mode' parameter is deprecated; all values route to the same "
+                "unified Coda agent, so it can be omitted.",
+                DeprecationWarning,
+                stacklevel=3,
+            )
+            body["mode"] = mode
+        if fast is not None:
+            body["fast"] = fast
+        return body
+
     def list(self) -> dict[str, Any]:
-        """List available agent modes."""
+        """List available agents."""
         resp = sync_request(self._client, "GET", "/agents")
         return parse_json(resp)
 
@@ -193,7 +239,7 @@ class AsyncCodaToolsClient:
     async def transpile(self, *, source_code: str, target: str) -> dict[str, Any]:
         """Transpile quantum code to a target framework."""
         resp = await async_request(
-            self._client, "POST", "/transpile", json={"source_code": source_code, "target": target}
+            self._client, "POST", "/tools/transpile", json={"source_code": source_code, "target": target}
         )
         return parse_json(resp)
 
@@ -210,22 +256,22 @@ class AsyncCodaToolsClient:
         body: dict[str, Any] = {"code": code, "method": method, "shots": shots, "backend": backend}
         if seed_simulator is not None:
             body["seed_simulator"] = seed_simulator
-        resp = await async_request(self._client, "POST", "/simulate", json=body)
+        resp = await async_request(self._client, "POST", "/tools/simulate", json=body)
         return parse_json(resp)
 
     async def to_openqasm3(self, *, code: str) -> dict[str, Any]:
         """Convert a quantum circuit to OpenQASM 3.0."""
-        resp = await async_request(self._client, "POST", "/to-openqasm3", json={"code": code})
+        resp = await async_request(self._client, "POST", "/tools/to-openqasm3", json={"code": code})
         return parse_json(resp)
 
     async def estimate_resources(self, *, code: str) -> dict[str, Any]:
         """Estimate resource requirements for a quantum circuit."""
-        resp = await async_request(self._client, "POST", "/estimate-resources", json={"code": code})
+        resp = await async_request(self._client, "POST", "/tools/estimate-resources", json={"code": code})
         return parse_json(resp)
 
     async def split_circuit(self, *, code: str) -> dict[str, Any]:
         """Split a circuit using circuit cutting."""
-        resp = await async_request(self._client, "POST", "/split-circuit", json={"code": code})
+        resp = await async_request(self._client, "POST", "/tools/split-circuit", json={"code": code})
         return parse_json(resp)
 
 
@@ -255,17 +301,17 @@ class AsyncCodaQPUsClient:
         }
         if braket_execution_mode_hint is not None:
             body["braket_execution_mode_hint"] = braket_execution_mode_hint
-        resp = await async_request(self._client, "POST", "/qpu/submit", json=body)
+        resp = await async_request(self._client, "POST", "/qpus", json=body)
         return parse_json(resp)
 
     async def status(self, *, job_id: str) -> dict[str, Any]:
         """Check status of a submitted QPU job."""
-        resp = await async_request(self._client, "POST", "/qpu/status", json={"job_id": job_id})
+        resp = await async_request(self._client, "POST", "/qpus/status", json={"job_id": job_id})
         return parse_json(resp)
 
     async def list(self) -> dict[str, Any]:
         """List available QPU devices."""
-        resp = await async_request(self._client, "GET", "/qpu/devices")
+        resp = await async_request(self._client, "GET", "/qpus")
         return parse_json(resp)
 
     async def estimate_cost(
@@ -286,33 +332,51 @@ class AsyncCodaQPUsClient:
         }
         if braket_execution_mode_hint is not None:
             body["braket_execution_mode_hint"] = braket_execution_mode_hint
-        resp = await async_request(self._client, "POST", "/qpu/estimate-cost", json=body)
+        resp = await async_request(self._client, "POST", "/qpus/estimate-cost", json=body)
         return parse_json(resp)
 
 
 class AsyncCodaAgentsClient:
-    """Async agent operations: chat (SSE) and list available modes."""
+    """Async agent operations: chat (SSE) and list available agents."""
 
     def __init__(self, client: httpx.AsyncClient) -> None:
         self._client = client
 
-    async def run(
+    def run(
         self,
         *,
         messages: list[dict[str, str]],
         thread_id: str | None = None,
-        fast: bool = False,
-        mode: str = "build",
+        code_mode: str = "inline",
+        budget: str = "high",
+        fast: bool | None = None,
+        mode: str | None = None,
     ) -> AsyncIterator[dict[str, Any]]:
-        """Chat with a Coda agent. Returns an async iterator of SSE events.
+        """Chat with the unified Coda agent. Returns an async iterator of SSE events.
 
         Each event is a dict with at least a ``type`` field. Terminal events
-        have ``type`` of ``completed``, ``error``, or ``cancelled``.
-        """
-        body: dict[str, Any] = {"messages": messages, "fast": fast, "mode": mode}
-        if thread_id is not None:
-            body["thread_id"] = thread_id
+        have ``type`` of ``completed``, ``files``, ``error``, or ``cancelled``.
 
+        Args:
+            messages: Conversation messages.
+            thread_id: Thread ID for conversation continuity.
+            code_mode: ``"inline"`` (default) streams final code as a fenced
+                markdown block in token events; ``"file"`` has the agent write
+                code to a virtual filesystem instead, returned in a terminal
+                ``files`` event mapping file paths to contents.
+            budget: Agent effort budget: ``"low"``, ``"medium"``, or ``"high"``
+                (default). Scales the model's thinking effort, max output
+                tokens, step limit, and parallel research-subagent pool.
+            fast: Deprecated. Ignored by the unified agent; use ``budget``.
+            mode: Deprecated. ``"agent"``, ``"build"``, and ``"learn"`` all
+                route to the same unified agent; omit this parameter.
+        """
+        body = CodaAgentsClient._build_run_body(
+            messages=messages, thread_id=thread_id, code_mode=code_mode, budget=budget, fast=fast, mode=mode
+        )
+        return self._stream_events(body)
+
+    async def _stream_events(self, body: dict[str, Any]) -> AsyncIterator[dict[str, Any]]:
         async with self._client.stream("POST", "/agents", json=body) as response:
             if not response.is_success:
                 await response.aread()
@@ -326,7 +390,7 @@ class AsyncCodaAgentsClient:
                         continue
 
     async def list(self) -> dict[str, Any]:
-        """List available agent modes."""
+        """List available agents."""
         resp = await async_request(self._client, "GET", "/agents")
         return parse_json(resp)
 

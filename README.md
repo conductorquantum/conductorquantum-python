@@ -70,9 +70,15 @@ from conductorquantum import ConductorQuantum
 
 client = ConductorQuantum(token="coda_YOUR_TOKEN")
 
-result = client.coda.simulate(code="from qiskit import QuantumCircuit\nqc = QuantumCircuit(2)\nqc.h(0)\nqc.cx(0, 1)")
+result = client.coda.tools.simulate(code="from qiskit import QuantumCircuit\nqc = QuantumCircuit(2)\nqc.h(0)\nqc.cx(0, 1)")
 
-for event in client.coda.agents(messages=[{"role": "user", "content": "Build a Bell state circuit"}]):
+# Chat with the unified Coda agent. `budget` controls agent effort
+# (low / medium / high) and `code_mode` controls code delivery
+# (inline markdown, or virtual files in a terminal `files` event).
+for event in client.coda.agents.run(
+    messages=[{"role": "user", "content": "Build a Bell state circuit"}],
+    budget="high",
+):
     print(event)
 ```
 
