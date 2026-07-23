@@ -17,7 +17,7 @@ import pytest
 from conductorquantum import AsyncConductorQuantum, ConductorQuantum
 from conductorquantum.coda.errors import CodaAPIError
 
-_AGENTS_TERMINAL_TYPES = frozenset({"completed", "files", "error", "cancelled"})
+_AGENTS_TERMINAL_TYPES = frozenset({"completed", "error", "cancelled"})
 
 
 @contextlib.contextmanager
@@ -302,6 +302,24 @@ class TestCodaAgentsRun:
         _assert_agents_sse_invariants(events)
         assert len(events) >= 2
         assert events[-1]["type"] == "completed"
+
+    def test_agents_run_code_mode_file(self, coda_client: ConductorQuantum):
+        """code_mode="file" streams written files back in a `files` event."""
+        with skip_if_service_unavailable():
+            events = list(
+                coda_client.coda.agents.run(
+                    messages=[{"role": "user", "content": "Write a 2-qubit Bell state circuit in Qiskit."}],
+                    code_mode="file",
+                    budget="low",
+                )
+            )
+        _assert_agents_sse_invariants(events)
+        assert events[-1]["type"] == "completed"
+        files_events = [ev for ev in events if ev.get("type") == "files"]
+        assert files_events, f"Expected a 'files' event, got types={[ev.get('type') for ev in events]}"
+        files = files_events[-1].get("data", {}).get("files", {})
+        assert isinstance(files, dict) and files, "files event must carry a non-empty data.files mapping"
+        assert all(isinstance(content, str) and content for content in files.values())
 
 
 class TestCodaAgentsList:

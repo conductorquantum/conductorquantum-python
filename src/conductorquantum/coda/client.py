@@ -152,15 +152,16 @@ class CodaAgentsClient:
         """Chat with the unified Coda agent. Returns an iterator of SSE events.
 
         Each event is a dict with at least a ``type`` field. Terminal events
-        have ``type`` of ``completed``, ``files``, ``error``, or ``cancelled``.
+        have ``type`` of ``completed``, ``error``, or ``cancelled``.
 
         Args:
             messages: Conversation messages.
             thread_id: Thread ID for conversation continuity.
             code_mode: ``"inline"`` (default) streams final code as a fenced
                 markdown block in token events; ``"file"`` has the agent write
-                code to a virtual filesystem instead, returned in a terminal
-                ``files`` event mapping file paths to contents.
+                code to a virtual filesystem instead, streamed back in a
+                ``files`` event (``data.files`` maps file paths to contents)
+                just before the terminal ``completed`` event.
             budget: Agent effort budget: ``"low"``, ``"medium"``, or ``"high"``
                 (default). Scales the model's thinking effort, max output
                 tokens, step limit, and parallel research-subagent pool.
@@ -355,15 +356,16 @@ class AsyncCodaAgentsClient:
         """Chat with the unified Coda agent. Returns an async iterator of SSE events.
 
         Each event is a dict with at least a ``type`` field. Terminal events
-        have ``type`` of ``completed``, ``files``, ``error``, or ``cancelled``.
+        have ``type`` of ``completed``, ``error``, or ``cancelled``.
 
         Args:
             messages: Conversation messages.
             thread_id: Thread ID for conversation continuity.
             code_mode: ``"inline"`` (default) streams final code as a fenced
                 markdown block in token events; ``"file"`` has the agent write
-                code to a virtual filesystem instead, returned in a terminal
-                ``files`` event mapping file paths to contents.
+                code to a virtual filesystem instead, streamed back in a
+                ``files`` event (``data.files`` maps file paths to contents)
+                just before the terminal ``completed`` event.
             budget: Agent effort budget: ``"low"``, ``"medium"``, or ``"high"``
                 (default). Scales the model's thinking effort, max output
                 tokens, step limit, and parallel research-subagent pool.
