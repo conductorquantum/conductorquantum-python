@@ -258,8 +258,10 @@ class ConductorQuantum(BaseConductorQuantum):
         *,
         messages: list[dict[str, str]],
         thread_id: typing.Optional[str] = None,
-        fast: bool = False,
-        mode: str = "build",
+        code_mode: str = "inline",
+        budget: str = "high",
+        fast: typing.Optional[bool] = None,
+        mode: typing.Optional[str] = None,
     ) -> Iterator[dict[str, typing.Any]]:
         # TODO(v2): Remove top-level shortcut client.agents(); use client.coda.agents.run()
         warnings.warn(
@@ -267,7 +269,9 @@ class ConductorQuantum(BaseConductorQuantum):
             DeprecationWarning,
             stacklevel=2,
         )
-        return self._coda.agents.run(messages=messages, thread_id=thread_id, fast=fast, mode=mode)
+        return self._coda.agents.run(
+            messages=messages, thread_id=thread_id, code_mode=code_mode, budget=budget, fast=fast, mode=mode
+        )
 
     def agents_list(self) -> dict[str, typing.Any]:
         # TODO(v2): Remove top-level shortcut client.agents_list(); use client.coda.agents.list()
@@ -493,8 +497,10 @@ class AsyncConductorQuantum(AsyncBaseConductorQuantum):
         *,
         messages: list[dict[str, str]],
         thread_id: typing.Optional[str] = None,
-        fast: bool = False,
-        mode: str = "build",
+        code_mode: str = "inline",
+        budget: str = "high",
+        fast: typing.Optional[bool] = None,
+        mode: typing.Optional[str] = None,
     ) -> AsyncIterator[dict[str, typing.Any]]:
         # TODO(v2): Remove top-level shortcut
         warnings.warn(
@@ -502,7 +508,9 @@ class AsyncConductorQuantum(AsyncBaseConductorQuantum):
             DeprecationWarning,
             stacklevel=2,
         )
-        async for event in self._coda.agents.run(messages=messages, thread_id=thread_id, fast=fast, mode=mode):
+        async for event in self._coda.agents.run(
+            messages=messages, thread_id=thread_id, code_mode=code_mode, budget=budget, fast=fast, mode=mode
+        ):
             yield event
 
     async def agents_list(self) -> dict[str, typing.Any]:

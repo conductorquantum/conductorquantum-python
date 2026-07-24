@@ -581,8 +581,10 @@ class TestCodaClientAgents:
         def handler(request: httpx.Request) -> httpx.Response:
             body = json.loads(request.content)
             assert body["messages"] == [{"role": "user", "content": "hi"}]
-            assert body["mode"] == "build"
-            assert body["fast"] is False
+            assert body["code_mode"] == "inline"
+            assert body["budget"] == "high"
+            assert "mode" not in body
+            assert "fast" not in body
             return _sse_response(events)
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
@@ -597,8 +599,8 @@ class TestCodaClientAgents:
         def handler(request: httpx.Request) -> httpx.Response:
             body = json.loads(request.content)
             assert body["thread_id"] == "t-1"
-            assert body["fast"] is True
-            assert body["mode"] == "learn"
+            assert body["code_mode"] == "file"
+            assert body["budget"] == "low"
             return _sse_response([{"type": "completed"}])
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
@@ -607,10 +609,27 @@ class TestCodaClientAgents:
             client.agents.run(
                 messages=[{"role": "user", "content": "test"}],
                 thread_id="t-1",
+                code_mode="file",
+                budget="low",
+            )
+        )
+
+    def test_agents_deprecated_mode_warns_and_is_still_sent(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            body = json.loads(request.content)
+            assert body["mode"] == "learn"
+            assert body["fast"] is True
+            return _sse_response([{"type": "completed"}])
+
+        client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
+        _patch_client(client, handler)
+        with pytest.warns(DeprecationWarning, match="mode"):
+            events = client.agents.run(
+                messages=[{"role": "user", "content": "test"}],
                 fast=True,
                 mode="learn",
             )
-        )
+        list(events)
 
     def test_agents_omits_thread_id_when_none(self):
         def handler(request: httpx.Request) -> httpx.Response:
@@ -803,8 +822,10 @@ class TestAsyncCodaClientAgents:
         async def handler(request: httpx.Request) -> httpx.Response:
             body = json.loads(request.content)
             assert body["thread_id"] == "t-2"
-            assert body["fast"] is True
-            assert body["mode"] == "learn"
+            assert body["code_mode"] == "file"
+            assert body["budget"] == "medium"
+            assert "mode" not in body
+            assert "fast" not in body
             return _sse_response([{"type": "completed"}])
 
         client = AsyncCodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
@@ -814,10 +835,27 @@ class TestAsyncCodaClientAgents:
             async for ev in client.agents.run(
                 messages=[{"role": "user", "content": "test"}],
                 thread_id="t-2",
-                fast=True,
-                mode="learn",
+                code_mode="file",
+                budget="medium",
             )
         ]
+
+    async def test_agents_deprecated_mode_warns_and_is_still_sent(self):
+        async def handler(request: httpx.Request) -> httpx.Response:
+            body = json.loads(request.content)
+            assert body["mode"] == "build"
+            assert body["fast"] is False
+            return _sse_response([{"type": "completed"}])
+
+        client = AsyncCodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")
+        _patch_async_client(client, handler)
+        with pytest.warns(DeprecationWarning, match="mode"):
+            stream = client.agents.run(
+                messages=[{"role": "user", "content": "test"}],
+                fast=False,
+                mode="build",
+            )
+        _ = [ev async for ev in stream]
 
     async def test_agents_skips_keepalive_lines(self):
         async def handler(request: httpx.Request) -> httpx.Response:
@@ -928,8 +966,10 @@ class TestCodaClientAgentsRunPath:
         def handler(request: httpx.Request) -> httpx.Response:
             body = json.loads(request.content)
             assert body["messages"] == [{"role": "user", "content": "hi"}]
-            assert body["mode"] == "build"
-            assert body["fast"] is False
+            assert body["code_mode"] == "inline"
+            assert body["budget"] == "high"
+            assert "mode" not in body
+            assert "fast" not in body
             return _sse_response([{"type": "completed"}])
 
         client = CodaClient(token=TOKEN, base_url=BASE_URL, sdk_version="0.0.0")

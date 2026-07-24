@@ -160,44 +160,46 @@ class TestCodaQPU:
 
 
 class TestCodaAgents:
-    def test_agents_build_mode(self, coda_client: ConductorQuantum):
+    def test_agents_unified(self, coda_client: ConductorQuantum):
         with skip_if_service_unavailable():
             events = list(
                 coda_client.coda.agents(
                     messages=[{"role": "user", "content": "What is a qubit?"}],
-                    mode="build",
-                    fast=True,
+                    budget="low",
                 )
             )
         _assert_agents_sse_invariants(events)
         assert len(events) >= 2
         assert events[-1]["type"] == "completed"
 
-    def test_agents_learn_mode(self, coda_client: ConductorQuantum):
+    def test_agents_deprecated_mode_alias_still_works(self, coda_client: ConductorQuantum):
         with skip_if_service_unavailable():
-            events = list(
-                coda_client.coda.agents(
+            with pytest.warns(DeprecationWarning, match="'mode'"):
+                stream = coda_client.coda.agents.run(
                     messages=[{"role": "user", "content": "Explain superposition briefly"}],
                     mode="learn",
-                    fast=True,
+                    budget="low",
                 )
-            )
+            events = list(stream)
         _assert_agents_sse_invariants(events)
         assert len(events) >= 2
         assert events[-1]["type"] == "completed"
 
-    def test_agents_with_thread_id(self, coda_client: ConductorQuantum):
+    def test_agents_rejects_foreign_thread_id(self, coda_client: ConductorQuantum):
+        """Thread IDs not owned by the caller are rejected (400/403)."""
         with skip_if_service_unavailable():
-            events = list(
-                coda_client.coda.agents(
-                    messages=[{"role": "user", "content": "Hi"}],
-                    thread_id="integration-test-thread",
-                    mode="build",
-                    fast=True,
+            try:
+                list(
+                    coda_client.coda.agents.run(
+                        messages=[{"role": "user", "content": "Hi"}],
+                        thread_id="integration-test-thread",
+                        budget="low",
+                    )
                 )
-            )
-        _assert_agents_sse_invariants(events)
-        assert events[-1]["type"] == "completed"
+            except CodaAPIError as exc:
+                assert exc.status_code in (400, 403)
+                return
+        pytest.fail("Expected the API to reject a thread_id the caller does not own")
 
 
 # ---------------------------------------------------------------------------
@@ -289,18 +291,35 @@ class TestCodaQPUsStatus:
 
 
 class TestCodaAgentsRun:
-    def test_agents_run_build(self, coda_client: ConductorQuantum):
+    def test_agents_run(self, coda_client: ConductorQuantum):
         with skip_if_service_unavailable():
             events = list(
                 coda_client.coda.agents.run(
                     messages=[{"role": "user", "content": "What is a qubit?"}],
-                    mode="build",
-                    fast=True,
+                    budget="low",
                 )
             )
         _assert_agents_sse_invariants(events)
         assert len(events) >= 2
         assert events[-1]["type"] == "completed"
+
+    def test_agents_run_code_mode_file(self, coda_client: ConductorQuantum):
+        """code_mode="file" streams written files back in a `files` event."""
+        with skip_if_service_unavailable():
+            events = list(
+                coda_client.coda.agents.run(
+                    messages=[{"role": "user", "content": "Write a 2-qubit Bell state circuit in Qiskit."}],
+                    code_mode="file",
+                    budget="low",
+                )
+            )
+        _assert_agents_sse_invariants(events)
+        assert events[-1]["type"] == "completed"
+        files_events = [ev for ev in events if ev.get("type") == "files"]
+        assert files_events, f"Expected a 'files' event, got types={[ev.get('type') for ev in events]}"
+        files = files_events[-1].get("data", {}).get("files", {})
+        assert isinstance(files, dict) and files, "files event must carry a non-empty data.files mapping"
+        assert all(isinstance(content, str) and content for content in files.values())
 
 
 class TestCodaAgentsList:
@@ -375,27 +394,28 @@ class TestAsyncCodaTranspile:
 
 
 class TestAsyncCodaAgents:
-    async def test_agents_build_mode(self, async_coda_client: AsyncConductorQuantum):
+    async def test_agents_unified(self, async_coda_client: AsyncConductorQuantum):
         events = []
         async with async_skip_if_service_unavailable():
             async for event in async_coda_client.coda.agents(
                 messages=[{"role": "user", "content": "What is a qubit?"}],
-                mode="build",
-                fast=True,
+                budget="low",
             ):
                 events.append(event)
         _assert_agents_sse_invariants(events)
         assert len(events) >= 2
         assert events[-1]["type"] == "completed"
 
-    async def test_agents_learn_mode(self, async_coda_client: AsyncConductorQuantum):
+    async def test_agents_deprecated_mode_alias_still_works(self, async_coda_client: AsyncConductorQuantum):
         events = []
         async with async_skip_if_service_unavailable():
-            async for event in async_coda_client.coda.agents(
-                messages=[{"role": "user", "content": "Define quantum superposition in one line."}],
-                mode="learn",
-                fast=True,
-            ):
+            with pytest.warns(DeprecationWarning, match="'mode'"):
+                stream = async_coda_client.coda.agents.run(
+                    messages=[{"role": "user", "content": "Define quantum superposition in one line."}],
+                    mode="learn",
+                    budget="low",
+                )
+            async for event in stream:
                 events.append(event)
         _assert_agents_sse_invariants(events)
         assert events[-1]["type"] == "completed"
@@ -416,13 +436,12 @@ class TestAsyncCodaToolsTranspile:
 
 
 class TestAsyncCodaAgentsRun:
-    async def test_agents_run_build(self, async_coda_client: AsyncConductorQuantum):
+    async def test_agents_run(self, async_coda_client: AsyncConductorQuantum):
         events = []
         async with async_skip_if_service_unavailable():
             async for event in async_coda_client.coda.agents.run(
                 messages=[{"role": "user", "content": "What is a qubit?"}],
-                mode="build",
-                fast=True,
+                budget="low",
             ):
                 events.append(event)
         _assert_agents_sse_invariants(events)
