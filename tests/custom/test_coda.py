@@ -437,13 +437,20 @@ class TestParseJson:
 
 
 class TestRetryDelay:
+    # Delays carry up to 25% jitter, so each is checked as a range: the base
+    # doubles per attempt and jitter only ever subtracts.
     def test_exponential_backoff(self):
-        assert retry_delay(0) == 0.5
-        assert retry_delay(1) == 1.0
-        assert retry_delay(2) == 2.0
+        for attempt, base in enumerate((0.5, 1.0, 2.0)):
+            delays = [retry_delay(attempt) for _ in range(100)]
+            assert all(base * 0.75 <= d <= base for d in delays)
 
     def test_capped_at_10(self):
-        assert retry_delay(10) == 10.0
+        assert all(10.0 * 0.75 <= retry_delay(10) <= 10.0 for _ in range(100))
+
+    def test_jitter_is_applied(self):
+        # Guards against the jitter silently regressing to a constant, which
+        # would resynchronise retrying clients.
+        assert len({retry_delay(2) for _ in range(100)}) > 1
 
 
 # ---------------------------------------------------------------------------

@@ -52,6 +52,9 @@ ruff = "==0.11.5"
 [tool.pytest.ini_options]
 testpaths = [ "tests" ]
 asyncio_mode = "auto"
+markers = [
+    "integration: hits the live API; requires an API token",
+]
 
 [tool.mypy]
 plugins = ["pydantic.mypy"]

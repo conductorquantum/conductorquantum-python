@@ -5,6 +5,7 @@ import warnings
 from collections.abc import AsyncIterator, Iterator
 
 import httpx
+from ._retry import DEFAULT_MAX_RETRIES, install_default_retries
 from .agents.client import AgentsClient, AsyncAgentsClient
 from .base_client import AsyncBaseConductorQuantum, BaseConductorQuantum
 from .coda._http import api_base_url_from_env
@@ -58,6 +59,7 @@ class ConductorQuantum(BaseConductorQuantum):
         timeout: typing.Optional[float] = DEFAULT_TIMEOUT_SECONDS,
         follow_redirects: typing.Optional[bool] = True,
         httpx_client: typing.Optional[httpx.Client] = None,
+        max_retries: int = DEFAULT_MAX_RETRIES,
     ):
         if token is None:
             raise ValueError("Provide token")
@@ -70,6 +72,7 @@ class ConductorQuantum(BaseConductorQuantum):
             follow_redirects=follow_redirects,
             httpx_client=httpx_client,
         )
+        install_default_retries(self._client_wrapper.httpx_client, max_retries)
         self._models = ExtendedModelsClient(client_wrapper=self._client_wrapper)
         self._agents = AgentsClient(client_wrapper=self._client_wrapper)
         _base_model_results = super(ConductorQuantum, self).model_results
@@ -301,6 +304,7 @@ class AsyncConductorQuantum(AsyncBaseConductorQuantum):
         timeout: typing.Optional[float] = DEFAULT_TIMEOUT_SECONDS,
         follow_redirects: typing.Optional[bool] = True,
         httpx_client: typing.Optional[httpx.AsyncClient] = None,
+        max_retries: int = DEFAULT_MAX_RETRIES,
     ):
         if token is None:
             raise ValueError("Provide token")
@@ -313,6 +317,7 @@ class AsyncConductorQuantum(AsyncBaseConductorQuantum):
             follow_redirects=follow_redirects,
             httpx_client=httpx_client,
         )
+        install_default_retries(self._client_wrapper.httpx_client, max_retries)
         self._models = AsyncExtendedModelsClient(client_wrapper=self._client_wrapper)
         self._agents = AsyncAgentsClient(client_wrapper=self._client_wrapper)
         _base_model_results = super(AsyncConductorQuantum, self).model_results

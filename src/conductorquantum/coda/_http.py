@@ -6,6 +6,7 @@ import json
 import os
 import time
 from collections.abc import Callable, Generator
+from random import random
 from typing import Any, Union
 
 import httpx
@@ -154,9 +155,15 @@ def parse_json(response: httpx.Response) -> dict[str, Any]:
 
 
 def retry_delay(attempt: int) -> float:
-    """Exponential backoff delay for retries."""
+    """Exponential backoff delay for retries, with jitter.
+
+    Jitter matters when an upstream blip fails many clients at once: without
+    it they all wake and retry on the same schedule, reproducing the load
+    spike that caused the failure. Matches the jitter the Control client uses
+    in ``core/http_client.py``.
+    """
     delay: float = min(INITIAL_RETRY_DELAY * (2**attempt), 10.0)
-    return delay
+    return delay * (1 - 0.25 * random())
 
 
 def sync_request(
