@@ -14,6 +14,7 @@ Usage:
 
 from __future__ import annotations
 
+import datetime
 import io
 import os
 import tempfile
@@ -290,11 +291,15 @@ class TestModelResultsList:
             assert isinstance(r.output, dict)
 
     def test_pagination(self, client: ConductorQuantum) -> None:
-        page1 = client.control.model_results.list(limit=2)
+        # Only page over results created before today (UTC). Concurrent CI runs share
+        # this account and create/delete results while this test runs, which would
+        # otherwise shift the offset between the two list calls.
+        yesterday = (datetime.datetime.now(datetime.timezone.utc).date() - datetime.timedelta(days=1)).isoformat()
+        page1 = client.control.model_results.list(limit=2, end_date=yesterday)
         if len(page1) < 2:
             pytest.skip("Not enough results to test pagination")
 
-        page2 = client.control.model_results.list(skip=1, limit=1)
+        page2 = client.control.model_results.list(skip=1, limit=1, end_date=yesterday)
         assert len(page2) == 1
         assert page1[1].id == page2[0].id
 
